@@ -77,6 +77,21 @@ export default function Dashboard() {
 
   if (loading) return <p className="p-6 text-center">Loading...</p>;
   if (error) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
+  // Password visibility toggles
+  const [showOldPass, setShowOldPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+
+  // Password strength meter state
+  const [newPassword, setNewPassword] = useState('');
+  const [strengthScore, setStrengthScore] = useState(0);
+
+  const handleNewPasswordChange = (e) => {
+  const val = e.target.value;
+  setNewPassword(val);
+  setStrengthScore(zxcvbn(val).score);
+};
+
+
 
   return (
     <main className="min-h-screen bg-gray-100 pb-10">
