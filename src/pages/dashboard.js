@@ -116,6 +116,48 @@ export default function Dashboard() {
             </button>
           </form>
         </div>
+        
+        <div className="mb-8 bg-white p-6 rounded-xl shadow-md max-w-xl mx-auto">
+          <h2 className="text-2xl font-bold text-purple-700 mb-4">Change Password</h2>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const newPassword = e.target.password.value;
+
+              const { error } = await supabase.auth.updateUser({
+                password: newPassword,
+              });
+
+              if (error) {
+                alert('Password update failed: ' + error.message);
+              } else {
+                alert('Password updated successfully');
+                e.target.reset(); // clear the form
+              }
+            }}
+            className="space-y-6"
+          >
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+              <input
+                type="password"
+                name="password"
+                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                required
+                minLength={6}
+                placeholder="Enter new password"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-black text-white font-semibold py-2 rounded-md hover:bg-gray-900 transition"
+            >
+              Update Password
+            </button>
+          </form>
+        </div>
+
 
 
 
