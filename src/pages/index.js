@@ -6,12 +6,14 @@ import { FaHeart, FaRegHeart, FaShoppingCart } from 'react-icons/fa';
 import Navbar from '@/components/Navbar';
 
 
-const { addToCart } = useCart();
-const { toggleWishlist, isInWishlist } = useWishlist();
+
 
 
 export default function Home() {
   const [products, setProducts] = useState([]);
+
+  const { addToCart } = useCart();
+const { toggleWishlist, isInWishlist } = useWishlist();
 
   useEffect(() => {
     async function fetchProducts() {
