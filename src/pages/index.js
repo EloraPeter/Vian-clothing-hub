@@ -27,41 +27,60 @@ const { toggleWishlist, isInWishlist } = useWishlist();
 
   return (
 
-    <div className="min-h-screen bg-gray-100 py-10 px-4">
-      <Navbar />
-      <h1 className="text-3xl font-bold text-center mb-8 text-purple-600">
-        Ready-to-Wear Collection
-      </h1>
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+  <Navbar />
+  <div className="max-w-7xl mx-auto">
+    <h1 className="text-4xl font-extrabold text-center mb-12 text-purple-700">
+      Ready-to-Wear Collection
+      <span className="block mt-2 h-1 w-20 bg-purple-500 mx-auto"></span>
+    </h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-        {products.map((product) => (
-          <div key={product.id} className="bg-white p-4 rounded-xl shadow-md relative">
-            <button
-              onClick={() => toggleWishlist(product)}
-              className="absolute top-2 right-2 text-red-500"
-            >
-              {isInWishlist(product.id) ? <FaHeart /> : <FaRegHeart />}
-            </button>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+      {products.map((product) => (
+        <div 
+          key={product.id} 
+          className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100 hover:border-purple-100 relative group"
+        >
+          <button
+            onClick={() => toggleWishlist(product)}
+            className="absolute top-4 right-4 z-10 p-2 bg-white/80 rounded-full backdrop-blur-sm hover:bg-red-50 transition-colors"
+            aria-label={isInWishlist(product.id) ? "Remove from wishlist" : "Add to wishlist"}
+          >
+            {isInWishlist(product.id) ? (
+              <FaHeart className="text-red-500 w-5 h-5" />
+            ) : (
+              <FaRegHeart className="text-gray-400 group-hover:text-red-400 w-5 h-5 transition-colors" />
+            )}
+          </button>
 
+          <div className="relative overflow-hidden rounded-lg aspect-square mb-5">
             <img
               src={product.image_url}
               alt={product.name}
-              className="w-full h-60 object-cover rounded-md mb-4"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
             />
-            <h2 className="text-xl font-semibold">{product.name}</h2>
-            <p className="text-gray-600 text-sm">{product.description}</p>
-            <p className="mt-2 text-purple-700 font-bold">
+          </div>
+          
+          <div className="space-y-2">
+            <h2 className="text-lg font-bold text-gray-900 line-clamp-1">{product.name}</h2>
+            <p className="text-gray-500 text-sm line-clamp-2 min-h-[40px]">{product.description}</p>
+            <p className="text-lg font-bold text-purple-700 mt-1">
               ₦{Number(product.price).toLocaleString()}
             </p>
-            <button
-              onClick={() => addToCart(product)}
-              className="mt-3 w-full bg-purple-600 text-white py-2 rounded flex items-center justify-center gap-2"
-            >
-              <FaShoppingCart /> Add to Cart
-            </button>
           </div>
-        ))}
-      </div>
+
+          <button
+            onClick={() => addToCart(product)}
+            className="mt-4 w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-colors duration-200 font-medium"
+          >
+            <FaShoppingCart className="w-4 h-4" />
+            <span>Add to Cart</span>
+          </button>
+        </div>
+      ))}
     </div>
+  </div>
+</div>
   );
 }
