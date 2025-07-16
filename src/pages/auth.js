@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
+import zxcvbn from 'zxcvbn';
+
 
 export default function Auth() {
   const router = useRouter();
@@ -8,6 +10,9 @@ export default function Auth() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [strengthScore, setStrengthScore] = useState(0);
 
   const toggleMode = () => {
     setMessage('');
