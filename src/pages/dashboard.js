@@ -128,16 +128,7 @@ export default function Dashboard() {
               />
             </div>
 
-            <button
-              type="submit"
-              className="w-full bg-purple-600 text-white font-semibold py-2 rounded-md hover:bg-purple-700 transition"
-            >
-              Save Changes
-            </button>
-          </form>
-        </div>
-
-        <div className="mb-8 bg-white p-6 rounded-xl shadow-md max-w-xl mx-auto">
+            <div className="mb-8 bg-white p-6 rounded-xl shadow-md max-w-xl mx-auto">
           <h2 className="text-2xl font-bold text-purple-700 mb-4">Change Password</h2>
           <form
             onSubmit={async (e) => {
@@ -238,6 +229,17 @@ export default function Dashboard() {
             </div>
           </form>
         </div>
+
+            <button
+              type="submit"
+              className="w-full bg-purple-600 text-white font-semibold py-2 rounded-md hover:bg-purple-700 transition"
+            >
+              Save Changes
+            </button>
+          </form>
+        </div>
+
+        
 
 
 
