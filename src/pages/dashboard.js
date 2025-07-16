@@ -116,35 +116,70 @@ export default function Dashboard() {
             </button>
           </form>
         </div>
-        
+
         <div className="mb-8 bg-white p-6 rounded-xl shadow-md max-w-xl mx-auto">
           <h2 className="text-2xl font-bold text-purple-700 mb-4">Change Password</h2>
           <form
             onSubmit={async (e) => {
               e.preventDefault();
-              const newPassword = e.target.password.value;
+              const oldPassword = e.target.old_password.value;
+              const newPassword = e.target.new_password.value;
 
-              const { error } = await supabase.auth.updateUser({
+              const {
+                data: { session },
+              } = await supabase.auth.getSession();
+
+              const email = session?.user?.email;
+
+              if (!email) {
+                alert("You're not logged in.");
+                return;
+              }
+
+              // 1. Reauthenticate with old password
+              const { error: signInError } = await supabase.auth.signInWithPassword({
+                email,
+                password: oldPassword,
+              });
+
+              if (signInError) {
+                alert('Old password is incorrect.');
+                return;
+              }
+
+              // 2. If successful, update to new password
+              const { error: updateError } = await supabase.auth.updateUser({
                 password: newPassword,
               });
 
-              if (error) {
-                alert('Password update failed: ' + error.message);
+              if (updateError) {
+                alert('Password update failed: ' + updateError.message);
               } else {
-                alert('Password updated successfully');
-                e.target.reset(); // clear the form
+                alert('Password updated successfully!');
+                e.target.reset();
               }
             }}
             className="space-y-6"
           >
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Old Password</label>
+              <input
+                type="password"
+                name="old_password"
+                required
+                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="Enter old password"
+              />
+            </div>
+
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
               <input
                 type="password"
-                name="password"
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                name="new_password"
                 required
                 minLength={6}
+                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                 placeholder="Enter new password"
               />
             </div>
@@ -153,10 +188,11 @@ export default function Dashboard() {
               type="submit"
               className="w-full bg-black text-white font-semibold py-2 rounded-md hover:bg-gray-900 transition"
             >
-              Update Password
+              Change Password
             </button>
           </form>
         </div>
+
 
 
 
