@@ -1,109 +1,146 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { useRouter } from 'next/router';
 
 export default function CustomOrderForm() {
-    const [form, setForm] = useState({
+  const router = useRouter();
+  const [form, setForm] = useState({
+    full_name: '',
+    email: '',
+    phone: '',
+    fabric: '',
+    style: '',
+    measurements: '',
+    address: '',
+    additional_notes: '',
+  });
+
+  const [userId, setUserId] = useState(null);
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Check auth & set user ID
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) {
+        router.push('/auth');
+      } else {
+        setUserId(data.session.user.id);
+        setForm((prev) => ({
+          ...prev,
+          email: data.session.user.email,
+        }));
+      }
+    });
+  }, [router]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage('');
+
+    const { error } = await supabase.from('custom_orders').insert([
+      {
+        ...form,
+        user_id: userId,
+        status: 'pending',
+      },
+    ]);
+
+    if (error) {
+      setMessage('Error: ' + error.message);
+    } else {
+      setMessage('Order submitted! Awaiting deposit.');
+      setForm({
         full_name: '',
-        phone: '',
         email: '',
+        phone: '',
         fabric: '',
         style: '',
         measurements: '',
-        additional_notes: '',
         address: '',
-    });
+        additional_notes: '',
+      });
+    }
 
-    const [loading, setLoading] = useState(false);
-    const [success, setSuccess] = useState(false);
+    setLoading(false);
+  };
 
-    const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        const { error } = await supabase.from('custom_orders').insert([form]);
-
-        if (!error) {
-            // ✅ WhatsApp Notification via CallMeBot
-            const phoneNumber = '2348087522801'; // Aunty Nwanne’s number (in intl format, no +)
-            const apiKey = '7165245'; // Her unique CallMeBot key
-
-            const message = encodeURIComponent(
-                `🧵 *New Custom Order!*\n👤 Name: ${form.full_name}\n📞 Phone: ${form.phone}\n🧶 Fabric: ${form.fabric}\n💃🏽 Style: ${form.style}\n📍 Address: ${form.address}`
-            );
-
-            const whatsappUrl = `https://api.callmebot.com/whatsapp.php?phone=${phoneNumber}&text=${message}&apikey=${apiKey}`;
-
-            try {
-                await fetch(whatsappUrl);
-                console.log('WhatsApp message sent to Aunty Nwanne 📲');
-            } catch (err) {
-                console.error('Failed to send WhatsApp message:', err.message);
-            }
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="bg-white max-w-2xl mx-auto p-6 rounded shadow space-y-4"
+    >
+      <input
+        type="text"
+        placeholder="Full Name"
+        value={form.full_name}
+        onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+        className="w-full border p-2 rounded"
+        required
+      />
+      <input
+        type="email"
+        placeholder="Email"
+        value={form.email}
+        readOnly
+        className="w-full border p-2 rounded bg-gray-100"
+      />
+      <input
+        type="text"
+        placeholder="Phone"
+        value={form.phone}
+        onChange={(e) => setForm({ ...form, phone: e.target.value })}
+        className="w-full border p-2 rounded"
+        required
+      />
+      <input
+        type="text"
+        placeholder="Fabric"
+        value={form.fabric}
+        onChange={(e) => setForm({ ...form, fabric: e.target.value })}
+        className="w-full border p-2 rounded"
+        required
+      />
+      <input
+        type="text"
+        placeholder="Style"
+        value={form.style}
+        onChange={(e) => setForm({ ...form, style: e.target.value })}
+        className="w-full border p-2 rounded"
+        required
+      />
+      <textarea
+        placeholder="Measurements"
+        value={form.measurements}
+        onChange={(e) => setForm({ ...form, measurements: e.target.value })}
+        className="w-full border p-2 rounded"
+      />
+      <textarea
+        placeholder="Delivery Address"
+        value={form.address}
+        onChange={(e) => setForm({ ...form, address: e.target.value })}
+        className="w-full border p-2 rounded"
+        required
+      />
+      <textarea
+        placeholder="Additional Notes"
+        value={form.additional_notes}
+        onChange={(e) =>
+          setForm({ ...form, additional_notes: e.target.value })
         }
-        setLoading(false);
-        if (error) {
-            alert('Error submitting order: ' + error.message);
-        } else {
-            setSuccess(true);
-            setForm({
-                full_name: '',
-                phone: '',
-                email: '',
-                fabric: '',
-                style: '',
-                measurements: '',
-                additional_notes: '',
-                address: '',
-            });
-        }
-    };
+        className="w-full border p-2 rounded"
+      />
 
-    return (
-        <div className="max-w-3xl mx-auto p-6 bg-white rounded-xl shadow-md mt-10">
-            <h2 className="text-2xl font-bold mb-4 text-purple-600">Custom Order</h2>
+      <button
+        type="submit"
+        disabled={loading}
+        className="bg-purple-700 text-white w-full py-2 rounded hover:bg-purple-800"
+      >
+        {loading ? 'Submitting...' : 'Place Order'}
+      </button>
 
-            {success && (
-                <div className="bg-green-100 text-green-800 p-3 rounded mb-4">
-                    Order submitted successfully!
-                </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <input name="full_name" value={form.full_name} onChange={handleChange} placeholder="Full Name" className="w-full p-2 border rounded" required />
-
-                <input name="phone" value={form.phone} onChange={handleChange} placeholder="Phone Number" className="w-full p-2 border rounded" required />
-
-                <input name="email" value={form.email} onChange={handleChange} placeholder="Email (optional)" className="w-full p-2 border rounded" />
-
-                <select name="fabric" value={form.fabric} onChange={handleChange} className="w-full p-2 border rounded" required>
-                    <option value="">Choose Fabric</option>
-                    <option value="Ankara">Ankara</option>
-                    <option value="Lace">Lace</option>
-                    <option value="Adire">Adire</option>
-                    <option value="Senator">Senator</option>
-                </select>
-
-                <select name="style" value={form.style} onChange={handleChange} className="w-full p-2 border rounded" required>
-                    <option value="">Choose Style</option>
-                    <option value="Bubu">Bubu</option>
-                    <option value="Kaftan">Kaftan</option>
-                    <option value="2-piece">2-Piece</option>
-                    <option value="Gown">Gown</option>
-                </select>
-
-                <textarea name="measurements" value={form.measurements} onChange={handleChange} placeholder="Measurements (optional)" className="w-full p-2 border rounded" />
-
-                <textarea name="additional_notes" value={form.additional_notes} onChange={handleChange} placeholder="Additional Notes (optional)" className="w-full p-2 border rounded" />
-
-                <textarea name="address" value={form.address} onChange={handleChange} placeholder="Delivery Address" className="w-full p-2 border rounded" required />
-
-                <button disabled={loading} className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
-                    {loading ? 'Submitting...' : 'Submit Order'}
-                </button>
-            </form>
-        </div>
-    );
+      {message && <p className="text-center mt-2 text-sm text-green-700">{message}</p>}
+    </form>
+  );
 }
