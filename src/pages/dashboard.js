@@ -246,14 +246,6 @@ export default function Dashboard() {
           </form>
         </div>
 
-
-
-
-
-
-
-
-
         {/* Wishlist Section */}
         <section className="mb-8 bg-white p-4 rounded shadow">
           <h2 className="font-semibold text-xl mb-4">Wishlist</h2>
