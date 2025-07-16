@@ -1,13 +1,29 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { useRouter } from 'next/router';
 
 export default function AdminPage() {
+  const router = useRouter();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [user, setUser] = useState(null);
 
-  // Fetch orders from Supabase
   useEffect(() => {
+    // Check user session
+    const session = supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) {
+        router.push('/login');
+      } else {
+        setUser(data.session.user);
+      }
+    });
+  }, [router]);
+
+  // Fetch orders once user is set
+  useEffect(() => {
+    if (!user) return;
+
     async function fetchOrders() {
       const { data, error } = await supabase
         .from('custom_orders')
@@ -20,10 +36,11 @@ export default function AdminPage() {
       }
       setLoading(false);
     }
-    fetchOrders();
-  }, []);
 
-  // Update order status handler
+    fetchOrders();
+  }, [user]);
+
+  // Update status handler (same as before)
   async function updateStatus(id, newStatus) {
     const { error } = await supabase
       .from('custom_orders')
@@ -40,12 +57,23 @@ export default function AdminPage() {
     }
   }
 
+  if (!user) return <p className="p-6 text-center">Checking authentication...</p>;
   if (loading) return <p className="p-6 text-center">Loading orders...</p>;
   if (error) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
 
   return (
     <main className="min-h-screen bg-gray-100 p-6">
       <h1 className="text-3xl font-bold mb-6 text-purple-700 text-center">Admin Dashboard</h1>
+
+      <button
+        className="mb-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+        onClick={async () => {
+          await supabase.auth.signOut();
+          router.push('/login');
+        }}
+      >
+        Log Out
+      </button>
 
       {orders.length === 0 && (
         <p className="text-center text-gray-600">No orders yet.</p>
