@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
 import Navbar from '@/components/Navbar';
+import { useWishlist } from '@/context/WishlistContext';
+
 
 
 export default function Dashboard() {
@@ -11,6 +13,8 @@ export default function Dashboard() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+    const { wishlist } = useWishlist();
+
 
   // Check session on load
   useEffect(() => {
