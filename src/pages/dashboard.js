@@ -31,6 +31,11 @@ export default function Dashboard() {
     setStrengthScore(zxcvbn(val).score);
   };
 
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
+
   // Check session
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -105,6 +110,32 @@ export default function Dashboard() {
         <div className="mb-8 bg-white p-6 rounded-xl shadow-md max-w-xl mx-auto">
           {/* Profile Update Form */}
           <h2 className="text-2xl font-bold text-purple-700 mb-4">Update Profile</h2>
+          <div className="flex items-center space-x-4 mb-4">
+            {previewUrl || profile?.avatar_url ? (
+              <img
+                src={previewUrl || profile.avatar_url}
+                alt="Avatar"
+                className="w-16 h-16 rounded-full object-cover border"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+                No Pic
+              </div>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) {
+                  setAvatarFile(file);
+                  setPreviewUrl(URL.createObjectURL(file));
+                }
+              }}
+              className="text-sm"
+            />
+          </div>
+
           <form
             onSubmit={async (e) => {
               e.preventDefault();
