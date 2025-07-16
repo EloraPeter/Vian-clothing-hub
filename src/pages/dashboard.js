@@ -139,10 +139,34 @@ export default function Dashboard() {
           <form
             onSubmit={async (e) => {
               e.preventDefault();
-              const { error } = await supabase
-                .from('profiles')
-                .update({ email: profile.email })
-                .eq('id', user.id);
+              let avatar_url = profile.avatar_url;
+
+if (avatarFile) {
+  setUploading(true);
+  const fileExt = avatarFile.name.split('.').pop();
+  const fileName = `${user.id}.${fileExt}`;
+  const filePath = `avatars/${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(filePath, avatarFile, { upsert: true });
+
+  if (uploadError) {
+    alert('Upload failed: ' + uploadError.message);
+    setUploading(false);
+    return;
+  }
+
+  const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+  avatar_url = data.publicUrl;
+  setUploading(false);
+}
+
+const { error } = await supabase
+  .from('profiles')
+  .update({ email: profile.email, avatar_url })
+  .eq('id', user.id);
+
 
               if (error) alert('Update failed: ' + error.message);
               else alert('Profile updated successfully');
