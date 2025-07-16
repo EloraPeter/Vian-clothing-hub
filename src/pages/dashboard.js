@@ -86,10 +86,10 @@ export default function Dashboard() {
   const [strengthScore, setStrengthScore] = useState(0);
 
   const handleNewPasswordChange = (e) => {
-  const val = e.target.value;
-  setNewPassword(val);
-  setStrengthScore(zxcvbn(val).score);
-};
+    const val = e.target.value;
+    setNewPassword(val);
+    setStrengthScore(zxcvbn(val).score);
+  };
 
 
 
@@ -179,35 +179,39 @@ export default function Dashboard() {
             }}
             className="space-y-6"
           >
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Old Password</label>
-              <input
-                type="password"
-                name="old_password"
-                required
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                placeholder="Enter old password"
-              />
-            </div>
-
+            {/* New Password with show/hide toggle and strength meter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-              <input
-                type="password"
-                name="new_password"
-                required
-                minLength={6}
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                placeholder="Enter new password"
-              />
-            </div>
+              <div className="relative">
+                <input
+                  type={showNewPass ? 'text' : 'password'}
+                  name="new_password"
+                  value={newPassword}
+                  onChange={handleNewPasswordChange}
+                  required
+                  minLength={6}
+                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="Enter new password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPass(!showNewPass)}
+                  className="absolute right-3 top-2 text-gray-500 hover:text-gray-700"
+                >
+                  {showNewPass ? 'Hide' : 'Show'}
+                </button>
+              </div>
 
-            <button
-              type="submit"
-              className="w-full bg-black text-white font-semibold py-2 rounded-md hover:bg-gray-900 transition"
-            >
-              Change Password
-            </button>
+              {/* Password Strength Meter */}
+              {newPassword && (
+                <p
+                  className="mt-1 font-semibold"
+                  style={{ color: ['#ef4444', '#f97316', '#facc15', '#4ade80', '#22c55e'][strengthScore] }}
+                >
+                  Password Strength: {['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'][strengthScore]}
+                </p>
+              )}
+            </div>
           </form>
         </div>
 
