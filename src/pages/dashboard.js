@@ -4,30 +4,28 @@ import { useRouter } from 'next/router';
 import Navbar from '@/components/Navbar';
 import { useWishlist } from '@/context/WishlistContext';
 
-
-
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [orders, setOrders] = useState([]);
+  const [productOrders, setProductOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-    const { wishlist } = useWishlist();
+  const { wishlist } = useWishlist();
 
-
-  // Check session on load
+  // Check session
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) {
-        router.push('/auth'); // redirect to login/signup if not logged in
+        router.push('/auth');
       } else {
         setUser(data.session.user);
       }
     });
   }, [router]);
 
-  // Fetch profile and orders after user is set
+  // Fetch everything after user loads
   useEffect(() => {
     if (!user) return;
 
@@ -35,24 +33,31 @@ export default function Dashboard() {
       setLoading(true);
       try {
         // Fetch profile info
-        let { data: profileData, error: profileError } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('email, is_admin')
           .eq('id', user.id)
           .single();
-
         if (profileError) throw profileError;
         setProfile(profileData);
 
-        // Fetch user's custom orders
-        let { data: ordersData, error: ordersError } = await supabase
+        // Fetch custom orders
+        const { data: ordersData, error: ordersError } = await supabase
           .from('custom_orders')
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
-
         if (ordersError) throw ordersError;
         setOrders(ordersData);
+
+        // Fetch ready-made product orders (if applicable)
+        const { data: productOrdersData, error: productOrdersError } = await supabase
+          .from('orders') // assuming this table
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+        if (productOrdersError) throw productOrdersError;
+        setProductOrders(productOrdersData);
       } catch (err) {
         setError(err.message);
       }
@@ -71,41 +76,82 @@ export default function Dashboard() {
   if (error) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
 
   return (
-    <main className="min-h-screen bg-gray-100 p-6 max-w-4xl mx-auto">
-          <Navbar />
+    <main className="min-h-screen bg-gray-100 pb-10">
+      <Navbar />
+      <div className="max-w-5xl mx-auto p-6">
+        <h1 className="text-3xl font-bold mb-6 text-purple-700 text-center">Customer Dashboard</h1>
 
-      <h1 className="text-3xl font-bold mb-6 text-purple-700 text-center">Customer Dashboard</h1>
+        {/* Profile Section */}
+        <section className="mb-8 bg-white p-4 rounded shadow">
+          <h2 className="font-semibold text-xl mb-2">Profile Info</h2>
+          <p><strong>Email:</strong> {profile?.email}</p>
+          {/* Later: Add Update Profile */}
+        </section>
 
-      <div className="mb-6 bg-white p-4 rounded shadow">
-        <h2 className="font-semibold text-xl mb-2">Profile Info</h2>
-        <p><strong>Email:</strong> {profile?.email}</p>
-        {/* Future: add profile update form here */}
+        {/* Wishlist Section */}
+        <section className="mb-8 bg-white p-4 rounded shadow">
+          <h2 className="font-semibold text-xl mb-4">Wishlist</h2>
+          {wishlist.length === 0 ? (
+            <p>You have no items in your wishlist.</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {wishlist.map((item) => (
+                <div key={item.id} className="bg-gray-50 p-3 rounded shadow text-center">
+                  <img src={item.image_url} alt={item.name} className="h-32 w-full object-cover rounded mb-2" />
+                  <p className="font-medium">{item.name}</p>
+                  <p className="text-sm text-gray-500">₦{item.price}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Custom Orders Section */}
+        <section className="mb-8 bg-white p-4 rounded shadow">
+          <h2 className="font-semibold text-xl mb-4">Custom Orders</h2>
+          {orders.length === 0 ? (
+            <p>You have no custom orders yet.</p>
+          ) : (
+            <ul className="space-y-4">
+              {orders.map((order) => (
+                <li key={order.id} className="border p-4 rounded">
+                  <p><strong>Fabric:</strong> {order.fabric}</p>
+                  <p><strong>Style:</strong> {order.style}</p>
+                  <p><strong>Status:</strong> {order.status}</p>
+                  <p><strong>Ordered on:</strong> {new Date(order.created_at).toLocaleString()}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* Product Orders (Ready-to-Wear) */}
+        <section className="mb-8 bg-white p-4 rounded shadow">
+          <h2 className="font-semibold text-xl mb-4">Product Purchase History</h2>
+          {productOrders.length === 0 ? (
+            <p>You haven't purchased any products yet.</p>
+          ) : (
+            <ul className="space-y-4">
+              {productOrders.map((order) => (
+                <li key={order.id} className="border p-4 rounded">
+                  <p><strong>Items:</strong> {order.items.map((i) => i.name).join(', ')}</p>
+                  <p><strong>Total:</strong> ₦{order.total}</p>
+                  <p><strong>Status:</strong> {order.status}</p>
+                  <p><strong>Placed:</strong> {new Date(order.created_at).toLocaleString()}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* Logout Button */}
+        <button
+          onClick={handleLogout}
+          className="mt-8 bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700"
+        >
+          Log Out
+        </button>
       </div>
-
-      <div className="bg-white p-4 rounded shadow">
-        <h2 className="font-semibold text-xl mb-4">Your Custom Orders</h2>
-        {orders.length === 0 ? (
-          <p>You have no custom orders yet.</p>
-        ) : (
-          <ul className="space-y-4">
-            {orders.map((order) => (
-              <li key={order.id} className="border p-4 rounded">
-                <p><strong>Fabric:</strong> {order.fabric}</p>
-                <p><strong>Style:</strong> {order.style}</p>
-                <p><strong>Status:</strong> {order.status}</p>
-                <p><strong>Ordered on:</strong> {new Date(order.created_at).toLocaleString()}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <button
-        onClick={handleLogout}
-        className="mt-8 bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700"
-      >
-        Log Out
-      </button>
     </main>
   );
 }
