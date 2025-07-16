@@ -103,6 +103,7 @@ export default function Dashboard() {
 
         {/* Profile Section */}
         <div className="mb-8 bg-white p-6 rounded-xl shadow-md max-w-xl mx-auto">
+          {/* Profile Update Form */}
           <h2 className="text-2xl font-bold text-purple-700 mb-4">Update Profile</h2>
           <form
             onSubmit={async (e) => {
@@ -128,7 +129,17 @@ export default function Dashboard() {
               />
             </div>
 
-            <div className="mb-8 bg-white p-6 rounded-xl shadow-md max-w-xl mx-auto">
+            <button
+              type="submit"
+              className="w-full bg-purple-600 text-white font-semibold py-2 rounded-md hover:bg-purple-700 transition"
+            >
+              Save Changes
+            </button>
+          </form>
+        </div>
+
+        <div className="mb-8 bg-white p-6 rounded-xl shadow-md max-w-xl mx-auto">
+          {/* Change Password Form */}
           <h2 className="text-2xl font-bold text-purple-700 mb-4">Change Password</h2>
           <form
             onSubmit={async (e) => {
@@ -147,7 +158,7 @@ export default function Dashboard() {
                 return;
               }
 
-              // 1. Reauthenticate with old password
+              // Reauthenticate with old password
               const { error: signInError } = await supabase.auth.signInWithPassword({
                 email,
                 password: oldPassword,
@@ -158,7 +169,7 @@ export default function Dashboard() {
                 return;
               }
 
-              // 2. If successful, update to new password
+              // Update to new password
               const { error: updateError } = await supabase.auth.updateUser({
                 password: newPassword,
               });
@@ -172,7 +183,6 @@ export default function Dashboard() {
             }}
             className="space-y-6"
           >
-
             {/* Old Password with show/hide toggle */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Old Password</label>
@@ -217,7 +227,6 @@ export default function Dashboard() {
                 </button>
               </div>
 
-              {/* Password Strength Meter */}
               {newPassword && (
                 <p
                   className="mt-1 font-semibold"
@@ -227,19 +236,18 @@ export default function Dashboard() {
                 </p>
               )}
             </div>
-          </form>
-        </div>
 
             <button
               type="submit"
-              className="w-full bg-purple-600 text-white font-semibold py-2 rounded-md hover:bg-purple-700 transition"
+              className="w-full bg-black text-white font-semibold py-2 rounded-md hover:bg-gray-900 transition"
             >
-              Save Changes
+              Change Password
             </button>
           </form>
         </div>
 
-        
+
+
 
 
 
