@@ -65,7 +65,7 @@ export default function AdminPage() {
 
     return (
         <main className="min-h-screen bg-gray-100 p-6">
-    <Navbar />
+<Navbar profile={profile} />
             <h1 className="text-3xl font-bold mb-6 text-purple-700 text-center">Admin Dashboard</h1>
             <p>Welcome, {user.email}</p>
 

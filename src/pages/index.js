@@ -28,7 +28,7 @@ const { toggleWishlist, isInWishlist } = useWishlist();
   return (
 
     <div className="min-h-screen bg-gray-100 pb-10">
-  <Navbar />
+<Navbar profile={profile} />
   <div className="max-w-7xl mx-auto">
     <h1 className="text-4xl font-extrabold text-center mb-12 text-purple-700">
       Ready-to-Wear Collection
