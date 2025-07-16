@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
+import Navbar from '@/components/Navbar';
+
 
 export default function Dashboard() {
   const router = useRouter();
@@ -66,6 +68,8 @@ export default function Dashboard() {
 
   return (
     <main className="min-h-screen bg-gray-100 p-6 max-w-4xl mx-auto">
+          <Navbar />
+
       <h1 className="text-3xl font-bold mb-6 text-purple-700 text-center">Customer Dashboard</h1>
 
       <div className="mb-6 bg-white p-4 rounded shadow">

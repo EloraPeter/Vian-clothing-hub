@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
+import Navbar from '@/components/Navbar';
+
 
 export default function AdminPage() {
     const router = useRouter();
@@ -63,6 +65,7 @@ export default function AdminPage() {
 
     return (
         <main className="min-h-screen bg-gray-100 p-6">
+    <Navbar />
             <h1 className="text-3xl font-bold mb-6 text-purple-700 text-center">Admin Dashboard</h1>
             <p>Welcome, {user.email}</p>
 
