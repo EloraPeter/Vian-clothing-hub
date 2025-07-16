@@ -1,0 +1,52 @@
+ Prioritized To-Do List for Aunty Nwanne Fashion Website
+🔥 High Priority — Core Features to Build ASAP
+Customer Signup/Login & Dashboard
+
+Cart and Checkout Flow (with login redirect if not signed in)
+
+Delivery Address Management & Order Tracking
+
+Paystack Payment Integration (initial deposit, invoices, receipts)
+
+Admin Route Protection (only admins access /admin)
+
+Image Upload for Style Inspiration (Supabase Storage)
+
+Custom Order Payment + WhatsApp Notification Flow (5k deposit, notify Aunty, invoice & receipt, delivery start)
+
+Profile Update (password, profile pic) for customers
+
+Mobile-Friendly & Responsive UI/UX
+
+⚡ Medium Priority — Growth & User Experience Boosters
+Product Filtering & Search
+
+Push Notifications & Email Automation (order updates, promos, restocks)
+
+Wishlist & Buy Later Features
+
+Order History & Purchase Tracking for customers
+
+Live Chat Support / Chatbot (basic customer support)
+
+Discount Codes & Promotions Management
+
+🚀 Future / Scaling Features
+Loyalty & Referral Program
+
+Blog / Style Guide Section (fashion tips, SEO, engagement)
+
+Testimonials & Reviews
+
+Admin Analytics Dashboard (orders, revenue, popular products)
+
+Inventory Management & Low Stock Alerts
+
+Scheduled Delivery & Pickup Options
+
+Offline Mode as Progressive Web App (PWA)
+
+Admin Collaboration & Role-Based Access Control (multiple admins, different roles)
+
+Secondary Payment Gateway: Stripe Integration
+
