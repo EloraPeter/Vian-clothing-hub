@@ -83,39 +83,40 @@ export default function Dashboard() {
 
         {/* Profile Section */}
         <div className="mb-8 bg-white p-6 rounded-xl shadow-md max-w-xl mx-auto">
-  <h2 className="text-2xl font-bold text-purple-700 mb-4">Update Profile</h2>
-  <form
-    onSubmit={async (e) => {
-      e.preventDefault();
-      const { error } = await supabase
-        .from('profiles')
-        .update({ email: profile.email })
-        .eq('id', user.id);
+          <h2 className="text-2xl font-bold text-purple-700 mb-4">Update Profile</h2>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const { error } = await supabase
+                .from('profiles')
+                .update({ email: profile.email })
+                .eq('id', user.id);
 
-      if (error) alert('Update failed: ' + error.message);
-      else alert('Profile updated successfully');
-    }}
-    className="space-y-6"
-  >
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
-      <input
-        type="email"
-        value={profile?.email || ''}
-        onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-        className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-        required
-      />
-    </div>
+              if (error) alert('Update failed: ' + error.message);
+              else alert('Profile updated successfully');
+            }}
+            className="space-y-6"
+          >
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
+              <input
+                type="email"
+                value={profile?.email || ''}
+                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                required
+              />
+            </div>
 
-    <button
-      type="submit"
-      className="w-full bg-purple-600 text-white font-semibold py-2 rounded-md hover:bg-purple-700 transition"
-    >
-      Save Changes
-    </button>
-  </form>
-</div>
+            <button
+              type="submit"
+              className="w-full bg-purple-600 text-white font-semibold py-2 rounded-md hover:bg-purple-700 transition"
+            >
+              Save Changes
+            </button>
+          </form>
+        </div>
+
 
 
 
