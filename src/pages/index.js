@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { useCart } from '@/context/CartContext'; // we'll build this
+import { useWishlist } from '@/context/WishlistContext'; // also build this
+import { FaHeart, FaRegHeart, FaShoppingCart } from 'react-icons/fa';
+
+const { addToCart } = useCart();
+const { toggleWishlist, isInWishlist } = useWishlist();
+
 
 export default function Home() {
   const [products, setProducts] = useState([]);
