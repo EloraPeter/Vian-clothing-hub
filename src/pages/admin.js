@@ -105,7 +105,7 @@ export default function AdminPage() {
                 <div className="flex items-center space-x-4 mb-4">
                     {previewUrl || profile?.avatar_url ? (
                         <img
-                            src={previewUrl || profile.avatar_url}
+                            src={previewUrl || profile.avatar_url || '/default-avatar.png'}
                             alt="Avatar"
                             className="w-16 h-16 rounded-full object-cover border"
                         />
