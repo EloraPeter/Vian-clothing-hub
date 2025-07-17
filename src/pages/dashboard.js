@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
 import Navbar from '@/components/Navbar';
 import { useWishlist } from '@/context/WishlistContext';
+import ProfileUploader from '@/components/ProfileUploader';
 import zxcvbn from 'zxcvbn';
 
 
