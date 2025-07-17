@@ -60,7 +60,7 @@ export default function Dashboard() {
           .from('profiles')
           .select('email, is_admin')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
         if (profileError) throw profileError;
         setProfile(profileData);
 
