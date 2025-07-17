@@ -12,6 +12,7 @@ export default function AdminPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [user, setUser] = useState(null);
+    
 
     useEffect(() => {
         // Check user session
