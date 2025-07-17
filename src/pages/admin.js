@@ -50,6 +50,28 @@ export default function AdminPage() {
         fetchOrders();
     }, [user]);
 
+    // fetch profile data
+    useEffect(() => {
+        if (!user) return;
+
+        async function fetchProfile() {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('email, avatar_url')
+                .eq('id', user.id)
+                .single();
+
+            if (error) {
+                setError(error.message);
+            } else {
+                setProfile(data);
+            }
+        }
+
+        fetchProfile();
+    }, [user]);
+
+
     // Update status handler (same as before)
     async function updateStatus(id, newStatus) {
         const { error } = await supabase
@@ -140,8 +162,11 @@ export default function AdminPage() {
                             .eq('id', user.id);
 
 
-                        if (error) alert('Update failed: ' + error.message);
-                        else alert('Profile updated successfully');
+                        if (!error) {
+                            setProfile((prev) => ({ ...prev, email: profile.email, avatar_url }));
+                            alert('Profile updated successfully');
+                        }
+
                     }}
                     className="space-y-6"
                 >
