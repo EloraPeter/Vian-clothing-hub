@@ -126,7 +126,7 @@ export default function AdminPage() {
     if (error) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
 
     return (
-        <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+        <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
             <Navbar profile={profile} />
             <div className="max-w-7xl mx-auto">
                 <h1 className="text-4xl font-extrabold mb-8 text-purple-800 text-center tracking-tight">
