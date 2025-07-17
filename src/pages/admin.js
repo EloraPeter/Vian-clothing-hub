@@ -65,9 +65,97 @@ export default function AdminPage() {
 
     return (
         <main className="min-h-screen bg-gray-100 p-6">
-<Navbar profile={profile} />
+            <Navbar profile={profile} />
             <h1 className="text-3xl font-bold mb-6 text-purple-700 text-center">Admin Dashboard</h1>
             <p>Welcome, {user.email}</p>
+
+            <div className="mb-8 bg-white p-6 rounded-xl shadow-md max-w-xl mx-auto">
+                {/* Profile Update Form */}
+                <h2 className="text-2xl font-bold text-purple-700 mb-4">Update Profile</h2>
+                <div className="flex items-center space-x-4 mb-4">
+                    {previewUrl || profile?.avatar_url ? (
+                        <img
+                            src={previewUrl || profile.avatar_url}
+                            alt="Avatar"
+                            className="w-16 h-16 rounded-full object-cover border"
+                        />
+                    ) : (
+                        <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+                            No Pic
+                        </div>
+                    )}
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                                setAvatarFile(file);
+                                setPreviewUrl(URL.createObjectURL(file));
+                            }
+                        }}
+                        className="text-sm"
+                        disabled={uploading}
+
+                    />
+                </div>
+
+                <form
+                    onSubmit={async (e) => {
+                        e.preventDefault();
+                        let avatar_url = profile.avatar_url;
+
+                        if (avatarFile) {
+                            setUploading(true);
+                            const fileExt = avatarFile.name.split('.').pop();
+                            const fileName = `${user.id}.${fileExt}`;
+                            const filePath = `avatars/${fileName}`;
+
+                            const { error: uploadError } = await supabase.storage
+                                .from('avatars')
+                                .upload(filePath, avatarFile, { upsert: true });
+
+                            if (uploadError) {
+                                alert('Upload failed: ' + uploadError.message);
+                                setUploading(false);
+                                return;
+                            }
+
+                            const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+                            avatar_url = data.publicUrl;
+                            setUploading(false);
+                        }
+
+                        const { error } = await supabase
+                            .from('profiles')
+                            .update({ email: profile.email, avatar_url })
+                            .eq('id', user.id);
+
+
+                        if (error) alert('Update failed: ' + error.message);
+                        else alert('Profile updated successfully');
+                    }}
+                    className="space-y-6"
+                >
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
+                        <input
+                            type="email"
+                            value={profile?.email || ''}
+                            onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            required
+                        />
+                    </div>
+
+                    <button
+                        type="submit"
+                        className="w-full bg-purple-600 text-white font-semibold py-2 rounded-md hover:bg-purple-700 transition"
+                    >
+                        Save Changes
+                    </button>
+                </form>
+            </div>
 
             <button
                 className="mb-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
