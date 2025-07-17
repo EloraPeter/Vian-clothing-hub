@@ -103,7 +103,7 @@ export default function Dashboard() {
 
   return (
     <main className="min-h-screen bg-gray-100 pb-10">
-<Navbar profile={profile} />
+      <Navbar profile={profile} />
       <div className="max-w-5xl mx-auto p-6">
         <h1 className="text-3xl font-bold mb-6 text-purple-700 text-center">Customer Dashboard</h1>
 
@@ -134,6 +134,8 @@ export default function Dashboard() {
                 }
               }}
               className="text-sm"
+              disabled={uploading}
+
             />
           </div>
 
@@ -142,31 +144,31 @@ export default function Dashboard() {
               e.preventDefault();
               let avatar_url = profile.avatar_url;
 
-if (avatarFile) {
-  setUploading(true);
-  const fileExt = avatarFile.name.split('.').pop();
-  const fileName = `${user.id}.${fileExt}`;
-  const filePath = `avatars/${fileName}`;
+              if (avatarFile) {
+                setUploading(true);
+                const fileExt = avatarFile.name.split('.').pop();
+                const fileName = `${user.id}.${fileExt}`;
+                const filePath = `avatars/${fileName}`;
 
-  const { error: uploadError } = await supabase.storage
-    .from('avatars')
-    .upload(filePath, avatarFile, { upsert: true });
+                const { error: uploadError } = await supabase.storage
+                  .from('avatars')
+                  .upload(filePath, avatarFile, { upsert: true });
 
-  if (uploadError) {
-    alert('Upload failed: ' + uploadError.message);
-    setUploading(false);
-    return;
-  }
+                if (uploadError) {
+                  alert('Upload failed: ' + uploadError.message);
+                  setUploading(false);
+                  return;
+                }
 
-  const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-  avatar_url = data.publicUrl;
-  setUploading(false);
-}
+                const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+                avatar_url = data.publicUrl;
+                setUploading(false);
+              }
 
-const { error } = await supabase
-  .from('profiles')
-  .update({ email: profile.email, avatar_url })
-  .eq('id', user.id);
+              const { error } = await supabase
+                .from('profiles')
+                .update({ email: profile.email, avatar_url })
+                .eq('id', user.id);
 
 
               if (error) alert('Update failed: ' + error.message);
