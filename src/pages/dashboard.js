@@ -150,9 +150,8 @@ export default function Dashboard() {
                 const fileName = `${user.id}.${fileExt}`;
                 const filePath = `{fileName}`;
 
-                const { error: uploadError } = await supabase.storage
-                  .from('avatars')
-                  .upload(filePath, avatarFile, { upsert: true });
+                const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, avatarFile, { upsert: true });
+
 
                 if (uploadError) {
                   alert('Upload failed: ' + uploadError.message);
