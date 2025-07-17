@@ -150,13 +150,13 @@ export default function Dashboard() {
                 const fileName = `${user.id}.${fileExt}`;
                 const filePath = `{fileName}`;
 
-const { error: uploadError } = await supabase.storage.from('avatars').update(filePath, avatarFile);
+                const { error: uploadError } = await supabase.storage.from('avatars').update(filePath, avatarFile);
 
-// If it fails because file doesn't exist yet, do a first-time upload
-if (uploadError && uploadError.message.includes('The resource was not found')) {
-    const { error: firstUploadError } = await supabase.storage.from('avatars').upload(filePath, avatarFile);
-    if (firstUploadError) throw new Error('Upload failed: ' + firstUploadError.message);
-}
+                // If it fails because file doesn't exist yet, do a first-time upload
+                if (uploadError && uploadError.message.includes('The resource was not found')) {
+                  const { error: firstUploadError } = await supabase.storage.from('avatars').upload(filePath, avatarFile);
+                  if (firstUploadError) throw new Error('Upload failed: ' + firstUploadError.message);
+                }
 
 
                 if (uploadError) {
