@@ -94,8 +94,10 @@ export default function AdminPage() {
 
 
             if (uploadError) {
+                console.error('Upload error:', uploadError);
                 throw new Error('Upload failed: ' + uploadError.message);
             }
+
 
             const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
             const avatar_url = data.publicUrl;
@@ -175,11 +177,10 @@ export default function AdminPage() {
                         <button
                             onClick={handleAvatarChange}
                             disabled={uploading || !avatarFile}
-                            className={`w-full max-w-xs py-3 rounded-lg font-semibold text-white transition-all duration-300 ${
-                                uploading || !avatarFile
+                            className={`w-full max-w-xs py-3 rounded-lg font-semibold text-white transition-all duration-300 ${uploading || !avatarFile
                                     ? 'bg-gray-400 cursor-not-allowed'
                                     : 'bg-purple-600 hover:bg-purple-700 shadow-lg hover:shadow-xl'
-                            }`}
+                                }`}
                         >
                             {uploading ? 'Uploading...' : 'Update Picture'}
                         </button>
