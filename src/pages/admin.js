@@ -12,7 +12,12 @@ export default function AdminPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [user, setUser] = useState(null);
-    
+    const [profile, setProfile] = useState(null);
+
+
+    const [avatarFile, setAvatarFile] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState(null);
+    const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
         // Check user session
