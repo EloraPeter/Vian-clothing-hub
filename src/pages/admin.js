@@ -59,7 +59,7 @@ export default function AdminPage() {
                 .from('profiles')
                 .select('email, avatar_url')
                 .eq('id', user.id)
-                .single();
+                .maybeSingle();
 
             if (error) {
                 setError(error.message);
@@ -174,8 +174,8 @@ export default function AdminPage() {
                         type="submit"
                         disabled={uploading}
                         className={`w-full py-2 rounded-md font-semibold transition ${uploading
-                                ? 'bg-gray-400 cursor-not-allowed'
-                                : 'bg-purple-600 hover:bg-purple-700 text-white'
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : 'bg-purple-600 hover:bg-purple-700 text-white'
                             }`}
                     >
                         {uploading ? 'Uploading...' : 'Save Changes'}
