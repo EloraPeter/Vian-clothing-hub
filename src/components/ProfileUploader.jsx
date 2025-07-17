@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { uploadAvatar } from '@/lib/supabaseFunctions';
 
-export default function ProfileUploader({ userId }) {
+export default function ProfileUploader({ userId, onUploadSuccess }) {
   const [uploading, setUploading] = useState(false);
 
   const handleUpload = async (e) => {
@@ -12,7 +12,7 @@ export default function ProfileUploader({ userId }) {
     try {
       const url = await uploadAvatar(file, userId);
       alert('Upload successful!');
-      // optionally refresh profile state
+      onUploadSuccess(url);
     } catch (err) {
       alert('Upload failed');
       console.error(err);
