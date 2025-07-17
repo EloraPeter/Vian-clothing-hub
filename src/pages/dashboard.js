@@ -148,7 +148,7 @@ export default function Dashboard() {
                 setUploading(true);
                 const fileExt = avatarFile.name.split('.').pop();
                 const fileName = `${user.id}.${fileExt}`;
-                const filePath = `{fileName}`;
+                const filePath = `${fileName}`;
 
                 const { error: uploadError } = await supabase.storage.from('avatars').update(filePath, avatarFile);
 
