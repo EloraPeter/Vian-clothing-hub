@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
 import Navbar from '@/components/Navbar';
+import ProfileUploader from '@/components/ProfileUploader';
+
 
 
 export default function AdminPage() {
