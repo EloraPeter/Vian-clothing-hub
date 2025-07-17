@@ -1,3 +1,8 @@
+import Link from 'next/link';
+import { FaShoppingCart } from 'react-icons/fa';
+import { useCart } from '@/context/CartContext'; // ✅ Make sure this is added
+import { useRouter } from 'next/router';
+
 export default function Navbar({ profile }) {
   const { cart } = useCart();
   const router = useRouter();
