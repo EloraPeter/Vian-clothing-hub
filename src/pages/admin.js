@@ -170,6 +170,17 @@ export default function AdminPage() {
                     }}
                     className="space-y-6"
                 >
+                    <button
+                        type="submit"
+                        disabled={uploading}
+                        className={`w-full py-2 rounded-md font-semibold transition ${uploading
+                                ? 'bg-gray-400 cursor-not-allowed'
+                                : 'bg-purple-600 hover:bg-purple-700 text-white'
+                            }`}
+                    >
+                        {uploading ? 'Uploading...' : 'Save Changes'}
+                    </button>
+
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
                         <input
