@@ -31,7 +31,7 @@ export default function Navbar({ profile }) {
 
         <button onClick={() => router.push('/dashboard')}>
           <img
-            src={previewUrl || profile?.avatar_url || '/default-avatar.png'}
+            src={profile?.avatar_url || '/default-avatar.png'}
             className="w-8 h-8 rounded-full object-cover"
             alt="User Avatar"
           />
