@@ -88,11 +88,10 @@ export default function AdminPage() {
         try {
             const fileExt = avatarFile.name.split('.').pop();
             const fileName = `${user.id}.${fileExt}`;
-            const filePath = `avatars/${fileName}`;
+            const filePath = `${fileName}`;
 
-            const { error: uploadError } = await supabase.storage
-                .from('avatars')
-                .upload(filePath, avatarFile, { upsert: true });
+            const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, avatarFile, { upsert: true });
+
 
             if (uploadError) {
                 throw new Error('Upload failed: ' + uploadError.message);
