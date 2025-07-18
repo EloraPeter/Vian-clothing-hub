@@ -4,7 +4,7 @@ import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { FaHeart, FaRegHeart, FaShoppingCart, FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
 import Navbar from "@/components/Navbar";
-import Footer from '@/components/Footer';
+import Footer from '@/components/footer';
 
 
 
