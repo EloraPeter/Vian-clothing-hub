@@ -1,10 +1,10 @@
-import { useCart } from '@/context/CartContext';
-import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { useCart } from "@/context/CartContext";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function CartPage() {
-const { cart, removeFromCart, clearCart, updateQuantity } = useCart();
+  const { cart, removeFromCart, clearCart, updateQuantity } = useCart();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -22,12 +22,11 @@ const { cart, removeFromCart, clearCart, updateQuantity } = useCart();
     fetchUser();
   }, []);
 
-
   const handleCheckout = () => {
     if (!user) {
-      router.push('/auth'); // not logged in
+      router.push("/auth"); // not logged in
     } else {
-      router.push('/checkout'); // go to checkout page
+      router.push("/checkout"); // go to checkout page
     }
   };
 
@@ -43,18 +42,8 @@ const { cart, removeFromCart, clearCart, updateQuantity } = useCart();
   return (
     <main className="p-6 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Your Cart</h1>
-      
-      
-      
-      <button
-        onClick={clearCart}
-        className="mb-4 bg-red-500 text-white px-4 py-2 rounded"
-      >
-        Clear Cart
-      </button>
 
-
-     {cart.length === 0 ? (
+      {cart.length === 0 ? (
         <p>Your cart is empty.</p>
       ) : (
         <>
@@ -72,18 +61,14 @@ const { cart, removeFromCart, clearCart, updateQuantity } = useCart();
                 <p>₦{item.price}</p>
                 <div className="flex items-center space-x-2 mt-2">
                   <button
-                    onClick={() =>
-                      updateQuantity(item.id, item.quantity - 1)
-                    }
+                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
                     className="bg-gray-200 px-2 py-1 rounded"
                   >
                     –
                   </button>
                   <span className="font-medium">{item.quantity}</span>
                   <button
-                    onClick={() =>
-                      updateQuantity(item.id, item.quantity + 1)
-                    }
+                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
                     className="bg-gray-200 px-2 py-1 rounded"
                   >
                     +
