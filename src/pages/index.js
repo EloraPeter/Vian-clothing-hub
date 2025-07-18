@@ -100,7 +100,7 @@ export default function Home() {
           <select
             value={`setsortOption`}
             onChange={(e) => setSortOption(e.target.value)}
-            className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="text-gray-600 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             aria-label="Sort products"
           >
             <option value="">Sort by: Default</option>
@@ -110,7 +110,7 @@ export default function Home() {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="text-gray-600 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             aria-label="Filter by category"
           >
             <option value="">Filter by Category</option>

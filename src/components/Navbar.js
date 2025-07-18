@@ -15,7 +15,7 @@ export default function Navbar({ profile }) {
         <input
           type="text"
           placeholder="Search for fabric or style..."
-          className="w-full border px-4 py-2 rounded-full"
+          className="text-gray-600 w-full border px-4 py-2 rounded-full"
         />
       </div>
 
