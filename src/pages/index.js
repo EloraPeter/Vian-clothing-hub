@@ -90,7 +90,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 pb-10">
+    <div className="min-h-screen mb-0 bg-gray-100 pb-0">
       <Navbar profile={profile} />
       <div className="max-w-7xl mx-auto ">
         <h1 className="text-4xl font-extrabold text-center mb-12 text-purple-700">
@@ -202,7 +202,7 @@ export default function Home() {
         </div>
 
         {/* Pagination */}
-        <div className="mt-8 flex justify-center gap-2 items-center">
+        <div className="mt-8 flex justify-center gap-2 items-center mb-10">
           <button
             className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
