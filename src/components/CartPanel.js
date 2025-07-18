@@ -43,7 +43,7 @@ export default function CartPanel({ isOpen, onClose }) {
             {/* Backdrop */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 bg-gray-900 bg-opacity-50 z-40 transition-opacity duration-300"
+                    className="fixed inset-0 bg-gray-900 bg-opacity-50 opacity-25 z-40 transition-opacity duration-300"
                     onClick={onClose}
                 />
             )}
