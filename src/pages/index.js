@@ -245,7 +245,7 @@ export default function Home() {
             <li>Matching Couple Styles</li>
             <li>African-Inspired Prints (Ankara, Adire, Aso Oke)</li>
           </ul>
-          Plus, we stock accessories like handbags, jewelry, headwraps, bonnets, scarves, and more — all made to match your outfits perfectly.
+          <p>Plus, we stock accessories like handbags, jewelry, headwraps, bonnets, scarves, and more — all made to match your outfits perfectly.</p>
         
         <p className="text-lg font-semibold text-gold-300 mb-2">✨ What Makes Vian Clothing Hub Special?</p>
         <ul className="list-disc list-inside text-gray-400 mb-4">

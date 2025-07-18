@@ -8,7 +8,7 @@ const Footer = () => {
   };
 
   return (
-    <footer className="text-white py-10">
+    <footer className="text-gree-600">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 px-4">
         <div>
           <h4 className="font-bold text-lg mb-3 text-gold-300">About Vian</h4>
@@ -44,14 +44,14 @@ const Footer = () => {
               className="p-2 rounded w-full text-black bg-gray-800 mb-2"
               required
             />
-            <button type="submit" className="w-full bg-gold-300 text-black py-2 px-4 rounded hover:bg-gold-400 transition-colors duration-200">
+            <button type="submit" className="w-full bg-gold-300 text-white py-2 px-4 rounded hover:bg-gold-400 transition-colors duration-200">
               Subscribe
             </button>
           </form>
         </div>
       </div>
 
-      <div className="text-center mt-8 text-sm text-gray-500">
+      <div className="text-center text-sm text-gray-500">
         © {new Date().getFullYear()} Vian Clothing Hub. All rights reserved.
       </div>
     </footer>
