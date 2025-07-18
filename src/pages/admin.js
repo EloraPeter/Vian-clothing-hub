@@ -138,6 +138,15 @@ if (uploadError && uploadError.message.includes('The resource was not found')) {
                 <h1 className="text-4xl font-extrabold mb-8 text-purple-800 text-center tracking-tight">
                     Admin Dashboard
                 </h1>
+                <button
+                    className="mb-8 bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors shadow-md"
+                    onClick={async () => {
+                        await supabase.auth.signOut();
+                        router.push('/login');
+                    }}
+                >
+                    Log Out
+                </button>
                 <p className="text-lg text-gray-700 text-center mb-8">Welcome, {profile?.email}</p>
 
                 <div className="mb-12 bg-white p-8 rounded-2xl shadow-xl max-w-lg mx-auto transform hover:scale-[1.02] transition-transform duration-300">
@@ -193,15 +202,7 @@ if (uploadError && uploadError.message.includes('The resource was not found')) {
                     </div>
                 </div>
 
-                <button
-                    className="mb-8 bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors shadow-md"
-                    onClick={async () => {
-                        await supabase.auth.signOut();
-                        router.push('/login');
-                    }}
-                >
-                    Log Out
-                </button>
+                
 
                 {orders.length === 0 && (
                     <p className="text-center text-gray-600 text-lg">No orders yet.</p>
