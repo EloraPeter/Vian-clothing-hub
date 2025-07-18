@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/footer';
 import { useWishlist } from '@/context/WishlistContext';
 import { useCart } from '@/context/CartContext';
 import CartPanel from '@/components/CartPanel';
@@ -99,7 +100,7 @@ export default function Dashboard() {
   if (error) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
 
   return (
-    <main className="min-h-screen bg-gray-100 pb-10">
+    <main className="min-h-screen bg-gray-100">
       <Navbar
         profile={profile}
         onCartClick={() => setIsCartOpen(true)}
@@ -395,6 +396,9 @@ export default function Dashboard() {
           Log Out
         </button>
       </div>
+      <Footer />
+
     </main>
+
   );
 }
