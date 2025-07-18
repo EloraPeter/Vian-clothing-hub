@@ -54,27 +54,52 @@ export default function CartPage() {
       </button>
 
 
-      {cart.length === 0 ? (
+     {cart.length === 0 ? (
         <p>Your cart is empty.</p>
       ) : (
         <>
+          <button
+            onClick={clearCart}
+            className="mb-4 bg-red-500 text-white px-4 py-2 rounded"
+          >
+            Clear Cart
+          </button>
+
           <ul className="space-y-4">
-            {cart.map((item, index) => (
-              <li key={index} className="border p-4 rounded shadow">
+            {cart.map((item) => (
+              <li key={item.id} className="border p-4 rounded shadow">
                 <p className="font-semibold">{item.name}</p>
                 <p>₦{item.price}</p>
-                <p>Quantity: {item.quantity}</p>
-                <p>Total: ₦{item.price * item.quantity}</p>
-
+                <div className="flex items-center space-x-2 mt-2">
+                  <button
+                    onClick={() =>
+                      updateQuantity(item.id, item.quantity - 1)
+                    }
+                    className="bg-gray-200 px-2 py-1 rounded"
+                  >
+                    –
+                  </button>
+                  <span className="font-medium">{item.quantity}</span>
+                  <button
+                    onClick={() =>
+                      updateQuantity(item.id, item.quantity + 1)
+                    }
+                    className="bg-gray-200 px-2 py-1 rounded"
+                  >
+                    +
+                  </button>
+                </div>
+                <p className="mt-2">Total: ₦{item.price * item.quantity}</p>
                 <button
                   onClick={() => removeFromCart(item.id)}
-                  className="text-red-600 text-sm"
+                  className="text-red-600 text-sm mt-1"
                 >
-                  Remove
+                  Remove Item
                 </button>
               </li>
             ))}
           </ul>
+
           <p className="mt-6 font-bold">Subtotal: ₦{total}</p>
           <button
             onClick={handleCheckout}
