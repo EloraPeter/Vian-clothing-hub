@@ -46,13 +46,21 @@ export default function Home() {
   // 👇 Fetch products
   useEffect(() => {
     async function fetchProducts() {
-      const { data, error } = await supabase.from('products').select('*');
-      if (error) console.error('Error fetching products:', error.message);
+      setLoading(true);
+      const { data, error } = await supabase.from("products").select("*");
+      if (error) console.error("Error fetching products:", error.message);
       else setProducts(data);
+      setLoading(false);
     }
 
     fetchProducts();
   }, []);
+
+  // Pagination logic
+  const indexOfLastProduct = currentPage * productsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  const currentProducts = products.slice(indexOfFirstProduct, indexOfLastProduct);
+  const totalPages = Math.ceil(products.length / productsPerPage);
 
   return (
     <div className="min-h-screen bg-gray-100 pb-10">
