@@ -221,7 +221,7 @@ export default function Home() {
             Next
           </button>
         </div>
-        <section className="bg-gray-100 p-6 mb-8 text-center">
+        <section className="bg-gray-100 p-6 mb-8 text-left">
           <h1 className="text-3xl font-bold text-purple-700 mb-4">Vian Clothing Hub – Nigeria’s Ultimate Fashion Destination</h1>
           <p className="text-lg text-gray-300 mb-4">Discover the Best of African & Contemporary Fashion Online</p>
           <p className="text-md text-gray-400 mb-4">
