@@ -10,7 +10,7 @@ export default function Home() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(8);
+  const [productsPerPage] = useState(30);
   const [sortOption, setSortOption] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
 
