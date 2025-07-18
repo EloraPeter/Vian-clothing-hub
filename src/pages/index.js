@@ -98,7 +98,7 @@ export default function Home() {
         {/* Filter/Sort Bar */}
         <div className="mb-6 flex flex-wrap gap-4">
           <select
-            value={sortsortOption}
+            value={`setsortOption`}
             onChange={(e) => setSortOption(e.target.value)}
             className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             aria-label="Sort products"
