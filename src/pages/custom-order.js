@@ -1,16 +1,43 @@
+import { useEffect, useState, useMemo } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import { useCart } from "@/context/CartContext";
 import CustomOrderForm from '@/components/CustomOrderForm';
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/footer';
 
 
 export default function CustomOrderPage() {
+  const [profile, setProfile] = useState(null);
+
+
+  // Fetch user profile
+  useEffect(() => {
+    async function fetchProfile() {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+        if (!profileError) setProfile(profileData);
+        else console.error("Profile fetch error:", profileError.message);
+      } else if (userError) console.error("User fetch error:", userError.message);
+    }
+    fetchProfile();
+  }, []);
+
   return (
-    <main className="min-h-screen bg-gray-100 py-10 px-4">
-<Navbar profile={profile} />
+    <main className="min-h-screen bg-gray-100 px-4">
+      <Navbar profile={profile} />
 
       <h1 className="text-3xl font-bold text-center mb-6 text-purple-700">
         Custom Order Form
       </h1>
       <CustomOrderForm />
+            <Footer />
+
     </main>
+
   );
 }
