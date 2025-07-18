@@ -270,14 +270,7 @@ export default function Home() {
             📱 Shop On the Go
             Visit our website anytime, or shop directly via our WhatsApp store. Follow us on social media @vianclothinghub to see new arrivals, style inspiration, and exclusive offers.
           </p>
-          <p className="text-lg font-semibold text-purple-700 mb-2">🧾 Frequently Asked Questions (FAQs)</p>
-          <ul className="list-disc list-inside text-gray-400 mb-4">
-            <li>Can I return items I bought from Vian Clothing Hub? Yes! You have up to 7 days to return eligible items. T&Cs apply.</li>
-            <li>Where do you deliver to? We deliver across Nigeria using trusted logistics partners. Express delivery available in select cities.</li>
-            <li>How can I pay? We accept payment on delivery (in select cities), debit/credit cards, bank transfer, and USSD.</li>
-            <li>Can I order custom outfits? Absolutely. Custom/bespoke orders are available. Chat with our style consultant to begin.</li>
-            <li>Do you offer group/corporate discounts? Yes! Whether it’s for weddings, events, or team wear — we offer discounts on bulk orders.</li>
-          </ul>
+          
         </section>
 
       </div>
