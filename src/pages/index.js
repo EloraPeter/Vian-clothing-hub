@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useCart } from "@/context/CartContext";
@@ -6,6 +5,7 @@ import { useWishlist } from "@/context/WishlistContext";
 import { FaHeart, FaRegHeart, FaShoppingCart, FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
 import Navbar from "@/components/Navbar";
 import Footer from '@/components/footer';
+import CartPanel from "@/components/CartPanel";
 
 export default function Home() {
     const [products, setProducts] = useState([]);
@@ -15,6 +15,7 @@ export default function Home() {
     const [productsPerPage] = useState(30);
     const [sortOption, setSortOption] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("");
+    const [isCartOpen, setIsCartOpen] = useState(false);
 
     const { addToCart } = useCart();
     const { toggleWishlist, isInWishlist } = useWishlist();
@@ -89,8 +90,13 @@ export default function Home() {
     };
 
     return (
-        <div className="min-h-screen mb-0 bg-gray-100 pb-0">
-            <Navbar profile={profile} />
+        <div className="min-h-screen mb-0 bg-gray-100 pb-0 relative">
+            <Navbar
+                profile={profile}
+                onCartClick={() => setIsCartOpen(true)}
+                cartItemCount={useCart().cart.length}
+            />
+            <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
             <div className="max-w-7xl mx-auto px-4 py-12">
                 <h1 className="text-4xl font-extrabold text-center mb-12 text-purple-700">
                     Ready-to-Wear Collection
@@ -145,7 +151,7 @@ export default function Home() {
                                 role="article"
                                 aria-label={product.name}
                             >
-                                <div className="absolute top-4 z-10 left-4 flex flex-col gap-2">
+                                <div className="absolute top-4 left-4 flex flex-col gap-2">
                                     {product.is_on_sale && (
                                         <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
                                             Sale
@@ -212,7 +218,13 @@ export default function Home() {
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => addToCart(product)}
+                                    onClick={() => addToCart({
+                                        ...product,
+                                        quantity: 1,
+                                        is_on_sale: product.is_on_sale,
+                                        discount_percentage: product.discount_percentage,
+                                        is_out_of_stock: product.is_out_of_stock,
+                                    })}
                                     disabled={product.is_out_of_stock}
                                     className={`mt-4 w-full py-3 rounded-lg flex items-center justify-center gap-2 transition-colors duration-200 font-medium ${
                                         product.is_out_of_stock
