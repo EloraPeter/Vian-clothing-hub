@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
 export default function CartPage() {
-  const { cart, removeFromCart } = useCart();
+const { cart, removeFromCart, clearCart } = useCart();
   const [user, setUser] = useState(null);
   const router = useRouter();
 
-  const total = cart.reduce((sum, item) => sum + item.price, 0);
+const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -27,7 +27,12 @@ export default function CartPage() {
   return (
     <main className="p-6 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Your Cart</h1>
-      <button onClick={clearCart}>Clear Cart</button>
+<button
+  onClick={clearCart}
+  className="mb-4 bg-red-500 text-white px-4 py-2 rounded"
+>
+  Clear Cart
+</button>
 
 
       {cart.length === 0 ? (
@@ -40,7 +45,7 @@ export default function CartPage() {
                 <p className="font-semibold">{item.name}</p>
                 <p>₦{item.price}</p>
                 <button
-                  onClick={() => removeFromCart(index)}
+onClick={() => removeFromCart(item.id)}
                   className="text-red-600 text-sm"
                 >
                   Remove
