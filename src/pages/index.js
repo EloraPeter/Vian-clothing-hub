@@ -211,7 +211,7 @@ export default function Home() {
           >
             Previous
           </button>
-          <span aria-live="polite">Page {currentPage} of {totalPages}</span>
+          <span className="text-gray-400" aria-live="polite">Page {currentPage} of {totalPages}</span>
           <button
             className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
             onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
