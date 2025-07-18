@@ -28,16 +28,17 @@ export default function CustomOrderPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gray-100 px-4">
+    <main className="min-h-screen mb-0 bg-gray-100 pb-0">
       <Navbar profile={profile} />
+      <div >
+        <h1 className="text-3xl font-bold text-center mb-6 text-purple-700">
+          Custom Order Form
+        </h1>
+        <CustomOrderForm />
+      </div>
+      <Footer />
 
-      <h1 className="text-3xl font-bold text-center mb-6 text-purple-700">
-        Custom Order Form
-      </h1>
-      <CustomOrderForm />
-            <Footer />
-
-    </main>
+    </main >
 
   );
 }
