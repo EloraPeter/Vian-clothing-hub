@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
 export default function CartPage() {
-  const { cart, removeFromCart, clearCart } = useCart();
+const { cart, removeFromCart, clearCart, updateQuantity } = useCart();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
