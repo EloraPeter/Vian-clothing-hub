@@ -31,6 +31,19 @@ const totalPrice = cart.reduce((acc, item) => acc + item.quantity * item.price, 
     });
   };
 
+  const updateQuantity = (productId, quantity) => {
+  if (quantity < 1) {
+    setCart((prev) => prev.filter((item) => item.id !== productId));
+  } else {
+    setCart((prev) =>
+      prev.map((item) =>
+        item.id === productId ? { ...item, quantity } : item
+      )
+    );
+  }
+};
+
+
   const removeFromCart = (productId) => {
     setCart((prev) => {
       const existing = prev.find((p) => p.id === productId);

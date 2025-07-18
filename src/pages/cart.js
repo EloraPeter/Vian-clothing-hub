@@ -44,6 +44,9 @@ const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
               <li key={index} className="border p-4 rounded shadow">
                 <p className="font-semibold">{item.name}</p>
                 <p>₦{item.price}</p>
+                <p>Quantity: {item.quantity}</p>
+<p>Total: ₦{item.price * item.quantity}</p>
+
                 <button
 onClick={() => removeFromCart(item.id)}
                   className="text-red-600 text-sm"
