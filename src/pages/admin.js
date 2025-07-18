@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
@@ -25,6 +24,8 @@ export default function AdminPage() {
     });
     const [productPreviewUrl, setProductPreviewUrl] = useState(null);
     const [productUploading, setProductUploading] = useState(false);
+    const [currentProductPage, setCurrentProductPage] = useState(1);
+    const [productsPerPage] = useState(10);
 
     useEffect(() => {
         const { data: authListener } = supabase.auth.onAuthStateChange((_, session) => {
@@ -239,6 +240,19 @@ export default function AdminPage() {
         }
     };
 
+    // Pagination for products
+    const totalProductPages = Math.ceil(products.length / productsPerPage);
+    const indexOfLastProduct = currentProductPage * productsPerPage;
+    const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+    const currentProducts = products.slice(indexOfFirstProduct, indexOfLastProduct);
+
+    // Reset page if out of bounds
+    useEffect(() => {
+        if (currentProductPage > totalProductPages && totalProductPages > 0) {
+            setCurrentProductPage(1);
+        }
+    }, [totalProductPages, currentProductPage]);
+
     if (!user) return <p className="p-6 text-center text-gray-600">Checking authentication...</p>;
     if (loading) return <p className="p-6 text-center text-gray-600">Loading data...</p>;
     if (error) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
@@ -399,108 +413,131 @@ export default function AdminPage() {
                     {products.length === 0 ? (
                         <p className="text-center text-gray-600 text-lg">No products available.</p>
                     ) : (
-                        <div className="space-y-6">
-                            {products.map((product) => (
-                                <div
-                                    key={product.id}
-                                    className="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-300"
-                                >
-                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-                                        <div className="flex items-center space-x-4">
-                                            <img
-                                                src={product.image_url}
-                                                alt={product.name}
-                                                className="w-16 h-16 object-cover rounded-lg border-2 border-gray-300"
-                                            />
-                                            <div>
-                                                <h3 className="font-semibold text-lg text-purple-800">{product.name}</h3>
-                                                <p className="text-gray-600">
-                                                    Price: ₦{Number(product.price).toLocaleString()}
-                                                    {product.discount_percentage > 0 &&
-                                                        ` (Discounted: ₦${(
-                                                            product.price *
-                                                            (1 - product.discount_percentage / 100)
-                                                        ).toLocaleString()})`}
-                                                </p>
-                                                <p className="text-gray-600">{product.description}</p>
-                                                <p className="text-gray-600">
-                                                    Category: {product.category || 'None'}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-col space-y-2 mt-4 sm:mt-0">
-                                            <div className="flex flex-wrap gap-2">
-                                                <button
-                                                    onClick={() =>
-                                                        handleUpdateProductFlags(product.id, {
-                                                            is_on_sale: !product.is_on_sale,
-                                                        })
-                                                    }
-                                                    className={`px-3 py-1 rounded-lg text-sm font-semibold ${
-                                                        product.is_on_sale
-                                                            ? 'bg-red-600 text-white'
-                                                            : 'bg-purple-600 text-white hover:bg-purple-700'
-                                                    }`}
-                                                >
-                                                    {product.is_on_sale ? 'Remove Sale' : 'Mark as On Sale'}
-                                                </button>
-                                                <button
-                                                    onClick={() =>
-                                                        handleUpdateProductFlags(product.id, {
-                                                            is_out_of_stock: !product.is_out_of_stock,
-                                                        })
-                                                    }
-                                                    className={`px-3 py-1 rounded-lg text-sm font-semibold ${
-                                                        product.is_out_of_stock
-                                                            ? 'bg-red-600 text-white'
-                                                            : 'bg-purple-600 text-white hover:bg-purple-700'
-                                                    }`}
-                                                >
-                                                    {product.is_out_of_stock
-                                                        ? 'Mark as In Stock'
-                                                        : 'Mark as Out of Stock'}
-                                                </button>
-                                                <button
-                                                    onClick={() =>
-                                                        handleUpdateProductFlags(product.id, {
-                                                            is_new: !product.is_new,
-                                                        })
-                                                    }
-                                                    className={`px-3 py-1 rounded-lg text-sm font-semibold ${
-                                                        product.is_new
-                                                            ? 'bg-red-600 text-white'
-                                                            : 'bg-purple-600 text-white hover:bg-purple-700'
-                                                    }`}
-                                                >
-                                                    {product.is_new ? 'Remove New' : 'Mark as New'}
-                                                </button>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    max="100"
-                                                    placeholder="Discount %"
-                                                    value={product.discount_percentage || 0}
-                                                    onChange={(e) =>
-                                                        handleUpdateProductFlags(product.id, {
-                                                            discount_percentage: parseFloat(e.target.value) || 0,
-                                                        })
-                                                    }
-                                                    className="w-24 p-1 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                        <>
+                            <div className="space-y-6">
+                                {currentProducts.map((product) => (
+                                    <div
+                                        key={product.id}
+                                        className="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-300"
+                                    >
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+                                            <div className="flex items-center space-x-4">
+                                                <img
+                                                    src={product.image_url}
+                                                    alt={product.name}
+                                                    className="w-16 h-16 object-cover rounded-lg border-2 border-gray-300"
                                                 />
-                                                <button
-                                                    onClick={() => handleDeleteProduct(product.id)}
-                                                    className="px-3 py-1 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700"
-                                                >
-                                                    Delete
-                                                </button>
+                                                <div>
+                                                    <h3 className="font-semibold text-lg text-purple-800">{product.name}</h3>
+                                                    <p className="text-gray-600">
+                                                        Price: ₦{Number(product.price).toLocaleString()}
+                                                        {product.discount_percentage > 0 &&
+                                                            ` (Discounted: ₦${(
+                                                                product.price *
+                                                                (1 - product.discount_percentage / 100)
+                                                            ).toLocaleString()})`}
+                                                    </p>
+                                                    <p className="text-gray-600">{product.description}</p>
+                                                    <p className="text-gray-600">
+                                                        Category: {product.category || 'None'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col space-y-2 mt-4 sm:mt-0">
+                                                <div className="flex flex-wrap gap-2">
+                                                    <button
+                                                        onClick={() =>
+                                                            handleUpdateProductFlags(product.id, {
+                                                                is_on_sale: !product.is_on_sale,
+                                                            })
+                                                        }
+                                                        className={`px-3 py-1 rounded-lg text-sm font-semibold ${
+                                                            product.is_on_sale
+                                                                ? 'bg-red-600 text-white'
+                                                                : 'bg-purple-600 text-white hover:bg-purple-700'
+                                                        }`}
+                                                    >
+                                                        {product.is_on_sale ? 'Remove Sale' : 'Mark as On Sale'}
+                                                    </button>
+                                                    <button
+                                                        onClick={() =>
+                                                            handleUpdateProductFlags(product.id, {
+                                                                is_out_of_stock: !product.is_out_of_stock,
+                                                            })
+                                                        }
+                                                        className={`px-3 py-1 rounded-lg text-sm font-semibold ${
+                                                            product.is_out_of_stock
+                                                                ? 'bg-red-600 text-white'
+                                                                : 'bg-purple-600 text-white hover:bg-purple-700'
+                                                        }`}
+                                                    >
+                                                        {product.is_out_of_stock
+                                                            ? 'Mark as In Stock'
+                                                            : 'Mark as Out of Stock'}
+                                                    </button>
+                                                    <button
+                                                        onClick={() =>
+                                                            handleUpdateProductFlags(product.id, {
+                                                                is_new: !product.is_new,
+                                                            })
+                                                        }
+                                                        className={`px-3 py-1 rounded-lg text-sm font-semibold ${
+                                                            product.is_new
+                                                                ? 'bg-red-600 text-white'
+                                                                : 'bg-purple-600 text-white hover:bg-purple-700'
+                                                        }`}
+                                                    >
+                                                        {product.is_new ? 'Remove New' : 'Mark as New'}
+                                                    </button>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        max="100"
+                                                        placeholder="Discount %"
+                                                        value={product.discount_percentage || 0}
+                                                        onChange={(e) =>
+                                                            handleUpdateProductFlags(product.id, {
+                                                                discount_percentage: parseFloat(e.target.value) || 0,
+                                                            })
+                                                        }
+                                                        className="w-24 p-1 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                                                    />
+                                                    <button
+                                                        onClick={() => handleDeleteProduct(product.id)}
+                                                        className="px-3 py-1 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                            <div className="mt-8 flex justify-center gap-2 items-center">
+                                <button
+                                    className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                                    onClick={() => setCurrentProductPage((prev) => Math.max(prev - 1, 1))}
+                                    disabled={currentProductPage === 1}
+                                    aria-label="Previous product page"
+                                >
+                                    Previous
+                                </button>
+                                <span className="text-gray-600" aria-live="polite">
+                                    Page {currentProductPage} of {totalProductPages}
+                                </span>
+                                <button
+                                    className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                                    onClick={() => setCurrentProductPage((prev) => Math.min(prev + 1, totalProductPages))}
+                                    disabled={currentProductPage === totalProductPages}
+                                    aria-label="Next product page"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </>
                     )}
                 </div>
 
