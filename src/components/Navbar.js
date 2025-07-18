@@ -1,10 +1,9 @@
 import Link from 'next/link';
 import { FaShoppingCart } from 'react-icons/fa';
-import { useCart } from '@/context/CartContext'; // ✅ Make sure this is added
+import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/router';
 
-export default function Navbar({ profile }) {
-  const { cart } = useCart();
+export default function Navbar({ profile, onCartClick, cartItemCount }) {
   const router = useRouter();
 
   return (
@@ -15,21 +14,28 @@ export default function Navbar({ profile }) {
         <input
           type="text"
           placeholder="Search for fabric or style..."
-          className="text-gray-600 w-full border px-4 py-2 rounded-full"
+          className="text-gray-600 w-full border px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
       </div>
 
       <div className="flex items-center gap-4">
-        <button onClick={() => router.push('/cart')} className="relative">
-          <FaShoppingCart className="text-purple-700 text-xl" />
-          {cart.length > 0 && (
+        <button
+          onClick={onCartClick}
+          className="relative text-purple-700 hover:text-purple-800 transition-colors"
+          aria-label="Open cart"
+        >
+          <FaShoppingCart className="text-xl" />
+          {cartItemCount > 0 && (
             <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
-              {cart.length}
+              {cartItemCount}
             </span>
           )}
         </button>
 
-        <button onClick={() => router.push('/dashboard')}>
+        <button
+          onClick={() => router.push('/dashboard')}
+          className="text-gray-600 hover:text-purple-700 transition-colors"
+        >
           <img
             src={profile?.avatar_url || '/default-avatar.png'}
             className="w-8 h-8 rounded-full object-cover"

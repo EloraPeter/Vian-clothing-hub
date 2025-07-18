@@ -151,7 +151,7 @@ export default function Home() {
                                 role="article"
                                 aria-label={product.name}
                             >
-                                <div className="absolute top-4 left-4 flex flex-col gap-2">
+                                <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
                                     {product.is_on_sale && (
                                         <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
                                             Sale
