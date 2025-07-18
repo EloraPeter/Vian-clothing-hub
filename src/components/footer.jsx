@@ -18,7 +18,7 @@ const Footer = () => {
         </div>
 
         <div>
-          <h4 className="font-bold text-lg mb-3 text-grey-600">Quick Links</h4>
+          <h4 className="font-bold text-lg mb-3 text-purple-700">Quick Links</h4>
           <ul className="space-y-2">
             <li><Link href="/shop" className="text-gray-400 hover:text-gold-300">Shop All</Link></li>
             <li><Link href="/custom-orders" className="text-gray-400 hover:text-gold-300">Custom Orders</Link></li>
@@ -28,14 +28,14 @@ const Footer = () => {
         </div>
 
         <div>
-          <h4 className="font-bold text-lg mb-3 text-grey-600">Contact</h4>
+          <h4 className="font-bold text-lg mb-3 text-purple-700">Contact</h4>
           <p className="text-gray-400">WhatsApp: <a href="https://wa.me/234XXXXXXXXXX" className="text-gold-300 hover:underline">+234 XXX XXX XXXX</a></p>
           <p className="text-gray-400">Email: <a href="mailto:support@vianclothinghub.com" className="text-gold-300 hover:underline">support@vianclothinghub.com</a></p>
           <p className="text-gray-400">Instagram: <a href="https://instagram.com/vianclothinghub" className="text-gold-300 hover:underline">@vianclothinghub</a></p>
         </div>
 
         <div>
-          <h4 className="font-bold text-lg mb-3 text-grey-600">Newsletter</h4>
+          <h4 className="font-bold text-lg mb-3 text-purple-700">Newsletter</h4>
           <p className="text-gray-400">Get updates on new arrivals, exclusive offers & style tips.</p>
           <form onSubmit={handleSubscribe} className="mt-4">
             <input
