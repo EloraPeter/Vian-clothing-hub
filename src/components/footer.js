@@ -9,7 +9,7 @@ const Footer = () => {
 
     return (
         <footer className="bg-purple-900">
-            <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 px-4">
+            <div className="w-full mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 px-4">
                 <div>
                     <h4 className="font-bold text-lg mb-3 text-purple-100">About Vian</h4>
                     <p className="text-gray-400">
