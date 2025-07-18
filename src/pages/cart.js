@@ -4,17 +4,24 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
 export default function CartPage() {
-const { cart, removeFromCart, clearCart } = useCart();
+  const { cart, removeFromCart, clearCart } = useCart();
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   const router = useRouter();
 
-const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    const fetchUser = async () => {
+      setLoading(true);
+      const { data } = await supabase.auth.getSession();
       setUser(data.session?.user || null);
-    });
+      setLoading(false);
+    };
+    fetchUser();
   }, []);
+
 
   const handleCheckout = () => {
     if (!user) {
@@ -24,15 +31,27 @@ const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     }
   };
 
+  if (loading) {
+    return (
+      <main className="p-6 max-w-3xl mx-auto text-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900 mx-auto" />
+        <p className="mt-4">Loading your cart...</p>
+      </main>
+    );
+  }
+
   return (
     <main className="p-6 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Your Cart</h1>
-<button
-  onClick={clearCart}
-  className="mb-4 bg-red-500 text-white px-4 py-2 rounded"
->
-  Clear Cart
-</button>
+      
+      
+      
+      <button
+        onClick={clearCart}
+        className="mb-4 bg-red-500 text-white px-4 py-2 rounded"
+      >
+        Clear Cart
+      </button>
 
 
       {cart.length === 0 ? (
@@ -45,10 +64,10 @@ const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
                 <p className="font-semibold">{item.name}</p>
                 <p>₦{item.price}</p>
                 <p>Quantity: {item.quantity}</p>
-<p>Total: ₦{item.price * item.quantity}</p>
+                <p>Total: ₦{item.price * item.quantity}</p>
 
                 <button
-onClick={() => removeFromCart(item.id)}
+                  onClick={() => removeFromCart(item.id)}
                   className="text-red-600 text-sm"
                 >
                   Remove
