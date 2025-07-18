@@ -6,6 +6,9 @@ export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
+  const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
+const totalPrice = cart.reduce((acc, item) => acc + item.quantity * item.price, 0);
+
 
   useEffect(() => {
     const saved = localStorage.getItem("aunty-cart");
@@ -43,7 +46,7 @@ export const CartProvider = ({ children }) => {
   const clearCart = () => setCart([]);
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart }}>
+    <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart, totalItems, totalPrice }}>
       {children}
     </CartContext.Provider>
   );

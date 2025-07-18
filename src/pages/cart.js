@@ -27,6 +27,8 @@ export default function CartPage() {
   return (
     <main className="p-6 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Your Cart</h1>
+      <button onClick={clearCart}>Clear Cart</button>
+
 
       {cart.length === 0 ? (
         <p>Your cart is empty.</p>
