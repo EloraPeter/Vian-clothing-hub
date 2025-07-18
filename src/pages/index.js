@@ -8,7 +8,9 @@ import Navbar from "@/components/Navbar";
 export default function Home() {
   const [products, setProducts] = useState([]);
   const [profile, setProfile] = useState(null); // 👈 Add profile state
-
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [productsPerPage] = useState(8);
 
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
