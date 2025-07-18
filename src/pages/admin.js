@@ -25,7 +25,7 @@ export default function AdminPage() {
     const [productPreviewUrl, setProductPreviewUrl] = useState(null);
     const [productUploading, setProductUploading] = useState(false);
     const [currentProductPage, setCurrentProductPage] = useState(1);
-    const [productsPerPage] = useState(10);
+    const [productsPerPage] = useState(5);
 
     useEffect(() => {
         const { data: authListener } = supabase.auth.onAuthStateChange((_, session) => {
