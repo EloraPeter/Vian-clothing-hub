@@ -350,6 +350,8 @@ export default function CheckoutPage() {
           Confirm & Place Order
         </button>
       </div>
+      <Footer />
+
     </main>
   );
 }
