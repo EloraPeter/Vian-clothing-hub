@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
 import L from 'leaflet';
-import { MaptilerLayer, MaptilerGeocoder } from '@maptiler/leaflet';
+import { MaptilerLayer, MaptilerGeocoder } from '@maptiler';
 import 'leaflet/dist/leaflet.css';
 
 export default function CheckoutPage() {
