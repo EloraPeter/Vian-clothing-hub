@@ -3,6 +3,10 @@ import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/footer';
+import CartPanel from '@/components/CartPanel';
+import zxcvbn from 'zxcvbn';
 
 // Dynamically import Leaflet and MapTiler SDK with SSR disabled
 const L = dynamic(() => import('leaflet'), { ssr: false });
@@ -29,6 +33,10 @@ export default function CheckoutPage() {
   const mapRef = useRef(null);
   const mapContainerRef = useRef(null);
   const router = useRouter();
+  const [profile, setProfile] = useState(null);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+
 
   // MapTiler API key
   const MAPTILER_API_KEY = process.env.NEXT_PUBLIC_MAPTILER_API_KEY;
@@ -252,87 +260,96 @@ export default function CheckoutPage() {
   );
 
   return (
-    <main className="p-6 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-purple-700 text-center">Checkout</h1>
+    <main className="min-h-screen bg-gray-100">
+      <Navbar
+        profile={profile}
+        onCartClick={() => setIsCartOpen(true)}
+        cartItemCount={cart.length}
+      />
+      <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
-      {/* Cart Summary */}
-      <section className="mb-8 bg-white p-6 rounded-xl shadow-md">
-        <h2 className="text-2xl font-bold text-purple-700 mb-4">Cart Summary</h2>
-        <ul className="space-y-4">
-          {cart.map((item) => (
-            <li key={item.id} className="flex items-center space-x-4 border-b border-gray-300 pb-4">
-              <img src={item.image_url} alt={item.name} className="w-16 h-16 object-cover rounded-lg border border-gray-300" />
-              <div className="flex-1">
-                <p className="text-gray-700 font-medium">{item.name}</p>
-                <p className="text-gray-600">
-                  {item.discount_percentage > 0 ? (
-                    <span>
-                      <span className="text-red-600 line-through">₦{Number(item.price).toLocaleString()}</span>{' '}
-                      <span className="text-green-600">
-                        ₦{(item.price * (1 - item.discount_percentage / 100)).toLocaleString()}
+      <div className="max-w-5xl mx-auto p-6">
+        <h1 className="text-3xl font-bold mb-6 text-purple-700 text-center">Checkout</h1>
+
+        {/* Cart Summary */}
+        <section className="mb-8 bg-white p-6 rounded-xl shadow-md">
+          <h2 className="text-2xl font-bold text-purple-700 mb-4">Cart Summary</h2>
+          <ul className="space-y-4">
+            {cart.map((item) => (
+              <li key={item.id} className="flex items-center space-x-4 border-b border-gray-300 pb-4">
+                <img src={item.image_url} alt={item.name} className="w-16 h-16 object-cover rounded-lg border border-gray-300" />
+                <div className="flex-1">
+                  <p className="text-gray-700 font-medium">{item.name}</p>
+                  <p className="text-gray-600">
+                    {item.discount_percentage > 0 ? (
+                      <span>
+                        <span className="text-red-600 line-through">₦{Number(item.price).toLocaleString()}</span>{' '}
+                        <span className="text-green-600">
+                          ₦{(item.price * (1 - item.discount_percentage / 100)).toLocaleString()}
+                        </span>
                       </span>
-                    </span>
-                  ) : (
-                    <span className="text-purple-700">₦{Number(item.price).toLocaleString()}</span>
-                  )}
+                    ) : (
+                      <span className="text-purple-700">₦{Number(item.price).toLocaleString()}</span>
+                    )}
+                  </p>
+                  <p className="text-gray-600">Quantity: {item.quantity}</p>
+                  {item.is_out_of_stock && <p className="text-red-600 text-sm">Out of Stock</p>}
+                </div>
+                <p className="text-gray-700 font-medium">
+                  Total: ₦{((item.discount_percentage > 0 ? item.price * (1 - item.discount_percentage / 100) : item.price) * item.quantity).toLocaleString()}
                 </p>
-                <p className="text-gray-600">Quantity: {item.quantity}</p>
-                {item.is_out_of_stock && <p className="text-red-600 text-sm">Out of Stock</p>}
-              </div>
-              <p className="text-gray-700 font-medium">
-                Total: ₦{((item.discount_percentage > 0 ? item.price * (1 - item.discount_percentage / 100) : item.price) * item.quantity).toLocaleString()}
-              </p>
-            </li>
-          ))}
-        </ul>
-        <p className="text-xl font-bold text-purple-700 mt-4">Subtotal: ₦{totalPrice.toLocaleString()}</p>
-      </section>
+              </li>
+            ))}
+          </ul>
+          <p className="text-xl font-bold text-purple-700 mt-4">Subtotal: ₦{totalPrice.toLocaleString()}</p>
+        </section>
 
-      {/* Delivery Address */}
-      <section className="mb-8 bg-white p-6 rounded-xl shadow-md">
-        <h2 className="text-2xl font-bold text-purple-700 mb-4">Delivery Address</h2>
-        {savedAddresses.length > 0 && (
+        {/* Delivery Address */}
+        <section className="mb-8 bg-white p-6 rounded-xl shadow-md">
+          <h2 className="text-2xl font-bold text-purple-700 mb-4">Delivery Address</h2>
+          {savedAddresses.length > 0 && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Select Saved Address</label>
+              <select
+                value={selectedAddressId}
+                onChange={handleSavedAddressChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none text-black focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="">Select an address</option>
+                {savedAddresses.map((addr) => (
+                  <option key={addr.id} value={addr.id}>{addr.address}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Select Saved Address</label>
-            <select
-              value={selectedAddressId}
-              onChange={handleSavedAddressChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
-              <option value="">Select an address</option>
-              {savedAddresses.map((addr) => (
-                <option key={addr.id} value={addr.id}>{addr.address}</option>
-              ))}
-            </select>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Enter or Search Address</label>
+            <input
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Enter delivery address"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-black"
+            />
           </div>
-        )}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Enter or Search Address</label>
-          <input
-            type="text"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="Enter delivery address"
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-          />
-        </div>
-        <button
-          onClick={handleSaveAddress}
-          className="mb-4 bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors"
-        >
-          Save Address
-        </button>
-        <div className="h-64 w-full" ref={mapContainerRef}></div>
-      </section>
+          <button
+            onClick={handleSaveAddress}
+            className="mb-4 bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors"
+          >
+            Save Address
+          </button>
+          <div className="h-64 w-full" ref={mapContainerRef}></div>
+        </section>
 
-      {/* Confirm Order */}
-      <button
-        onClick={handleOrder}
-        className="w-full bg-purple-600 text-white px-6 py-3 rounded-md hover:bg-purple-700 transition-colors font-semibold"
-        disabled={!address}
-      >
-        Confirm & Place Order
-      </button>
+        {/* Confirm Order */}
+        <button
+          onClick={handleOrder}
+          className="w-full bg-purple-600 text-white px-6 py-3 rounded-md hover:bg-purple-700 transition-colors font-semibold"
+          disabled={!address}
+        >
+          Confirm & Place Order
+        </button>
+      </div>
     </main>
   );
 }
