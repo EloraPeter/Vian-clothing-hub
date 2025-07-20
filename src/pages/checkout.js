@@ -1,12 +1,20 @@
-
 import { useCart } from '@/context/CartContext';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
-import L from 'leaflet';
-import { MaptilerLayer, MaptilerGeocoder } from '@maptiler/sdk';
+import dynamic from 'next/dynamic';
+
+// Dynamically import Leaflet and MapTiler SDK with SSR disabled
+const L = dynamic(() => import('leaflet'), { ssr: false });
+const { MaptilerLayer, MaptilerGeocoder } = dynamic(() => import('@maptiler/sdk'), { ssr: false });
+
+// Import Leaflet CSS and MapTiler CSS
 import 'leaflet/dist/leaflet.css';
 import '@maptiler/sdk/dist/maptiler-sdk.css';
+
+// Fix Leaflet marker icons
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
 export default function CheckoutPage() {
   const { cart, totalPrice, clearCart } = useCart();
@@ -22,12 +30,23 @@ export default function CheckoutPage() {
   const mapContainerRef = useRef(null);
   const router = useRouter();
 
-  // MapTiler API key (replace with your key)
+  // MapTiler API key
   const MAPTILER_API_KEY = process.env.NEXT_PUBLIC_MAPTILER_API_KEY;
 
-  // Initialize Leaflet map
+  // Initialize Leaflet map (client-side only)
   useEffect(() => {
-    if (!mapContainerRef.current || !MAPTILER_API_KEY) return;
+    if (!mapContainerRef.current || !MAPTILER_API_KEY || typeof window === 'undefined') return;
+
+    // Set default Leaflet icon
+    const DefaultIcon = L.icon({
+      iconUrl: markerIcon.src,
+      shadowUrl: markerShadow.src,
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41],
+    });
+    L.Marker.prototype.options.icon = DefaultIcon;
 
     // Initialize map
     mapRef.current = L.map(mapContainerRef.current, {
@@ -38,7 +57,7 @@ export default function CheckoutPage() {
     // Add MapTiler layer
     const maptilerLayer = new MaptilerLayer({
       apiKey: MAPTILER_API_KEY,
-      style: 'streets-v2', // Use MapTiler's streets style
+      style: 'streets-v2',
     }).addTo(mapRef.current);
 
     // Add geocoding control
@@ -59,7 +78,7 @@ export default function CheckoutPage() {
       if (marker) marker.remove();
       const newMarker = L.marker([center[1], center[0]]).addTo(mapRef.current);
       setMarker(newMarker);
-      setSelectedAddressId(''); // Clear saved address selection
+      setSelectedAddressId('');
     });
 
     // Handle map click for reverse geocoding
