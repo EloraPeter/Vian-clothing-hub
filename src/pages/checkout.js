@@ -93,6 +93,11 @@ export default function CheckoutPage() {
         const response = await fetch(
           `https://api.maptiler.com/geocoding/${lng},${lat}.json?key=${MAPTILER_API_KEY}`
         );
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Reverse geocoding failed:", errorText);
+          return;
+        }
         const data = await response.json();
         if (data.features[0]) {
           setAddress(data.features[0].place_name);
