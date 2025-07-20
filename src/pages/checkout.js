@@ -4,8 +4,9 @@ import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
 import L from 'leaflet';
-import { MaptilerLayer, MaptilerGeocoder } from '@maptiler';
+import { MaptilerLayer, MaptilerGeocoder } from '@maptiler/sdk';
 import 'leaflet/dist/leaflet.css';
+import '@maptiler/sdk/dist/maptiler-sdk.css';
 
 export default function CheckoutPage() {
   const { cart, totalPrice, clearCart } = useCart();
@@ -35,7 +36,7 @@ export default function CheckoutPage() {
     });
 
     // Add MapTiler layer
-    new MaptilerLayer({
+    const maptilerLayer = new MaptilerLayer({
       apiKey: MAPTILER_API_KEY,
       style: 'streets-v2', // Use MapTiler's streets style
     }).addTo(mapRef.current);
