@@ -25,3 +25,24 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+.leaflet-container {
+  border: 1px solid #d1d5db; /* border-gray-300 */
+}
+.maptiler-geocoder input {
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  padding: 0.5rem 1rem;
+  outline: none;
+}
+.maptiler-geocoder input:focus {
+  ring: 2px solid #8b5cf6; /* focus:ring-purple-500 */
+}
+.maptiler-geocoder--results {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+}
+.maptiler-geocoder--result:hover {
+  background: #f3e8ff; /* bg-purple-100 */
+  color: #6d28d9; /* text-purple-700 */
+}
