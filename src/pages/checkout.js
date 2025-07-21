@@ -8,9 +8,9 @@ import Footer from '@/components/footer';
 import CartPanel from '@/components/CartPanel';
 import zxcvbn from 'zxcvbn';
 
-// Dynamically import Leaflet and MapTiler SDK with SSR disabled
-const L = dynamic(() => import('leaflet'), { ssr: false });
-const { MaptilerLayer, MaptilerGeocoder } = dynamic(() => import('@maptiler/sdk'), { ssr: false });
+// Leaflet CSS
+import 'leaflet/dist/leaflet.css';
+import '@maptiler/sdk/dist/maptiler-sdk.css';
 
 // Import Leaflet CSS and MapTiler CSS
 import 'leaflet/dist/leaflet.css';
