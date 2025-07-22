@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/footer';
 import CartPanel from '@/components/CartPanel';
 import Link from 'next/link'
+import Image from 'next/image'
 import zxcvbn from 'zxcvbn';
 
 // Leaflet CSS

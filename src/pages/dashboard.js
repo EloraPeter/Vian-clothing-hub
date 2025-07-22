@@ -371,7 +371,7 @@ export default function Dashboard() {
         <section className="mb-8 bg-white p-6 rounded-xl shadow-md">
           <h2 className="text-2xl font-bold text-purple-700 mb-4">Product Purchase History</h2>
           {productOrders.length === 0 ? (
-            <p className="text-gray-600">You haven't purchased any products yet.</p>
+            <p className="text-gray-600">You haven&rsquo;t purchased any products yet.</p>
           ) : (
             <ul className="space-y-4">
               {productOrders.map((order) => (
