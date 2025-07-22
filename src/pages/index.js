@@ -181,7 +181,7 @@ export default function Home() {
                                 </button>
                                 <a href={`/product/${product.id}`} className="block">
                                     <div className="relative overflow-hidden rounded-xl aspect-square mb-4">
-                                        <img
+                                        <image
                                             src={product.image_url}
                                             alt={product.name}
                                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"

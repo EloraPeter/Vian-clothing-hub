@@ -271,7 +271,7 @@ export default function AdminPage() {
                     <div className="flex flex-col items-center space-y-6">
                         <div className="relative">
                             {previewUrl || profile?.avatar_url ? (
-                                <img
+                                <image
                                     src={previewUrl || profile.avatar_url}
                                     alt="Avatar"
                                     className="w-24 h-24 rounded-full object-cover border-4 border-purple-200 shadow-md"
@@ -387,7 +387,7 @@ export default function AdminPage() {
                                 disabled={productUploading}
                             />
                             {productPreviewUrl && (
-                                <img
+                                <image
                                     src={productPreviewUrl}
                                     alt="Product Preview"
                                     className="mt-4 w-24 h-24 object-cover rounded-lg border-2 border-gray-300"
@@ -422,7 +422,7 @@ export default function AdminPage() {
                                     >
                                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
                                             <div className="flex items-center space-x-4">
-                                                <img
+                                                <image
                                                     src={product.image_url}
                                                     alt={product.name}
                                                     className="w-16 h-16 object-cover rounded-lg border-2 border-gray-300"

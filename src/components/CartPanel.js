@@ -2,6 +2,8 @@ import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import Image from 'next/image'
+
 
 export default function CartPanel({ isOpen, onClose }) {
     const { cart, removeFromCart, clearCart, updateQuantity } = useCart();
@@ -126,7 +128,7 @@ export default function CartPanel({ isOpen, onClose }) {
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center space-x-4">
-                                                    <img
+                                                    <image
                                                         src={item.image_url}
                                                         alt={item.name}
                                                         className="w-16 h-16 object-cover rounded-lg border border-gray-300"
