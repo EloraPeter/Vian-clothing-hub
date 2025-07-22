@@ -250,6 +250,24 @@ export default function AdminPage() {
         }
     };
 
+    const [categories, setCategories] = useState([]);
+    useEffect(() => {
+        async function fetchCategories() {
+            const { data, error } = await supabase
+                .from('products') // or a separate `categories` table
+                .select('category')
+                .neq('category', null);
+
+            if (data) {
+                const uniqueCategories = [...new Set(data.map(item => item.category))];
+                setCategories(uniqueCategories);
+            }
+        }
+
+        fetchCategories();
+    }, []);
+
+
     const handleProductChange = (e) => {
         const { name, value, files } = e.target;
         if (name === 'imageFile') {
