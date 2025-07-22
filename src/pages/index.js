@@ -270,11 +270,11 @@ export default function Home() {
                         Welcome to Vian Clothing Hub, your No.1 online fashion store in Nigeria. From trendy ready-to-wear styles to elegant custom pieces, Vian Clothing Hub offers you the convenience of shopping premium-quality fashion items from the comfort of your home, workplace, or even on-the-go.
                     </p>
                     <p className="text-md text-gray-600 mb-4">
-                        Our platform was built for modern Nigerians who want stylish, affordable, and expressive fashion—delivered fast and stress-free. Whether you're in Lagos, Asaba, Abuja, or anywhere in Nigeria, Vian Clothing Hub delivers style to your doorstep.
+                        Our platform was built for modern Nigerians who want stylish, affordable, and expressive fashion—delivered fast and stress-free. Whether you&rsquo;re in Lagos, Asaba, Abuja, or anywhere in Nigeria, Vian Clothing Hub delivers style to your doorstep.
                     </p>
                     <p className="text-lg font-semibold text-purple-700 mb-2">🔥 Trendy, Original, and Affordable</p>
                     <p className="text-md text-gray-600 mb-4">
-                        We take pride in offering authentic and stylish fashion that reflects your personality. Whether you're going to a wedding, brunch, work, church, or simply dressing up for yourself, Vian Clothing Hub has the perfect outfit.
+                        We take pride in offering authentic and stylish fashion that reflects your personality. Whether you&rsquo;re going to a wedding, brunch, work, church, or simply dressing up for yourself, Vian Clothing Hub has the perfect outfit.
                     </p>
                     <p className="text-md text-gray-600 mb-4">
                         Shop from our wide collection of:
