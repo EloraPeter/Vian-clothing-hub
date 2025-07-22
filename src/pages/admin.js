@@ -426,11 +426,10 @@ export default function AdminPage() {
                         <button
                             onClick={handleAvatarChange}
                             disabled={uploading || !avatarFile}
-                            className={`w-full max-w-xs py-3 rounded-lg font-semibold text-white transition-all duration-300 ${
-                                uploading || !avatarFile
-                                    ? 'bg-gray-400 cursor-not-allowed'
-                                    : 'bg-purple-600 hover:bg-purple-700 shadow-lg hover:shadow-xl'
-                            }`}
+                            className={`w-full max-w-xs py-3 rounded-lg font-semibold text-white transition-all duration-300 ${uploading || !avatarFile
+                                ? 'bg-gray-400 cursor-not-allowed'
+                                : 'bg-purple-600 hover:bg-purple-700 shadow-lg hover:shadow-xl'
+                                }`}
                         >
                             {uploading ? 'Uploading...' : 'Update Picture'}
                         </button>
@@ -480,19 +479,24 @@ export default function AdminPage() {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                            <select
+                            <input
+                                list="category-options"
                                 name="category"
                                 value={productData.category}
                                 onChange={handleProductChange}
                                 className="w-full p-2 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                            >
-                                <option value="">Select a category (optional)</option>
-                                <option value="dresses">Dresses</option>
-                                <option value="tops">Tops</option>
-                                <option value="shirts">Shirts</option>
-                                <option value="accessories">Accessories</option>
-                            </select>
+                                placeholder="Type or select a category"
+                            />
+                            <datalist id="category-options">
+                                <option value="Dresses" />
+                                <option value="Tops" />
+                                <option value="Shirts" />
+                                <option value="Accessories" />
+                                {categories.map((cat, index) => (
+                                    <option key={index} value={cat} />
+                                ))}                            </datalist>
                         </div>
+
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
                             <input
@@ -514,11 +518,10 @@ export default function AdminPage() {
                         <button
                             onClick={handleProductSubmit}
                             disabled={productUploading}
-                            className={`w-full py-3 rounded-lg font-semibold text-white transition-all duration-300 ${
-                                productUploading
-                                    ? 'bg-gray-400 cursor-not-allowed'
-                                    : 'bg-purple-600 hover:bg-purple-700 shadow-lg hover:shadow-xl'
-                            }`}
+                            className={`w-full py-3 rounded-lg font-semibold text-white transition-all duration-300 ${productUploading
+                                ? 'bg-gray-400 cursor-not-allowed'
+                                : 'bg-purple-600 hover:bg-purple-700 shadow-lg hover:shadow-xl'
+                                }`}
                         >
                             {productUploading ? 'Uploading...' : 'Add Product'}
                         </button>
@@ -568,11 +571,10 @@ export default function AdminPage() {
                                                                 is_on_sale: !product.is_on_sale,
                                                             })
                                                         }
-                                                        className={`px-3 py-1 rounded-lg text-sm font-semibold ${
-                                                            product.is_on_sale
-                                                                ? 'bg-red-600 text-white'
-                                                                : 'bg-purple-600 text-white hover:bg-purple-700'
-                                                        }`}
+                                                        className={`px-3 py-1 rounded-lg text-sm font-semibold ${product.is_on_sale
+                                                            ? 'bg-red-600 text-white'
+                                                            : 'bg-purple-600 text-white hover:bg-purple-700'
+                                                            }`}
                                                     >
                                                         {product.is_on_sale ? 'Remove Sale' : 'Mark as On Sale'}
                                                     </button>
@@ -582,11 +584,10 @@ export default function AdminPage() {
                                                                 is_out_of_stock: !product.is_out_of_stock,
                                                             })
                                                         }
-                                                        className={`px-3 py-1 rounded-lg text-sm font-semibold ${
-                                                            product.is_out_of_stock
-                                                                ? 'bg-red-600 text-white'
-                                                                : 'bg-purple-600 text-white hover:bg-purple-700'
-                                                        }`}
+                                                        className={`px-3 py-1 rounded-lg text-sm font-semibold ${product.is_out_of_stock
+                                                            ? 'bg-red-600 text-white'
+                                                            : 'bg-purple-600 text-white hover:bg-purple-700'
+                                                            }`}
                                                     >
                                                         {product.is_out_of_stock
                                                             ? 'Mark as In Stock'
@@ -598,11 +599,10 @@ export default function AdminPage() {
                                                                 is_new: !product.is_new,
                                                             })
                                                         }
-                                                        className={`px-3 py-1 rounded-lg text-sm font-semibold ${
-                                                            product.is_new
-                                                                ? 'bg-red-600 text-white'
-                                                                : 'bg-purple-600 text-white hover:bg-purple-700'
-                                                        }`}
+                                                        className={`px-3 py-1 rounded-lg text-sm font-semibold ${product.is_new
+                                                            ? 'bg-red-600 text-white'
+                                                            : 'bg-purple-600 text-white hover:bg-purple-700'
+                                                            }`}
                                                     >
                                                         {product.is_new ? 'Remove New' : 'Mark as New'}
                                                     </button>
