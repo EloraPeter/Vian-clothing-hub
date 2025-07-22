@@ -11,7 +11,7 @@
   "dependencies": {
     "@maptiler/sdk": "^3.6.0",
     "@react-google-maps/api": "^2.20.7",
-    "@supabase/supabase-js": "^2.51.0",
+    "@supabase/supabase-js": "^2.52.0",
     "leaflet": "^1.9.4",
     "next": "^15.4.1",
     "react": "19.1.0",
