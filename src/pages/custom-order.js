@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useRouter } from "next/router";
 import { useCart } from "@/context/CartContext";
 import CustomOrderForm from '@/components/CustomOrderForm';
 import Navbar from '@/components/Navbar';
@@ -8,6 +9,7 @@ import Footer from '@/components/footer';
 
 export default function CustomOrderPage() {
   const [profile, setProfile] = useState(null);
+  const router = useRouter();
 
 
   // Fetch user profile
