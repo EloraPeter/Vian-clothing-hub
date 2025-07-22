@@ -26,6 +26,7 @@ export default function AdminPage() {
     const [productUploading, setProductUploading] = useState(false);
     const [currentProductPage, setCurrentProductPage] = useState(1);
     const [productsPerPage] = useState(5);
+    const [orderPrices, setOrderPrices] = useState({});
 
     useEffect(() => {
         const { data: authListener } = supabase.auth.onAuthStateChange((_, session) => {
@@ -75,19 +76,121 @@ export default function AdminPage() {
         fetchData();
     }, [user]);
 
+    const sendWhatsAppNotification = async (phone, text) => {
+        const apiKey = '7165245';
+        const url = `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=${encodeURIComponent(text)}&apikey=${apiKey}`;
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                console.error('Failed to send WhatsApp notification:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error sending WhatsApp notification:', error);
+        }
+    };
+
+    const sendEmailNotification = async (email, subject, body) => {
+        // Placeholder: Use Supabase edge function or external service
+        console.log(`Sending email to ${email}: Subject: ${subject}, Body: ${body}`);
+        // Example Supabase edge function call:
+        // await supabase.functions.invoke('send-email', { body: { to: email, subject, html: body } });
+    };
+
+    const createInAppNotification = async (userId, message) => {
+        const { error } = await supabase.from('notifications').insert([
+            {
+                user_id: userId,
+                message,
+                created_at: new Date().toISOString(),
+                read: false,
+            },
+        ]);
+        if (error) {
+            console.error('Error creating in-app notification:', error.message);
+        }
+    };
+
+    const generateInvoicePDF = async (order, amount) => {
+        // Placeholder: Server-side function to replace LaTeX placeholders and compile PDF
+        const invoiceData = {
+            ORDERID: order.id,
+            FULLNAME: order.full_name,
+            FABRIC: order.fabric,
+            STYLE: order.style,
+            ADDRESS: order.address,
+            AMOUNT: amount.toLocaleString(),
+            DATE: new Date().toLocaleDateString(),
+        };
+        // Assume a server-side function generates and uploads the PDF
+        const pdfUrl = `[Generated PDF URL for order ${order.id}]`; // Replace with actual PDF generation logic
+        return pdfUrl;
+    };
+
     async function updateStatus(id, newStatus) {
-        const { error } = await supabase
+        const price = orderPrices[id] || 0;
+        if (newStatus === 'in progress' && !price) {
+            alert('Please set a price before marking as in progress.');
+            return;
+        }
+
+        const updates = { status: newStatus };
+        if (newStatus === 'in progress') {
+            updates.price = parseFloat(price);
+        }
+
+        const { error, data } = await supabase
             .from('custom_orders')
-            .update({ status: newStatus })
-            .eq('id', id);
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+
         if (error) {
             alert('Error updating status: ' + error.message);
         } else {
             setOrders((prev) =>
                 prev.map((order) =>
-                    order.id === id ? { ...order, status: newStatus } : order
+                    order.id === id ? { ...order, ...updates } : order
                 )
             );
+            if (newStatus === 'in progress') {
+                const order = data;
+                // Generate and store invoice
+                const pdfUrl = await generateInvoicePDF(order, price);
+                const { error: invoiceError } = await supabase.from('invoices').insert([
+                    {
+                        order_id: order.id,
+                        user_id: order.user_id,
+                        amount: parseFloat(price),
+                        pdf_url: pdfUrl,
+                    },
+                ]);
+                if (invoiceError) {
+                    console.error('Error creating invoice:', invoiceError.message);
+                }
+                // Send notifications
+                const notificationText = `Your custom order (ID: ${order.id}) is now in progress! Please check the app to view your invoice and make payment: [Your App URL]`;
+                await sendWhatsAppNotification(order.phone, notificationText);
+                const emailBody = `
+                    <h2>Order Update</h2>
+                    <p>Your custom order (ID: ${order.id}) is now in progress.</p>
+                    <p><strong>Invoice</strong></p>
+                    <p>Order ID: ${order.id}</p>
+                    <p>Customer: ${order.full_name}</p>
+                    <p>Fabric: ${order.fabric}</p>
+                    <p>Style: ${order.style}</p>
+                    <p>Delivery Address: ${order.address}</p>
+                    <p>Amount: ₦${Number(price).toLocaleString()}</p>
+                    <p>Date: ${new Date().toLocaleDateString()}</p>
+                    <p><a href="${pdfUrl}">View/Download Invoice</a></p>
+                    <p>Please check the app for more details: [Your App URL]</p>
+                `;
+                await sendEmailNotification(order.email, 'Order In Progress - Invoice', emailBody);
+                await createInAppNotification(
+                    order.user_id,
+                    `Your order (ID: ${order.id}) is now in progress. Check your dashboard for the invoice.`
+                );
+            }
         }
     }
 
@@ -541,6 +644,66 @@ export default function AdminPage() {
                     )}
                 </div>
 
+                <div className="mb-12 bg-white p-8 rounded-2xl shadow-xl max-w-6xl mx-auto">
+                    <h2 className="text-2xl font-bold text-purple-800 mb-6">Manage Custom Orders</h2>
+                    {orders.length === 0 ? (
+                        <p className="text-center text-gray-600 text-lg">No orders yet.</p>
+                    ) : (
+                        <div className="space-y-6">
+                            {orders.map((order) => (
+                                <div
+                                    key={order.id}
+                                    className="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300"
+                                >
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h2 className="font-semibold text-xl text-gray-800">{order.full_name}</h2>
+                                        <div className="flex items-center gap-4">
+                                            <input
+                                                type="number"
+                                                placeholder="Set Price (₦)"
+                                                value={orderPrices[order.id] || ''}
+                                                onChange={(e) =>
+                                                    setOrderPrices((prev) => ({
+                                                        ...prev,
+                                                        [order.id]: e.target.value,
+                                                    }))
+                                                }
+                                                className="w-32 p-2 border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                                                min="0"
+                                                step="0.01"
+                                            />
+                                            <select
+                                                value={order.status}
+                                                onChange={(e) => updateStatus(order.id, e.target.value)}
+                                                className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                                            >
+                                                <option value="pending">Pending</option>
+                                                <option value="in progress">In Progress</option>
+                                                <option value="completed">Completed</option>
+                                                <option value="cancelled">Cancelled</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-600">
+                                        <p><strong>Phone:</strong> {order.phone}</p>
+                                        <p><strong>Email:</strong> {order.email || '—'}</p>
+                                        <p><strong>Fabric:</strong> {order.fabric}</p>
+                                        <p><strong>Style:</strong> {order.style}</p>
+                                        <p><strong>Measurements:</strong> {order.measurements || '—'}</p>
+                                        <p><strong>Notes:</strong> {order.additional_notes || '—'}</p>
+                                        <p className="sm:col-span-2"><strong>Address:</strong> {order.address}</p>
+                                        <p><strong>Deposit:</strong> ₦{Number(order.deposit || 0).toLocaleString()}</p>
+                                        <p><strong>Price:</strong> {order.price ? `₦${Number(order.price).toLocaleString()}` : 'Not set'}</p>
+                                    </div>
+                                    <p className="text-sm text-gray-500 mt-4">
+                                        Ordered on: {new Date(order.created_at).toLocaleString()}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
                 <button
                     className="mb-8 bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors shadow-md"
                     onClick={async () => {
@@ -550,45 +713,6 @@ export default function AdminPage() {
                 >
                     Log Out
                 </button>
-
-                {orders.length === 0 && (
-                    <p className="text-center text-gray-600 text-lg">No orders yet.</p>
-                )}
-
-                <div className="max-w-6xl mx-auto space-y-6">
-                    {orders.map((order) => (
-                        <div
-                            key={order.id}
-                            className="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300"
-                        >
-                            <div className="flex justify-between items-center mb-4">
-                                <h2 className="font-semibold text-xl text-gray-800">{order.full_name}</h2>
-                                <select
-                                    value={order.status}
-                                    onChange={(e) => updateStatus(order.id, e.target.value)}
-                                    className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                                >
-                                    <option value="pending">Pending</option>
-                                    <option value="in progress">In Progress</option>
-                                    <option value="completed">Completed</option>
-                                    <option value="cancelled">Cancelled</option>
-                                </select>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-600">
-                                <p><strong>Phone:</strong> {order.phone}</p>
-                                <p><strong>Email:</strong> {order.email || '—'}</p>
-                                <p><strong>Fabric:</strong> {order.fabric}</p>
-                                <p><strong>Style:</strong> {order.style}</p>
-                                <p><strong>Measurements:</strong> {order.measurements || '—'}</p>
-                                <p><strong>Notes:</strong> {order.additional_notes || '—'}</p>
-                                <p className="sm:col-span-2"><strong>Address:</strong> {order.address}</p>
-                            </div>
-                            <p className="text-sm text-gray-500 mt-4">
-                                Ordered on: {new Date(order.created_at).toLocaleString()}
-                            </p>
-                        </div>
-                    ))}
-                </div>
             </div>
         </main>
     );

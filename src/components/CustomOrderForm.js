@@ -13,6 +13,7 @@ export default function CustomOrderForm() {
     measurements: '',
     address: '',
     additional_notes: '',
+    deposit: 5000, // Non-refundable deposit
   });
 
   const [userId, setUserId] = useState(null);
@@ -34,32 +35,74 @@ export default function CustomOrderForm() {
     });
   }, [router]);
 
+  const sendWhatsAppNotification = async (phone, text) => {
+    const apiKey = '7165245';
+    const url = `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=${encodeURIComponent(text)}&apikey=${apiKey}`;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.error('Failed to send WhatsApp notification:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error sending WhatsApp notification:', error);
+    }
+  };
+
+  const createAdminNotification = async (message) => {
+    const { data: adminProfiles } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('is_admin', true);
+    
+    if (adminProfiles) {
+      for (const admin of adminProfiles) {
+        await supabase.from('notifications').insert([
+          {
+            user_id: admin.id,
+            message,
+            created_at: new Date().toISOString(),
+            read: false,
+          },
+        ]);
+      }
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
 
-    const { error } = await supabase.from('custom_orders').insert([
+    const { error, data } = await supabase.from('custom_orders').insert([
       {
         ...form,
         user_id: userId,
         status: 'pending',
+        delivery_status: 'not_started',
       },
-    ]);
+    ]).select().single();
 
     if (error) {
       setMessage('Error: ' + error.message);
     } else {
-      setMessage('Order submitted! Awaiting deposit.');
+      setMessage('Order submitted! Awaiting deposit confirmation.');
+      // Notify user via WhatsApp
+      const userNotificationText = `Your custom order has been submitted! Fabric: ${form.fabric}, Style: ${form.style}. A non-refundable deposit of ₦5,000 is required. Please check the app for updates: [Your App URL]`;
+      await sendWhatsAppNotification(form.phone, userNotificationText);
+      // Notify admin via WhatsApp and in-app
+      const adminNotificationText = `New custom order submitted by ${form.full_name} (ID: ${data.id}). Fabric: ${form.fabric}, Style: ${form.style}. Please set the outfit price in the admin dashboard.`;
+      await sendWhatsAppNotification('2348087522801', adminNotificationText);
+      await createAdminNotification(adminNotificationText);
       setForm({
         full_name: '',
-        email: '',
+        email: form.email,
         phone: '',
         fabric: '',
         style: '',
         measurements: '',
         address: '',
         additional_notes: '',
+        deposit: 5000,
       });
     }
 
@@ -126,11 +169,18 @@ export default function CustomOrderForm() {
       <textarea
         placeholder="Additional Notes"
         value={form.additional_notes}
-        onChange={(e) =>
-          setForm({ ...form, additional_notes: e.target.value })
-        }
+        onChange={(e) => setForm({ ...form, additional_notes: e.target.value })}
         className="w-full border p-2 rounded bg-gray-100 text-black"
       />
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Deposit (₦)</label>
+        <input
+          type="number"
+          value={form.deposit}
+          readOnly
+          className="w-full border p-2 rounded bg-gray-200 text-black cursor-not-allowed"
+        />
+      </div>
 
       <button
         type="submit"
