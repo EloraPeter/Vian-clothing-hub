@@ -81,7 +81,7 @@ export default function Dashboard() {
         // Fetch ready-made product orders
         const { data: productOrdersData, error: productOrdersError } = await supabase
           .from('orders')
-          .select('*, products(name, image_url, price)')
+          .select('*, order_items(product_id, quantity, products(name, image_url, price))')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
         if (productOrdersError) throw productOrdersError;
@@ -296,9 +296,8 @@ export default function Dashboard() {
                 {notifications.map((notif) => (
                   <li
                     key={notif.id}
-                    className={`border border-gray-300 p-4 rounded-lg ${
-                      notif.read ? 'bg-gray-100' : 'bg-purple-50'
-                    }`}
+                    className={`border border-gray-300 p-4 rounded-lg ${notif.read ? 'bg-gray-100' : 'bg-purple-50'
+                      }`}
                   >
                     <p className="text-gray-700">{notif.message}</p>
                     <p className="text-gray-500 text-sm">
@@ -663,22 +662,25 @@ export default function Dashboard() {
               <ul className="space-y-4">
                 {productOrders.map((order) => (
                   <li key={order.id} className="border border-gray-300 p-4 rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <img
-                        src={order.products.image_url}
-                        alt={order.products.name}
-                        className="w-16 h-16 object-cover rounded-lg border border-gray-300"
-                      />
-                      <div>
-                        <p className="text-gray-700"><strong>Product:</strong> {order.products.name}</p>
-                        <p className="text-gray-700"><strong>Price:</strong> ₦{Number(order.products.price).toLocaleString()}</p>
-                        <p className="text-gray-700"><strong>Quantity:</strong> {order.quantity}</p>
-                        <p className="text-gray-700"><strong>Status:</strong> {order.status}</p>
-                        <p className="text-gray-600 text-sm">
-                          <strong>Ordered on:</strong> {new Date(order.created_at).toLocaleString()}
-                        </p>
+                    <p className="text-gray-700"><strong>Order ID:</strong> {order.id}</p>
+                    {order.order_items.map((item) => (
+                      <div key={item.product_id} className="flex items-center space-x-4">
+                        <img
+                          src={item.products.image_url}
+                          alt={item.products.name}
+                          className="w-16 h-16 object-cover rounded-lg border border-gray-300"
+                        />
+                        <div>
+                          <p className="text-gray-700"><strong>Product:</strong> {item.products.name}</p>
+                          <p className="text-gray-700"><strong>Price:</strong> ₦{Number(item.products.price).toLocaleString()}</p>
+                          <p className="text-gray-700"><strong>Quantity:</strong> {item.quantity}</p>
+                        </div>
                       </div>
-                    </div>
+                    ))}
+                    <p className="text-gray-700"><strong>Status:</strong> {order.status}</p>
+                    <p className="text-gray-600 text-sm">
+                      <strong>Ordered on:</strong> {new Date(order.created_at).toLocaleString()}
+                    </p>
                   </li>
                 ))}
               </ul>
