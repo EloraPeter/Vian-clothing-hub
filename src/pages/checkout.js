@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/footer';
 import CartPanel from '@/components/CartPanel';
+import Link from 'next/link'
 import zxcvbn from 'zxcvbn';
 
 // Leaflet CSS
@@ -252,9 +253,9 @@ export default function CheckoutPage() {
       <h1 className="text-3xl font-bold mb-6 text-purple-700 text-center">Checkout</h1>
       <p className="text-gray-600">
         Your cart is empty.{' '}
-        <a href="/" className="text-purple-600 hover:underline">
+        <link href="/" className="text-purple-600 hover:underline">
           Continue shopping
-        </a>.
+        </link>.
       </p>
     </main>
   );
