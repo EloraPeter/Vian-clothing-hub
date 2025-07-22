@@ -29,7 +29,7 @@ export default function Home() {
                     .from("profiles")
                     .select("*")
                     .eq("id", user.id)
-                    .single();
+                    .maybeSingle();
                 if (!profileError) setProfile(profileData);
                 else console.error("Profile fetch error:", profileError.message);
             } else if (userError) console.error("User fetch error:", userError.message);
