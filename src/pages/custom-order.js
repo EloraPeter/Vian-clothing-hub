@@ -16,18 +16,29 @@ export default function CustomOrderPage() {
   useEffect(() => {
     async function fetchProfile() {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .maybeSingle();
-        if (!profileError) setProfile(profileData);
-        else console.error("Profile fetch error:", profileError.message);
-      } else if (userError) console.error("User fetch error:", userError.message);
+      if (userError || !user) {
+        console.error("User fetch error or no user:", userError?.message || "No user");
+        router.push("/auth");
+        return;
+      }
+
+      console.log("Fetching profile for user ID:", user.id);
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error("Profile fetch error:", profileError.message);
+        setProfile(null);
+      } else {
+        console.log("Profile data:", profileData);
+        setProfile(profileData || null);
+      }
     }
     fetchProfile();
-  }, []);
+  }, [router]);
 
   return (
     <main className="min-h-screen mb-0 bg-gray-100 pb-0">
