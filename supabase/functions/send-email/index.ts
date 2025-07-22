@@ -3,29 +3,30 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-const postmarkApiKey = Deno.env.get('POSTMARK_API_KEY')!;
+const resendApiKey = Deno.env.get('RESEND_API_KEY')!;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 serve(async (req) => {
   try {
     const { to, subject, html } = await req.json();
     
-    const response = await fetch('https://api.postmarkapp.com/email', {
+    const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        'X-Postmark-Server-Token': postmarkApiKey,
+        'Authorization': `Bearer ${resendApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        From: 'support@vianclothinghub.com',
-        To: to,
-        Subject: subject,
-        HtmlBody: html,
-        MessageStream: 'outbound',
+        from: 'support@vianclothinghub.com',
+        to,
+        subject,
+        html,
       }),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to send email');
+      const errorData = await response.json();
+      throw new Error(`Failed to send email: ${errorData.message || response.statusText}`);
     }
 
     return new Response(JSON.stringify({ success: true }), {
