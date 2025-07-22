@@ -1,0 +1,66 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{xcolor}
+\definecolor{vianpurple}{RGB}{126, 34, 206}
+\geometry{margin=1in}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\color{vianpurple}\textbf{Vian Clothing Hub}}
+\fancyhead[R]{\color{vianpurple}\textbf{Invoice}}
+\fancyfoot[C]{Page \thepage\ of \pageref{LastPage}}
+
+\begin{document}
+
+\begin{center}
+    {\color{vianpurple}\textbf{\LARGE Invoice}} \\
+    \vspace{0.5cm}
+    Vian Clothing Hub \\
+    Nigeria's Ultimate Fashion Destination \\
+    \vspace{0.5cm}
+\end{center}
+
+\begin{flushleft}
+    \textbf{Invoice Details} \\
+    Invoice ID: \textbf{INVOICEID} \\
+    Order ID: \textbf{ORDERID} \\
+    Date: \textbf{DATE} \\
+    \vspace{0.5cm}
+    \textbf{Customer Details} \\
+    Name: \textbf{FULLNAME} \\
+    Address: \textbf{ADDRESS} \\
+\end{flushleft}
+
+\begin{center}
+    \vspace{0.5cm}
+    \textbf{Order Summary}
+    \begin{tabular}{llr}
+        \toprule
+        \textbf{Description} & \textbf{Details} & \textbf{Amount (₦)} \\
+        \midrule
+        Fabric & \textbf{FABRIC} & \\
+        Style & \textbf{STYLE} & \\
+        \midrule
+        Deposit (Non-refundable) & & \textbf{DEPOSIT} \\
+        Balance & & \textbf{BALANCE} \\
+        \midrule
+        \textbf{Total} & & \textbf{AMOUNT} \\
+        \bottomrule
+    \end{tabular}
+\end{center}
+
+\vspace{1cm}
+
+\begin{flushleft}
+    \textbf{Payment Instructions:} Please complete payment via the Vian Clothing Hub app. \\
+    \textbf{Note:} Check your dashboard for order updates. \\
+    \textbf{Contact Us:} support@vianclothinghub.com | +2348087522801
+\end{flushleft}
+
+\end{document}
