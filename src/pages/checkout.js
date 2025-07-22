@@ -279,7 +279,7 @@ export default function CheckoutPage() {
           <ul className="space-y-4">
             {cart.map((item) => (
               <li key={item.id} className="flex items-center space-x-4 border-b border-gray-300 pb-4">
-                <image src={item.image_url} alt={item.name} className="w-16 h-16 object-cover rounded-lg border border-gray-300" />
+                <img src={item.image_url} alt={item.name} className="w-16 h-16 object-cover rounded-lg border border-gray-300" />
                 <div className="flex-1">
                   <p className="text-gray-700 font-medium">{item.name}</p>
                   <p className="text-gray-600">

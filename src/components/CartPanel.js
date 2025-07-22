@@ -128,7 +128,7 @@ export default function CartPanel({ isOpen, onClose }) {
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center space-x-4">
-                                                    <image
+                                                    <img
                                                         src={item.image_url}
                                                         alt={item.name}
                                                         className="w-16 h-16 object-cover rounded-lg border border-gray-300"

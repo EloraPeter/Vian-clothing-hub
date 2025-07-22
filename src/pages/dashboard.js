@@ -115,7 +115,7 @@ export default function Dashboard() {
           <h2 className="text-2xl font-bold text-purple-700 mb-4">Update Profile</h2>
           <div className="flex items-center space-x-4 mb-4">
             {previewUrl || profile?.avatar_url ? (
-              <image
+              <img
                 src={previewUrl || profile.avatar_url}
                 alt="Avatar"
                 className="w-16 h-16 rounded-full object-cover border border-gray-300"
@@ -326,7 +326,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {wishlist.map((item) => (
                 <div key={item.id} className="bg-gray-50 p-3 rounded-lg shadow-sm text-center">
-                  <image src={item.image_url} alt={item.name} className="h-32 w-full object-cover rounded-lg mb-2" />
+                  <img src={item.image_url} alt={item.name} className="h-32 w-full object-cover rounded-lg mb-2" />
                   <p className="font-medium text-gray-700">{item.name}</p>
                   <p className="text-sm text-gray-600">
                     {item.discount_percentage > 0 ? (

@@ -36,7 +36,7 @@ export default function Navbar({ profile, onCartClick, cartItemCount }) {
           onClick={() => router.push('/dashboard')}
           className="text-gray-600 hover:text-purple-700 transition-colors"
         >
-          <image
+          <img
             src={profile?.avatar_url || '/default-avatar.png'}
             className="w-8 h-8 rounded-full object-cover"
             alt="User Avatar"
