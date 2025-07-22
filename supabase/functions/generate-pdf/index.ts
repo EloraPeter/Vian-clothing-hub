@@ -1,9 +1,7 @@
 import { serve } from 'std/http/server.ts';
 import { createClient } from '@supabase/supabase-js';
 import { exec } from 'https://deno.land/x/execute@v1.2.0/mod.ts';
-import { serve } from 'std/http/server.ts';
-import { exec } from 'https://deno.land/x/execute@v1.2.0/mod.ts';
-import { createClient } from '@supabase/supabase-js';
+
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
