@@ -179,7 +179,7 @@ export default function Dashboard() {
     }
 
     const handler = window.PaystackPop.setup({
-      key: 'pk_test_your_paystack_public_key', // Replace with your Paystack public key
+      key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY, // Replace with your Paystack public key
       email: profile.email,
       amount: (invoice.amount - (invoice.custom_orders.deposit || 5000)) * 100, // Amount in kobo (excluding deposit)
       currency: 'NGN',
