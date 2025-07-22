@@ -81,7 +81,7 @@ export default function Dashboard() {
         // Fetch ready-made product orders
         const { data: productOrdersData, error: productOrdersError } = await supabase
           .from('orders')
-          .select('*')
+          .select('*, products(name, image_url, price)')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
         if (productOrdersError) throw productOrdersError;
@@ -136,6 +136,42 @@ export default function Dashboard() {
     }
   };
 
+  const sendEmailNotification = async (email, subject, body) => {
+    const { error } = await supabase.functions.invoke('send-email', {
+      body: { to: email, subject, html: body },
+    });
+    if (error) {
+      console.error('Error sending email:', error.message);
+    }
+  };
+
+  const generateReceiptPDF = async (invoice, paymentReference) => {
+    const receiptData = {
+      RECEIPTID: crypto.randomUUID(),
+      INVOICEID: invoice.id,
+      ORDERID: invoice.order_id,
+      PAYMENTREF: paymentReference,
+      FULLNAME: invoice.custom_orders.full_name,
+      FABRIC: invoice.custom_orders.fabric,
+      STYLE: invoice.custom_orders.style,
+      ADDRESS: invoice.custom_orders.address,
+      DEPOSIT: Number(invoice.custom_orders.deposit || 5000).toLocaleString(),
+      BALANCE: Number(invoice.amount - (invoice.custom_orders.deposit || 5000)).toLocaleString(),
+      AMOUNT: Number(invoice.amount).toLocaleString(),
+      DATE: new Date().toLocaleDateString(),
+    };
+
+    const { data, error } = await supabase.functions.invoke('generate-pdf', {
+      body: { type: 'receipt', data: receiptData },
+    });
+
+    if (error) {
+      throw new Error(`Receipt PDF generation failed: ${error.message}`);
+    }
+
+    return { pdfUrl: data.pdfUrl, receiptId: receiptData.RECEIPTID };
+  };
+
   const initiatePayment = async (invoice) => {
     if (!window.PaystackPop) {
       alert('Paystack SDK not loaded.');
@@ -143,9 +179,9 @@ export default function Dashboard() {
     }
 
     const handler = window.PaystackPop.setup({
-      key: 'pk_test_your_paystack_public_key', // Replace with your Paystack test public key
+      key: 'pk_test_your_paystack_public_key', // Replace with your Paystack public key
       email: profile.email,
-      amount: (invoice.amount - (invoice.custom_orders.deposit || 0)) * 100, // Amount in kobo (excluding deposit)
+      amount: (invoice.amount - (invoice.custom_orders.deposit || 5000)) * 100, // Amount in kobo (excluding deposit)
       currency: 'NGN',
       ref: `VIAN_${invoice.id}_${Date.now()}`,
       callback: async (response) => {
@@ -160,12 +196,14 @@ export default function Dashboard() {
         // Mark invoice as paid
         await supabase.from('invoices').update({ paid: true }).eq('id', invoice.id);
         // Generate receipt
+        const { pdfUrl, receiptId } = await generateReceiptPDF(invoice, response.reference);
         const receiptData = {
+          id: receiptId,
           invoice_id: invoice.id,
           user_id: user.id,
           amount: invoice.amount,
           payment_reference: response.reference,
-          pdf_url: `[Generated Receipt PDF URL for invoice ${invoice.id}]`, // Replace with actual PDF generation
+          pdf_url: pdfUrl,
         };
         await supabase.from('receipts').insert([receiptData]);
         setReceipts((prev) => [receiptData, ...prev]);
@@ -180,7 +218,7 @@ export default function Dashboard() {
           )
         );
         // Notify user
-        const notificationText = `Payment successful for order ID: ${invoice.order_id}. Delivery has started. Check your dashboard for the receipt.`;
+        const notificationText = `Payment successful for order ID: ${invoice.order_id}. Delivery has started. Check your dashboard for the receipt: [Your App URL]`;
         await supabase.from('notifications').insert([
           {
             user_id: user.id,
@@ -199,6 +237,24 @@ export default function Dashboard() {
           },
           ...prev,
         ]);
+        const emailBody = `
+          <h2>Payment Confirmation</h2>
+          <p>Your payment for order ID: ${invoice.order_id} has been received.</p>
+          <p><strong>Receipt</strong></p>
+          <p>Order ID: ${invoice.order_id}</p>
+          <p>Customer: ${invoice.custom_orders.full_name}</p>
+          <p>Fabric: ${invoice.custom_orders.fabric}</p>
+          <p>Style: ${invoice.custom_orders.style}</p>
+          <p>Delivery Address: ${invoice.custom_orders.address}</p>
+          <p>Deposit: ₦${Number(invoice.custom_orders.deposit || 5000).toLocaleString()}</p>
+          <p>Balance Paid: ₦${Number(invoice.amount - (invoice.custom_orders.deposit || 5000)).toLocaleString()}</p>
+          <p>Total Amount: ₦${Number(invoice.amount).toLocaleString()}</p>
+          <p>Payment Reference: ${response.reference}</p>
+          <p>Date: ${new Date().toLocaleDateString()}</p>
+          <p><a href="${pdfUrl}">View/Download Receipt</a></p>
+          <p>Delivery has started. Please check the app for updates: [Your App URL]</p>
+        `;
+        await sendEmailNotification(profile.email, 'Payment Receipt', emailBody);
         alert('Payment successful! Receipt generated and delivery started.');
       },
       onClose: () => {
@@ -274,7 +330,9 @@ export default function Dashboard() {
                     <p className="text-gray-700"><strong>Order ID:</strong> {invoice.order_id}</p>
                     <p className="text-gray-700"><strong>Fabric:</strong> {invoice.custom_orders.fabric}</p>
                     <p className="text-gray-700"><strong>Style:</strong> {invoice.custom_orders.style}</p>
-                    <p className="text-gray-700"><strong>Amount:</strong> ₦{Number(invoice.amount).toLocaleString()}</p>
+                    <p className="text-gray-700"><strong>Deposit:</strong> ₦{Number(invoice.custom_orders.deposit || 5000).toLocaleString()}</p>
+                    <p className="text-gray-700"><strong>Balance:</strong> ₦{Number(invoice.amount - (invoice.custom_orders.deposit || 5000)).toLocaleString()}</p>
+                    <p className="text-gray-700"><strong>Total Amount:</strong> ₦{Number(invoice.amount).toLocaleString()}</p>
                     <p className="text-gray-700"><strong>Status:</strong> {invoice.paid ? 'Paid' : 'Pending'}</p>
                     <p className="text-gray-600 text-sm">
                       <strong>Issued:</strong> {new Date(invoice.created_at).toLocaleString()}
@@ -315,7 +373,9 @@ export default function Dashboard() {
                     <p className="text-gray-700"><strong>Order ID:</strong> {receipt.invoices.custom_orders.id}</p>
                     <p className="text-gray-700"><strong>Fabric:</strong> {receipt.invoices.custom_orders.fabric}</p>
                     <p className="text-gray-700"><strong>Style:</strong> {receipt.invoices.custom_orders.style}</p>
-                    <p className="text-gray-700"><strong>Amount:</strong> ₦{Number(receipt.amount).toLocaleString()}</p>
+                    <p className="text-gray-700"><strong>Deposit:</strong> ₦{Number(receipt.invoices.custom_orders.deposit || 5000).toLocaleString()}</p>
+                    <p className="text-gray-700"><strong>Balance Paid:</strong> ₦{Number(receipt.amount - (receipt.invoices.custom_orders.deposit || 5000)).toLocaleString()}</p>
+                    <p className="text-gray-700"><strong>Total Amount:</strong> ₦{Number(receipt.amount).toLocaleString()}</p>
                     <p className="text-gray-700"><strong>Payment Reference:</strong> {receipt.payment_reference}</p>
                     <p className="text-gray-600 text-sm">
                       <strong>Issued:</strong> {new Date(receipt.created_at).toLocaleString()}
@@ -596,19 +656,29 @@ export default function Dashboard() {
 
           {/* Product Orders Section */}
           <section className="mb-8 bg-white p-6 rounded-xl shadow-md">
-            <h2 className="text-2xl font-bold text-purple-700 mb-4">Product Purchase History</h2>
+            <h2 className="text-2xl font-bold text-purple-700 mb-4">Product Orders</h2>
             {productOrders.length === 0 ? (
-              <p className="text-gray-600">You haven't purchased any products yet.</p>
+              <p className="text-gray-600">You have no product orders yet.</p>
             ) : (
               <ul className="space-y-4">
                 {productOrders.map((order) => (
                   <li key={order.id} className="border border-gray-300 p-4 rounded-lg">
-                    <p className="text-gray-700"><strong>Items:</strong> {order.items.map((i) => i.name).join(', ')}</p>
-                    <p className="text-gray-700"><strong>Total:</strong> ₦{Number(order.total).toLocaleString()}</p>
-                    <p className="text-gray-700"><strong>Status:</strong> {order.status}</p>
-                    <p className="text-gray-600 text-sm">
-                      <strong>Placed:</strong> {new Date(order.created_at).toLocaleString()}
-                    </p>
+                    <div className="flex items-center space-x-4">
+                      <img
+                        src={order.products.image_url}
+                        alt={order.products.name}
+                        className="w-16 h-16 object-cover rounded-lg border border-gray-300"
+                      />
+                      <div>
+                        <p className="text-gray-700"><strong>Product:</strong> {order.products.name}</p>
+                        <p className="text-gray-700"><strong>Price:</strong> ₦{Number(order.products.price).toLocaleString()}</p>
+                        <p className="text-gray-700"><strong>Quantity:</strong> {order.quantity}</p>
+                        <p className="text-gray-700"><strong>Status:</strong> {order.status}</p>
+                        <p className="text-gray-600 text-sm">
+                          <strong>Ordered on:</strong> {new Date(order.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -616,12 +686,14 @@ export default function Dashboard() {
           </section>
 
           {/* Logout Button */}
-          <button
-            onClick={handleLogout}
-            className="mt-8 bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700 transition-colors"
-          >
-            Log Out
-          </button>
+          <div className="text-center">
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-red-700 transition-colors"
+            >
+              Log Out
+            </button>
+          </div>
         </div>
         <Footer />
       </main>
