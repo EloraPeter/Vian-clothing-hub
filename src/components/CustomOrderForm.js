@@ -14,24 +14,37 @@ export default function CustomOrderForm() {
     address: '',
     additional_notes: '',
   });
-
   const [userId, setUserId] = useState(null);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Check auth & set user ID
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) {
+    async function fetchUserData() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
         router.push('/auth');
-      } else {
-        setUserId(data.session.user.id);
+        return;
+      }
+      setUserId(user.id);
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('full_name, email')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (profileData) {
         setForm((prev) => ({
           ...prev,
-          email: data.session.user.email,
+          email: profileData.email || user.email,
+          full_name: profileData.full_name || '',
+        }));
+      } else {
+        setForm((prev) => ({
+          ...prev,
+          email: user.email,
         }));
       }
-    });
+    }
+    fetchUserData();
   }, [router]);
 
   const handleSubmit = async (e) => {
@@ -39,18 +52,34 @@ export default function CustomOrderForm() {
     setLoading(true);
     setMessage('');
 
-    const { error } = await supabase.from('custom_orders').insert([
-      {
-        ...form,
-        user_id: userId,
-        status: 'pending',
-      },
-    ]);
+    try {
+      const { error: insertError } = await supabase.from('custom_orders').insert([
+        {
+          ...form,
+          user_id: userId,
+          status: 'pending',
+        },
+      ]);
 
-    if (error) {
-      setMessage('Error: ' + error.message);
-    } else {
-      setMessage('Order submitted! Awaiting deposit.');
+      if (insertError) throw new Error('Order insertion failed: ' + insertError.message);
+
+      // Send WhatsApp notification via CallMeBot
+      const notificationMessage = `New custom order from ${form.full_name}: Fabric: ${form.fabric}, Style: ${form.style}, Address: ${form.address}`;
+      const encodedMessage = encodeURIComponent(notificationMessage);
+      const apiKey = process.env.NEXT_PUBLIC_CALLMEBOT_API_KEY || '7165245';
+      const phone = process.env.NEXT_PUBLIC_CALLMEBOT_PHONE || '+2348087522801';
+      const response = await fetch(
+        `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=${encodedMessage}&apikey=${apiKey}`
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('CallMeBot API error:', errorText);
+        throw new Error('Failed to send notification: ' + errorText);
+      }
+
+      console.log('CallMeBot API response:', await response.text());
+      setMessage('Order submitted! Awaiting deposit. Notification sent.');
       setForm({
         full_name: '',
         email: '',
@@ -61,9 +90,12 @@ export default function CustomOrderForm() {
         address: '',
         additional_notes: '',
       });
+    } catch (error) {
+      console.error('Submission error:', error.message);
+      setMessage('Error: ' + error.message);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -126,12 +158,9 @@ export default function CustomOrderForm() {
       <textarea
         placeholder="Additional Notes"
         value={form.additional_notes}
-        onChange={(e) =>
-          setForm({ ...form, additional_notes: e.target.value })
-        }
+        onChange={(e) => setForm({ ...form, additional_notes: e.target.value })}
         className="w-full border p-2 rounded bg-gray-100 text-black"
       />
-
       <button
         type="submit"
         disabled={loading}
@@ -139,8 +168,11 @@ export default function CustomOrderForm() {
       >
         {loading ? 'Submitting...' : 'Place Order'}
       </button>
-
-      {message && <p className="text-center mt-2 text-sm text-green-700">{message}</p>}
+      {message && (
+        <p className={`text-center mt-2 text-sm ${message.startsWith('Error') ? 'text-red-700' : 'text-green-700'}`}>
+          {message}
+        </p>
+      )}
     </form>
   );
 }
