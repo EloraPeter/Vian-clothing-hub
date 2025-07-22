@@ -1,0 +1,67 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{xcolor}
+\definecolor{vianpurple}{RGB}{126, 34, 206}
+\geometry{margin=1in}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\color{vianpurple}\textbf{Vian Clothing Hub}}
+\fancyhead[R]{\color{vianpurple}\textbf{Payment Receipt}}
+\fancyfoot[C]{Page \thepage\ of \pageref{LastPage}}
+
+\begin{document}
+
+\begin{center}
+    {\color{vianpurple}\textbf{\LARGE Payment Receipt}} \\
+    \vspace{0.5cm}
+    Vian Clothing Hub \\
+    Nigeria's Ultimate Fashion Destination \\
+    \vspace{0.5cm}
+\end{center}
+
+\begin{flushleft}
+    \textbf{Receipt Details} \\
+    Receipt ID: \textbf{RECEIPTID} \\
+    Invoice ID: \textbf{INVOICEID} \\
+    Order ID: \textbf{ORDERID} \\
+    Payment Reference: \textbf{PAYMENTREF} \\
+    Date: \textbf{DATE} \\
+    \vspace{0.5cm}
+    \textbf{Customer Details} \\
+    Name: \textbf{FULLNAME} \\
+    Address: \textbf{ADDRESS} \\
+\end{flushleft}
+
+\begin{center}
+    \vspace{0.5cm}
+    \textbf{Payment Summary}
+    \begin{tabular}{llr}
+        \toprule
+        \textbf{Description} & \textbf{Details} & \textbf{Amount (₦)} \\
+        \midrule
+        Fabric & \textbf{FABRIC} & \\
+        Style & \textbf{STYLE} & \\
+        \midrule
+        Deposit (Non-refundable) & & \textbf{DEPOSIT} \\
+        Balance Paid & & \textbf{BALANCE} \\
+        \midrule
+        \textbf{Total Paid} & & \textbf{AMOUNT} \\
+        \bottomrule
+    \end{tabular}
+\end{center}
+
+\vspace{1cm}
+
+\begin{flushleft}
+    \textbf{Note:} Your order is now in progress. Delivery has started. Check your dashboard for updates. \\
+    \textbf{Contact Us:} support@vianclothinghub.com | +2348087522801
+\end{flushleft}
+
+\end{document}
