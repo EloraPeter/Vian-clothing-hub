@@ -90,10 +90,12 @@ export default function AdminPage() {
     };
 
     const sendEmailNotification = async (email, subject, body) => {
-        // Placeholder: Use Supabase edge function or external service
-        console.log(`Sending email to ${email}: Subject: ${subject}, Body: ${body}`);
-        // Example Supabase edge function call:
-        // await supabase.functions.invoke('send-email', { body: { to: email, subject, html: body } });
+        const { error } = await supabase.functions.invoke('send-email', {
+            body: { to: email, subject, html: body },
+        });
+        if (error) {
+            console.error('Error sending email:', error.message);
+        }
     };
 
     const createInAppNotification = async (userId, message) => {
@@ -111,19 +113,28 @@ export default function AdminPage() {
     };
 
     const generateInvoicePDF = async (order, amount) => {
-        // Placeholder: Server-side function to replace LaTeX placeholders and compile PDF
         const invoiceData = {
+            INVOICEID: crypto.randomUUID(),
             ORDERID: order.id,
             FULLNAME: order.full_name,
             FABRIC: order.fabric,
             STYLE: order.style,
             ADDRESS: order.address,
-            AMOUNT: amount.toLocaleString(),
+            DEPOSIT: Number(order.deposit || 5000).toLocaleString(),
+            BALANCE: Number(amount - (order.deposit || 5000)).toLocaleString(),
+            AMOUNT: Number(amount).toLocaleString(),
             DATE: new Date().toLocaleDateString(),
         };
-        // Assume a server-side function generates and uploads the PDF
-        const pdfUrl = `[Generated PDF URL for order ${order.id}]`; // Replace with actual PDF generation logic
-        return pdfUrl;
+
+        const { data, error } = await supabase.functions.invoke('generate-pdf', {
+            body: { type: 'invoice', data: invoiceData },
+        });
+
+        if (error) {
+            throw new Error(`PDF generation failed: ${error.message}`);
+        }
+
+        return data.pdfUrl;
     };
 
     async function updateStatus(id, newStatus) {
@@ -159,6 +170,7 @@ export default function AdminPage() {
                 const pdfUrl = await generateInvoicePDF(order, price);
                 const { error: invoiceError } = await supabase.from('invoices').insert([
                     {
+                        id: invoiceData.INVOICEID,
                         order_id: order.id,
                         user_id: order.user_id,
                         amount: parseFloat(price),
@@ -180,7 +192,9 @@ export default function AdminPage() {
                     <p>Fabric: ${order.fabric}</p>
                     <p>Style: ${order.style}</p>
                     <p>Delivery Address: ${order.address}</p>
-                    <p>Amount: ₦${Number(price).toLocaleString()}</p>
+                    <p>Deposit: ₦${Number(order.deposit || 5000).toLocaleString()}</p>
+                    <p>Balance: ₦${Number(price - (order.deposit || 5000)).toLocaleString()}</p>
+                    <p>Total Amount: ₦${Number(price).toLocaleString()}</p>
                     <p>Date: ${new Date().toLocaleDateString()}</p>
                     <p><a href="${pdfUrl}">View/Download Invoice</a></p>
                     <p>Please check the app for more details: [Your App URL]</p>
