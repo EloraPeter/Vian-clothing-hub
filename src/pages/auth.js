@@ -80,8 +80,8 @@ export default function Auth() {
       >
         <img src="/logo.svg" alt="Aunty Nwanne Logo" className="h-16 w-auto" />
       </Link>
-      <div className="min-h-screen flex flex-col-reverse md:flex-row items-center justify-center p-4 mx-12 gap-8">
-        <div className="relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all duration-500 hover:scale-105 animate-fade-in">
+<div className="min-h-screen flex flex-col-reverse md:flex-row items-center justify-center px-4 md:px-12 py-8 gap-6 md:gap-8">
+  <div className="relative bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md transform transition-all duration-500 hover:scale-105 animate-fade-in">
           <form onSubmit={handleSubmit} className="space-y-6">
             <h1 className="text-3xl font-extrabold text-center text-purple-800 font-['Playfair_Display']">
               {mode === "login" ? "Welcome Back" : "Join the Style"}
@@ -204,7 +204,7 @@ export default function Auth() {
             </p>
           </form>
         </div>
-        <div className="relative w-full ml-10  text-left text-white space-y-4 animate-tilt">
+  <div className="relative w-full text-left text-white space-y-4 animate-tilt md:ml-10">
           {mode === "login" ? (
             <>
               <p className="text-7xl font-bold text-purple-400 tracking-wide">
