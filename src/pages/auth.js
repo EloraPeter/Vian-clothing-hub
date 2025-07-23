@@ -193,7 +193,20 @@ export default function Auth() {
             </p>
           </form>
         </div>
-        <div></div>
+        <div className="mt-8 text-center text-sm text-gray-700 max-w-md">
+          {mode === 'login' ? (
+            <>
+              <p className="font-medium">Welcome back, fashion icon. 👑</p>
+              <p>Log in to shop your style, track orders, and unlock exclusive deals.</p>
+            </>
+          ) : (
+            <>
+              <p className="font-medium">Join the vibe. Wear the difference. ✨</p>
+              <p>Create your account and step into the world of timeless fashion, curated just for you.</p>
+            </>
+          )}
+        </div>
+
       </div>
       <Footer />
     </main>

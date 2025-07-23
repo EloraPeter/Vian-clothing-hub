@@ -4,6 +4,7 @@ const DressLoader = () => {
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50">
       <div className="relative animate-pulse">
+        <div className="text-white text-sm mt-4 animate-pulse">Crafting Your Style...</div>
         <svg
           className="w-16 h-16 text-purple-600"
           viewBox="0 0 24 24"
