@@ -3,11 +3,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
 import zxcvbn from 'zxcvbn';
 import Spinner from '@/components/Spinner';
-import Navbar from '@/components/Navbar';
 import Footer from '@/components/footer';
-import { useWishlist } from '@/context/WishlistContext';
-import { useCart } from '@/context/CartContext';
-import CartPanel from '@/components/CartPanel';
 
 export default function Auth() {
   const router = useRouter();
@@ -72,9 +68,9 @@ export default function Auth() {
   const strengthColor = ['#ef4444', '#f97316', '#facc15', '#4ade80', '#22c55e'];
 
   return (
-    <main className="min-h-screen">
-      <Navbar />
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-100 via-pink-50 to-gray-50 p-4">
+    <main className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-gray-50">
+      
+      <div className="min-h-screen flex items-center justify-center p-4">
         <div className="relative bg-white rounded-2xl shadow-xl p-8 w-full max-w-md transform transition-all duration-500 hover:scale-105 animate-fade-in">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-200/20 to-pink-200/20 rounded-2xl -z-10" />
           <form onSubmit={handleSubmit} className="space-y-6">
