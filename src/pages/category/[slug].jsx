@@ -13,6 +13,11 @@ import DressLoader from '@/components/DressLoader';
 export default function Category() {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
+    const [profile, setProfile] = useState(null);
+        const [isCartOpen, setIsCartOpen] = useState(false);
+    
+    const { addToCart } = useCart();
+        const { toggleWishlist, isInWishlist } = useWishlist();
 
     const { slug } = router.query;
     const [products, setProducts] = useState([]);
@@ -35,6 +40,23 @@ export default function Category() {
         { name: 'Shop', href: '/shop' },
         { name: slug.replace('-', ' ').toUpperCase(), href: `/category/${slug}` },
     ];
+
+     // Fetch user profile
+        useEffect(() => {
+            async function fetchProfile() {
+                const { data: { user }, error: userError } = await supabase.auth.getUser();
+                if (user) {
+                    const { data: profileData, error: profileError } = await supabase
+                        .from("profiles")
+                        .select("*")
+                        .eq("id", user.id)
+                        .maybeSingle();
+                    if (!profileError) setProfile(profileData);
+                    else console.error("Profile fetch error:", profileError.message);
+                } else if (userError) console.error("User fetch error:", userError.message);
+            }
+            fetchProfile();
+        }, []);
 
     return (
         <main className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-rose-50 bg-[url('/african-fabric.jpg')] bg-cover bg-center relative">

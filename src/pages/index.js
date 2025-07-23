@@ -12,6 +12,11 @@ import DressLoader from '@/components/DressLoader';
 
 export default function Home() {
     const [loading, setLoading] = useState(true);
+    const [profile, setProfile] = useState(null);
+        const [isCartOpen, setIsCartOpen] = useState(false);
+    
+    const { addToCart } = useCart();
+        const { toggleWishlist, isInWishlist } = useWishlist();
 
     const categories = [
         { name: 'Women’s Clothing', slug: 'womens-clothing', image: '/womens-clothing.jpg' },
@@ -24,7 +29,24 @@ export default function Home() {
         { id: 2, name: 'Kente Shirt', price: 59.99, image: '/kente-shirt.jpg' },
     ];
 
-    if (loading) return <DressLoader />;
+    // Fetch user profile
+    useEffect(() => {
+        async function fetchProfile() {
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profileData, error: profileError } = await supabase
+                    .from("profiles")
+                    .select("*")
+                    .eq("id", user.id)
+                    .maybeSingle();
+                if (!profileError) setProfile(profileData);
+                else console.error("Profile fetch error:", profileError.message);
+            } else if (userError) console.error("User fetch error:", userError.message);
+        }
+        fetchProfile();
+    }, []);
+
+    // if (loading) return <DressLoader />;
 
 
     return (

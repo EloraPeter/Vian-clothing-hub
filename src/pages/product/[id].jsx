@@ -14,12 +14,32 @@ export default function Product() {
     const router = useRouter();
     const { id } = router.query;
     const [loading, setLoading] = useState(true);
+    const [profile, setProfile] = useState(null);
+    const { addToCart } = useCart();
+        const { toggleWishlist, isInWishlist } = useWishlist();
 
     const [product, setProduct] = useState(null);
     const [reviews, setReviews] = useState([]);
     const [relatedItems, setRelatedItems] = useState([]);
     const [frequentlyBought, setFrequentlyBought] = useState([]);
     const [mainImage, setMainImage] = useState('');
+
+     // Fetch user profile
+        useEffect(() => {
+            async function fetchProfile() {
+                const { data: { user }, error: userError } = await supabase.auth.getUser();
+                if (user) {
+                    const { data: profileData, error: profileError } = await supabase
+                        .from("profiles")
+                        .select("*")
+                        .eq("id", user.id)
+                        .maybeSingle();
+                    if (!profileError) setProfile(profileData);
+                    else console.error("Profile fetch error:", profileError.message);
+                } else if (userError) console.error("User fetch error:", userError.message);
+            }
+            fetchProfile();
+        }, []);
 
     useEffect(() => {
         async function fetchProduct() {
