@@ -9,6 +9,8 @@ import { FaHeart, FaRegHeart, FaShoppingCart, FaStar, FaStarHalfAlt, FaRegStar }
 import Navbar from "@/components/Navbar";
 import CartPanel from "@/components/CartPanel";
 import DressLoader from '@/components/DressLoader';
+import Breadcrumbs from '@/components/Breadcrumbs';
+import Head from 'next/head';
 
 export default function Product() {
     const router = useRouter();
@@ -16,62 +18,104 @@ export default function Product() {
     const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState(null);
     const { addToCart } = useCart();
-        const { toggleWishlist, isInWishlist } = useWishlist();
-
+    const { toggleWishlist, isInWishlist } = useWishlist();
+    const [additionalImages, setAdditionalImages] = useState([]);
     const [product, setProduct] = useState(null);
     const [reviews, setReviews] = useState([]);
-    const [relatedItems, setRelatedItems] = useState([]);
+    const [relatedProducts, setRelatedProducts] = useState([]);
     const [frequentlyBought, setFrequentlyBought] = useState([]);
     const [mainImage, setMainImage] = useState('');
+    const [newReview, setNewReview] = useState({ rating: '', comment: '' });
 
-     // Fetch user profile
-        useEffect(() => {
-            async function fetchProfile() {
-                const { data: { user }, error: userError } = await supabase.auth.getUser();
-                if (user) {
-                    const { data: profileData, error: profileError } = await supabase
-                        .from("profiles")
-                        .select("*")
-                        .eq("id", user.id)
-                        .maybeSingle();
-                    if (!profileError) setProfile(profileData);
-                    else console.error("Profile fetch error:", profileError.message);
-                } else if (userError) console.error("User fetch error:", userError.message);
-            }
-            fetchProfile();
-        }, []);
 
     useEffect(() => {
-        async function fetchProduct() {
-            const { data: productData } = await supabase.from('products').select('*').eq('id', id).single();
+        if (!id) return;
+
+        async function fetchData() {
+            setLoading(true);
+            // Fetch user profile
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profileData } = await supabase
+                    .from('profiles')
+                    .select('email, avatar_url')
+                    .eq('id', user.id)
+                    .maybeSingle();
+                setProfile(profileData);
+            }
+
+            // Fetch product
+            const { data: productData } = await supabase
+                .from('products')
+                .select('*, categories(name, slug)')
+                .eq('id', id)
+                .single();
             setProduct(productData);
-            setMainImage(productData?.images[0] || '');
 
-            const { data: reviewData } = await supabase.from('reviews').select('*').eq('product_id', id);
-            setReviews(reviewData || []);
+            // Fetch additional images
+            const { data: imagesData } = await supabase
+                .from('product_images')
+                .select('image_url')
+                .eq('product_id', id);
+            setAdditionalImages(imagesData?.map((img) => img.image_url) || []);
 
-            const { data: relatedData } = await supabase.from('products').select('*').eq('category', productData?.category).neq('id', id).limit(4);
-            setRelatedItems(relatedData || []);
+            // Fetch reviews
+            const { data: reviewsData } = await supabase
+                .from('reviews')
+                .select('rating, comment, created_at')
+                .eq('product_id', id);
+            setReviews(reviewsData || []);
 
-            const { data: boughtData } = await supabase.from('products').select('*').eq('category', productData?.category).neq('id', id).limit(2);
-            setFrequentlyBought(boughtData || []);
+            // Fetch related products
+            const { data: relatedData } = await supabase
+                .from('products')
+                .select('id, name, image_url, price, is_on_sale, discount_percentage')
+                .eq('category_id', productData?.category_id)
+                .neq('id', id)
+                .limit(4);
+            setRelatedProducts(relatedData || []);
+            setLoading(false);
         }
-        if (id) fetchProduct();
+        fetchData();
     }, [id]);
 
-    if (!product) return <div>Loading...</div>;
+    const handleReviewSubmit = async (e) => {
+        e.preventDefault();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            router.push('/auth');
+            return;
+        }
+        const { error } = await supabase.from('reviews').insert({
+            product_id: id,
+            user_id: user.id,
+            rating: parseInt(newReview.rating),
+            comment: newReview.comment,
+        });
+        if (!error) {
+            setReviews([...reviews, { rating: parseInt(newReview.rating), comment: newReview.comment, created_at: new Date().toISOString() }]);
+            setNewReview({ rating: '', comment: '' });
+        }
+    };
 
-    const breadcrumbs = [
-        { name: 'Home', href: '/' },
-        { name: 'Shop', href: '/shop' },
-        { name: product.category.replace('-', ' ').toUpperCase(), href: `/category/${product.category}` },
-        { name: product.name, href: `/product/${id}` },
-    ];
+    const renderStars = (rating) => {
+        const stars = [];
+        for (let i = 1; i <= 5; i++) {
+            if (i <= rating) stars.push(<FaStar key={i} className="text-yellow-400" />);
+            else if (i - 0.5 <= rating) stars.push(<FaStarHalfAlt key={i} className="text-yellow-400" />);
+            else stars.push(<FaRegStar key={i} className="text-yellow-400" />);
+        }
+        return stars;
+    };
 
     if (loading) return <DressLoader />;
 
 
     return (
+        <Head>
+        <title>{product?.name} - Vian Clothing Hub</title>
+        <meta name="description" content={product?.description} />
+      </Head>
         <main className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-rose-50 bg-[url('/african-fabric.jpg')] bg-cover bg-center relative">
             <Navbar
                 profile={profile}
@@ -79,100 +123,133 @@ export default function Product() {
                 cartItemCount={useCart().cart.length}
             />
             <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-            <div className="flex flex-col p-6 max-w-5xl mx-auto">
-                <nav className="flex items-center space-x-2 text-gray-600 mb-6">
-                    {breadcrumbs.map((crumb, i) => (
-                        <div key={crumb.href} className="flex items-center">
-                            <Link href={crumb.href} className="hover:text-purple-700">
-                                {crumb.name}
-                            </Link>
-                            {i < breadcrumbs.length - 1 && <span className="mx-2">></span>}
-                        </div>
-                    ))}
-                </nav>
-                <div className="flex flex-col md:flex-row gap-6">
-                    <div className="w-full md:w-1/2">
-                        <img src={mainImage} alt={product.name} className="w-full h-96 object-cover rounded-lg" />
-                        <div className="flex gap-2 mt-4">
-                            {product.images.map((image, i) => (
-                                <img
-                                    key={i}
-                                    src={image}
-                                    alt={`${product.name} ${i + 1}`}
-                                    className="w-20 h-20 object-cover rounded-lg cursor-pointer hover:opacity-80"
-                                    onClick={() => setMainImage(image)}
-                                />
-                            ))}
-                        </div>
-                    </div>
-                    <div className="w-full md:w-1/2 bg-white/90 rounded-lg p-6 shadow-md">
-                        <h1 className="text-3xl font-bold text-purple-800 font-['Playfair_Display'] mb-4">{product.name}</h1>
-                        <p className="text-xl text-gray-700 mb-4">${product.price.toFixed(2)}</p>
-                        <p className="text-gray-600 mb-6">{product.description}</p>
-                        <button className="w-full bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 shadow-md hover:shadow-lg transition-all duration-300">
-                            Add to Cart
-                        </button>
-                    </div>
+            <div className="max-w-7xl mx-auto px-4 py-12">
+          <Breadcrumbs product={product} category={product?.categories} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Images */}
+            <div>
+              <img
+                src={product?.image_url}
+                alt={product?.name}
+                className="w-full h-96 object-cover rounded-lg mb-4"
+              />
+              {additionalImages.length > 0 && (
+                <div className="flex gap-2">
+                  {additionalImages.map((image, i) => (
+                    <img
+                      key={i}
+                      src={image}
+                      alt={`${product?.name} ${i + 1}`}
+                      className="w-20 h-20 object-cover rounded-lg"
+                    />
+                  ))}
                 </div>
-                <div className="mt-12">
-                    <h2 className="text-2xl font-bold text-purple-800 font-['Playfair_Display'] mb-4">Customer Reviews</h2>
-                    <div className="bg-white/90 rounded-lg p-6 shadow-md">
-                        {reviews.length === 0 ? (
-                            <p className="text-gray-600">No reviews yet.</p>
-                        ) : (
-                            reviews.map((review) => (
-                                <div key={review.id} className="mb-4">
-                                    <div className="flex items-center mb-2">
-                                        {[...Array(5)].map((_, i) => (
-                                            <svg
-                                                key={i}
-                                                className={`w-5 h-5 ${i < review.rating ? 'text-yellow-600' : 'text-gray-300'}`}
-                                                fill="currentColor"
-                                                viewBox="0 0 20 20"
-                                            >
-                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.97a1 1 0 00.95.69h4.18c.969 0 1.371 1.24.588 1.81l-3.39 2.46a1 1 0 00-.364 1.118l1.286 3.97c.3.921-.755 1.688-1.54 1.118l-3.39-2.46a1 1 0 00-1.175 0l-3.39 2.46c-.784.57-1.838-.197-1.54-1.118l1.286-3.97a1 1 0 00-.364-1.118l-3.39-2.46c-.783-.57-.38-1.81.588-1.81h4.18a1 1 0 00.95-.69l1.286-3.97z" />
-                                            </svg>
-                                        ))}
-                                    </div>
-                                    <p className="text-gray-600">{review.comment}</p>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </div>
-                <div className="mt-12">
-                    <h2 className="text-2xl font-bold text-purple-800 font-['Playfair_Display'] mb-4">Related Items</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {relatedItems.map((item) => (
-                            <Link
-                                key={item.id}
-                                href={`/product/${item.id}`}
-                                className="relative bg-white/80 rounded-lg shadow-md p-4 hover:scale-105 transition-all duration-300"
-                            >
-                                <img src={item.image} alt={item.name} className="w-full h-48 object-cover rounded-lg" />
-                                <h3 className="text-xl font-semibold text-gray-800 mt-2">{item.name}</h3>
-                                <p className="text-gray-600">${item.price.toFixed(2)}</p>
-                            </Link>
-                        ))}
-                    </div>
-                </div>
-                <div className="mt-12">
-                    <h2 className="text-2xl font-bold text-purple-800 font-['Playfair_Display'] mb-4">Frequently Bought Together</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {frequentlyBought.map((item) => (
-                            <Link
-                                key={item.id}
-                                href={`/product/${item.id}`}
-                                className="relative bg-white/80 rounded-lg shadow-md p-4 hover:scale-105 transition-all duration-300"
-                            >
-                                <img src={item.image} alt={item.name} className="w-full h-48 object-cover rounded-lg" />
-                                <h3 className="text-xl font-semibold text-gray-800 mt-2">{item.name}</h3>
-                                <p className="text-gray-600">${item.price.toFixed(2)}</p>
-                            </Link>
-                        ))}
-                    </div>
-                </div>
+              )}
             </div>
+            {/* Details */}
+            <div>
+              <h1 className="text-3xl font-bold text-purple-800 font-playfair-display mb-4">
+                {product?.name}
+              </h1>
+              <div className="flex gap-2 mb-4">{renderStars(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length || 0)}</div>
+              <p className="text-purple-700 font-semibold text-xl mb-4">
+                {product?.is_on_sale ? (
+                  <>
+                    <span className="line-through text-red-600">₦{Number(product.price).toLocaleString()}</span>
+                    <span className="ml-2 text-green-600">
+                      ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
+                    </span>
+                  </>
+                ) : (
+                  `₦${Number(product.price).toLocaleString()}`
+                )}
+              </p>
+              <p className="text-gray-600 mb-4">{product?.description}</p>
+              <button
+                onClick={() => addToCart({ ...product, quantity: 1 })}
+                disabled={product?.is_out_of_stock}
+                className={`w-full py-3 rounded-lg flex items-center justify-center gap-2 font-medium ${
+                  product?.is_out_of_stock ? 'bg-gray-400 cursor-not-allowed text-white' : 'bg-purple-600 hover:bg-purple-700 text-white'
+                }`}
+              >
+                <FaShoppingCart />
+                {product?.is_out_of_stock ? 'Out of Stock' : 'Add to Cart'}
+              </button>
+            </div>
+          </div>
+          {/* Reviews */}
+          <section className="mt-12">
+            <h2 className="text-2xl font-bold text-purple-800 font-playfair-display mb-4">Customer Reviews</h2>
+            {reviews.length === 0 ? (
+              <p className="text-gray-600">No reviews yet.</p>
+            ) : (
+              <ul className="space-y-4">
+                {reviews.map((review, i) => (
+                  <li key={i} className="border p-4 rounded-lg">
+                    <div className="flex gap-2 mb-2">{renderStars(review.rating)}</div>
+                    <p className="text-gray-600">{review.comment}</p>
+                    <p className="text-sm text-gray-500">{new Date(review.created_at).toLocaleString()}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <form onSubmit={handleReviewSubmit} className="mt-6 space-y-4">
+              <select
+                value={newReview.rating}
+                onChange={(e) => setNewReview({ ...newReview, rating: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg text-gray-700"
+                required
+              >
+                <option value="">Select Rating</option>
+                {[1, 2, 3, 4, 5].map((r) => (
+                  <option key={r} value={r}>{r} Stars</option>
+                ))}
+              </select>
+              <textarea
+                value={newReview.comment}
+                onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg text-gray-700"
+                placeholder="Write your review"
+              />
+              <button
+                type="submit"
+                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+              >
+                Submit Review
+              </button>
+            </form>
+          </section>
+          {/* Related Products */}
+          <section className="mt-12">
+            <h2 className="text-2xl font-bold text-purple-800 font-playfair-display mb-4">Related Products</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {relatedProducts.map((product) => (
+                <Link key={product.id} href={`/product/${product.id}`}>
+                  <a className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100">
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="w-full h-48 object-cover rounded-lg mb-4"
+                    />
+                    <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
+                    <p className="text-purple-700 font-semibold">
+                      {product.is_on_sale ? (
+                        <>
+                          <span className="line-through text-red-600">₦{Number(product.price).toLocaleString()}</span>
+                          <span className="ml-2 text-green-600">
+                            ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
+                          </span>
+                        </>
+                      ) : (
+                        `₦${Number(product.price).toLocaleString()}`
+                      )}
+                    </p>
+                  </a>
+                </Link>
+              ))}
+            </div>
+          </section>
+        </div>
             <Footer />
         </main>
     );
