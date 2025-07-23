@@ -8,6 +8,7 @@ import { useCart } from '@/context/CartContext';
 import CartPanel from '@/components/CartPanel';
 import zxcvbn from 'zxcvbn';
 import Script from 'next/script';
+import DressLoader from '@/components/DressLoader';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -251,7 +252,7 @@ export default function Dashboard() {
     router.push('/auth');
   };
 
-  if (loading) return <p className="p-6 text-center text-gray-600">Loading...</p>;
+  if (loading) return <DressLoader />;
   if (error) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
 
   return (
