@@ -70,13 +70,14 @@ export default function Auth() {
   const strengthColor = ['#ef4444', '#f97316', '#facc15', '#4ade80', '#22c55e'];
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-rose-50 bg-[url('/african-fabric.jpg')] bg-cover bg-center">
+    <main className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-rose-50 bg-[url('/african-fabric.jpg')] bg-cover bg-center relative">
       {loading && <DressLoader />}
-      <Link href="/" className="flex items-center space-x-2 p-6">
-        <img src="/logo.svg" alt="Aunty Nwanne Logo" className="h-12 w-auto" />
+      <Link href="/" className="fixed top-6 left-6 z-50 flex items-center space-x-2">
+        <img src="/logo.svg" alt="Aunty Nwanne Logo" className="h-16 w-auto" />
       </Link>
-      <div className="min-h-screen flex item-center justify-center ml-50 p-4">
+      <div className="min-h-screen flex flex-col md:flex-row items-center justify-center p-4 gap-8">
         <div className="relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all duration-500 hover:scale-105 animate-fade-in">
+          <div className="absolute inset-0 bg-gray-900/30 rounded-2xl -z-10" />
           <form onSubmit={handleSubmit} className="space-y-6">
             <h1 className="text-3xl font-extrabold text-center text-purple-800 font-['Playfair_Display']">
               {mode === 'login' ? 'Welcome Back' : 'Join the Style'}
@@ -193,20 +194,19 @@ export default function Auth() {
             </p>
           </form>
         </div>
-        <div className="mt-8 text-center text-sm text-gray-700 max-w-md">
+        <div className="w-full max-w-md rounded-2xl shadow-lg p-6 text-center text-gray-700 space-y-4 animate-fade-in">
           {mode === 'login' ? (
             <>
-              <p className="font-medium">Welcome back, fashion icon. 👑</p>
-              <p>Log in to shop your style, track orders, and unlock exclusive deals.</p>
+              <p className="text-xxl font-bold text-purple-400 ">Hey, fashion icon. 👑</p>
+              <p className="text-sm">Log in to shop your style, track orders, and unlock exclusive deals.</p>
             </>
           ) : (
             <>
-              <p className="font-medium">Join the vibe. Wear the difference. ✨</p>
-              <p>Create your account and step into the world of timeless fashion, curated just for you.</p>
+              <p className="text-xl font-semibold text-purple-800 ">Join the vibe. Wear the difference. ✨</p>
+              <p className="text-sm">Create your account and step into the world of timeless fashion, curated just for you.</p>
             </>
           )}
         </div>
-
       </div>
       <Footer />
     </main>
