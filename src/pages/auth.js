@@ -200,8 +200,8 @@ export default function Auth() {
           <div className="absolute inset-0 border-4 border-double border-yellow-500/50 rounded-2xl -z-10" />
           {mode === 'login' ? (
             <>
-              <p className="text-4xl font-bold text-yellow-600 font-['Playfair_Display'] tracking-wide">Hey, Fashion Icon! 👑</p>
-              <p className="text-lg text-gray-700">Log in to dive into vibrant styles, track your orders, and unlock exclusive African fashion deals.</p>
+              <p className="text-7xl font-bold text-purple-400 tracking-wide">Hey, Fashion Icon! 👑</p>
+              <p className="text-3xl text-white">Log in to dive into vibrant styles, track your orders, and unlock exclusive African fashion deals.</p>
             </>
           ) : (
             <>
