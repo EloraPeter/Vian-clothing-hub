@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import zxcvbn from 'zxcvbn';
 import Spinner from '@/components/Spinner';
+import DressLoader from '@/components/DressLoader';
 import Footer from '@/components/footer';
 
 export default function Auth() {
@@ -69,17 +70,16 @@ export default function Auth() {
   const strengthColor = ['#ef4444', '#f97316', '#facc15', '#4ade80', '#22c55e'];
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-gray-50">
-
-      <Link href="/" className="flex items-center space-x-2">
-        <img src="/logo.svg" alt="Aunty Nwanne Logo" className="h-30 w-auto ml-10 mt-10" />
+    <main className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-rose-50 bg-[url('/african-fabric.jpg')] bg-cover bg-center">
+      {loading && <DressLoader />}
+      <Link href="/" className="flex items-center space-x-2 p-6">
+        <img src="/logo.svg" alt="Aunty Nwanne Logo" className="h-12 w-auto" />
       </Link>
-
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="relative bg-white rounded-2xl shadow-xl p-8 w-full max-w-md transform transition-all duration-500 hover:scale-105 animate-fade-in">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-200/20 to-pink-200/20 rounded-2xl -z-10" />
+        <div className="relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all duration-500 hover:scale-105 animate-fade-in">
+          <div className="absolute inset-0 bg-gray-900/30 rounded-2xl -z-10" />
           <form onSubmit={handleSubmit} className="space-y-6">
-            <h1 className="text-3xl font-extrabold text-center text-purple-800">
+            <h1 className="text-3xl font-extrabold text-center text-purple-800 font-['Playfair_Display']">
               {mode === 'login' ? 'Welcome Back' : 'Join the Style'}
             </h1>
 
