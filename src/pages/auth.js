@@ -204,8 +204,7 @@ export default function Auth() {
             </p>
           </form>
         </div>
-        <div className="relative w-full ml-10 max-w-l text-left text-white space-y-4 animate-tilt">
-          <div className="absolute inset-0 border-4 border-double border-yellow-500/50 rounded-2xl -z-10" />
+        <div className="relative w-full ml-10 max-w-md text-left text-white space-y-4 animate-tilt">
           {mode === "login" ? (
             <>
               <p className="text-7xl font-bold text-purple-400 tracking-wide">
