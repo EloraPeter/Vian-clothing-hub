@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import zxcvbn from 'zxcvbn';
 import Spinner from '@/components/Spinner';
 import Footer from '@/components/footer';
@@ -69,7 +70,11 @@ export default function Auth() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-gray-50">
-      
+
+      <Link href="/" className="flex items-center space-x-2">
+        <img src="/logo.svg" alt="Aunty Nwanne Logo" className="h-30 w-auto ml-10 mt-10" />
+      </Link>
+
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="relative bg-white rounded-2xl shadow-xl p-8 w-full max-w-md transform transition-all duration-500 hover:scale-105 animate-fade-in">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-200/20 to-pink-200/20 rounded-2xl -z-10" />
