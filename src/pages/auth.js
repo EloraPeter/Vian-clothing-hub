@@ -5,7 +5,6 @@ import Link from "next/link";
 import zxcvbn from "zxcvbn";
 import Spinner from "@/components/Spinner";
 import DressLoader from "@/components/DressLoader";
-import Footer from "@/components/footer";
 
 export default function Auth() {
   const router = useRouter();
@@ -80,8 +79,8 @@ export default function Auth() {
       >
         <img src="/logo.svg" alt="Aunty Nwanne Logo" className="h-16 w-auto" />
       </Link>
-<div className="min-h-screen flex flex-col-reverse md:flex-row items-center justify-center px-4 md:px-12 py-8 gap-6 md:gap-8">
-  <div className="relative bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md transform transition-all duration-500 hover:scale-105 animate-fade-in">
+      <div className="min-h-screen flex flex-col-reverse md:flex-row items-center justify-center px-4 md:px-12 md:py-20 py-8 gap-6 md:gap-8">
+        <div className="relative bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md transform transition-all duration-500 hover:scale-105 animate-fade-in">
           <form onSubmit={handleSubmit} className="space-y-6">
             <h1 className="text-3xl font-extrabold text-center text-purple-800 font-['Playfair_Display']">
               {mode === "login" ? "Welcome Back" : "Join the Style"}
@@ -204,13 +203,13 @@ export default function Auth() {
             </p>
           </form>
         </div>
-  <div className="relative w-full text-left text-white space-y-4 animate-tilt md:ml-10">
+        <div className="relative w-full text-left px-10 text-white space-y-4 animate-tilt md:ml-10">
           {mode === "login" ? (
             <>
-              <p className="text-7xl font-bold text-purple-400 tracking-wide">
+              <p className="text-4xl md:text-7xl font-bold text-purple-400 tracking-wide">
                 Hey, Fashion Icon!
               </p>
-              <p className="text-2xl text-white leading-relaxed">
+              <p className="text-base md:text-2xl text-white leading-relaxed">
                 Log in to explore a vibrant collection of authentic African
                 fashion, effortlessly track your stylish orders, and unlock
                 exclusive deals crafted just for you.
@@ -218,10 +217,10 @@ export default function Auth() {
             </>
           ) : (
             <>
-              <p className="text-7xl font-bold text-purple-400 tracking-wide">
+              <p className="text-4xl md:text-7xl font-bold text-purple-400 tracking-wide">
                 Join the Vibe!
               </p>
-              <p className="text-2xl text-white leading-relaxed">
+              <p className="text-base md:text-2xl text-white leading-relaxed">
                 Create your account today and begin your journey into a world of
                 bold, elegant, and timeless African fashion handpicked to
                 celebrate your unique style and story.
@@ -230,7 +229,6 @@ export default function Auth() {
           )}
         </div>
       </div>
-      <Footer />
     </main>
   );
 }
