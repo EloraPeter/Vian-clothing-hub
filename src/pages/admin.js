@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
 import Navbar from '@/components/Navbar';
 import ProfileUploader from '@/components/ProfileUploader';
+import DressLoader from '@/components/DressLoader';
 
 export default function AdminPage() {
     const router = useRouter();
@@ -381,7 +382,7 @@ export default function AdminPage() {
     }, [totalProductPages, currentProductPage]);
 
     if (!user) return <p className="p-6 text-center text-gray-600">Checking authentication...</p>;
-    if (loading) return <p className="p-6 text-center text-gray-600">Loading data...</p>;
+    if (loading) return <DressLoader />;
     if (error) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
 
     return (
@@ -437,11 +438,10 @@ export default function AdminPage() {
                                 <button
                                     onClick={handleAvatarChange}
                                     disabled={uploading || !avatarFile}
-                                    className={`w-full py-2 rounded-md font-semibold text-white transition-colors ${
-                                        uploading || !avatarFile
+                                    className={`w-full py-2 rounded-md font-semibold text-white transition-colors ${uploading || !avatarFile
                                             ? 'bg-gray-400 cursor-not-allowed'
                                             : 'bg-purple-600 hover:bg-purple-700'
-                                    }`}
+                                        }`}
                                 >
                                     {uploading ? 'Uploading...' : 'Update Picture'}
                                 </button>
@@ -531,11 +531,10 @@ export default function AdminPage() {
                                 <button
                                     type="submit"
                                     disabled={productUploading}
-                                    className={`w-full py-2 rounded-md font-semibold text-white transition-colors ${
-                                        productUploading
+                                    className={`w-full py-2 rounded-md font-semibold text-white transition-colors ${productUploading
                                             ? 'bg-gray-400 cursor-not-allowed'
                                             : 'bg-purple-600 hover:bg-purple-700'
-                                    }`}
+                                        }`}
                                 >
                                     {productUploading ? 'Uploading...' : 'Add Product'}
                                 </button>
@@ -589,11 +588,10 @@ export default function AdminPage() {
                                                                         is_on_sale: !product.is_on_sale,
                                                                     })
                                                                 }
-                                                                className={`px-3 py-1 rounded-md text-sm font-medium ${
-                                                                    product.is_on_sale
+                                                                className={`px-3 py-1 rounded-md text-sm font-medium ${product.is_on_sale
                                                                         ? 'bg-red-600 text-white'
                                                                         : 'bg-purple-600 text-white hover:bg-purple-700'
-                                                                }`}
+                                                                    }`}
                                                             >
                                                                 {product.is_on_sale ? 'Remove Sale' : 'Mark as On Sale'}
                                                             </button>
@@ -603,11 +601,10 @@ export default function AdminPage() {
                                                                         is_out_of_stock: !product.is_out_of_stock,
                                                                     })
                                                                 }
-                                                                className={`px-3 py-1 rounded-md text-sm font-medium ${
-                                                                    product.is_out_of_stock
+                                                                className={`px-3 py-1 rounded-md text-sm font-medium ${product.is_out_of_stock
                                                                         ? 'bg-red-600 text-white'
                                                                         : 'bg-purple-600 text-white hover:bg-purple-700'
-                                                                }`}
+                                                                    }`}
                                                             >
                                                                 {product.is_out_of_stock
                                                                     ? 'Mark as In Stock'
@@ -619,11 +616,10 @@ export default function AdminPage() {
                                                                         is_new: !product.is_new,
                                                                     })
                                                                 }
-                                                                className={`px-3 py-1 rounded-md text-sm font-medium ${
-                                                                    product.is_new
+                                                                className={`px-3 py-1 rounded-md text-sm font-medium ${product.is_new
                                                                         ? 'bg-red-600 text-white'
                                                                         : 'bg-purple-600 text-white hover:bg-purple-700'
-                                                                }`}
+                                                                    }`}
                                                             >
                                                                 {product.is_new ? 'Remove New' : 'Mark as New'}
                                                             </button>
