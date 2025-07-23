@@ -3,7 +3,7 @@ import Footer from '@/components/footer';
 
 export default function NotFound() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-rose-50 bg-[url('/african-fabric.jpg')] bg-cover bg-center relative flex items-center justify-center p-6">
+    <main className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-rose-50 bg-[url('/african-fabric.jpg')] bg-cover bg-center relative p-6">
       <Link href="/" className="fixed top-6 left-6 z-50 flex items-center space-x-2 hover:shadow-glow transition-shadow duration-300">
         <img src="/logo.svg" alt="Vian Clothing Hub Logo" className="h-20 w-auto" />
       </Link>
