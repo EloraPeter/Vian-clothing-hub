@@ -479,7 +479,7 @@ export default function Dashboard() {
                   type="email"
                   value={profile?.email || ''}
                   onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-black"
                   required
                 />
               </div>
@@ -548,7 +548,7 @@ export default function Dashboard() {
                     type={showOldPass ? 'text' : 'password'}
                     name="old_password"
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-black"
                     placeholder="Enter old password"
                   />
                   <button
@@ -571,7 +571,7 @@ export default function Dashboard() {
                     onChange={handleNewPasswordChange}
                     required
                     minLength={6}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-black"
                     placeholder="Enter new password"
                   />
                   <button
