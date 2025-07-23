@@ -84,7 +84,7 @@ export default function Auth() {
         </button>
 
         <input
-          className="w-full border rounded p-2"
+          className="w-full border rounded p-2 text-black"
           type="email"
           placeholder="Email"
           value={form.email}
@@ -95,7 +95,7 @@ export default function Auth() {
         {/* Password field with toggle */}
         <div className="relative">
           <input
-            className="w-full border rounded p-2"
+            className="w-full border rounded p-2 text-black"
             type={showPassword ? 'text' : 'password'}
             placeholder="Password"
             value={form.password}
@@ -115,7 +115,7 @@ export default function Auth() {
         {/* Strength meter for signup only */}
         {mode === 'signup' && form.password && (
           <p
-            className="text-sm font-semibold"
+            className="text-sm font-semibold  text-grey-700"
             style={{ color: strengthColor[strengthScore] }}
           >
             Password Strength: {strengthText[strengthScore]}
