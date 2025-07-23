@@ -126,7 +126,7 @@ export default function Auth() {
         {mode === 'signup' && (
           <div className="relative">
             <input
-              className="w-full border rounded p-2"
+              className="w-full border rounded p-2 text-black"
               type={showConfirm ? 'text' : 'password'}
               placeholder="Confirm Password"
               value={form.confirm}
