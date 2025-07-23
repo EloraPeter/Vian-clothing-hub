@@ -7,7 +7,7 @@ export default function NotFound() {
                 <img src="/logo.svg" alt="Vian Clothing Hub Logo" className="h-20 w-auto" />
             </Link>
             <div className="flex items-center justify-centre min-h-screen ">
-                <div className="relative pl-10 max-w-lg w-full  text-left animate-fade-in">
+                <div className="relative pl-10 max-w-lg w-full text-left animate-fade-in">
                     <div className="mb-6">
                         <svg
                             className="w-24 h-24 mx-auto text-yellow-600 animate-pulse"
