@@ -75,7 +75,7 @@ export default function Auth() {
       <Link href="/" className="flex items-center space-x-2 p-6">
         <img src="/logo.svg" alt="Aunty Nwanne Logo" className="h-12 w-auto" />
       </Link>
-      <div className="min-h-screen flex  ml-50 p-4">
+      <div className="min-h-screen flex item-center justify-center ml-50 p-4">
         <div className="relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all duration-500 hover:scale-105 animate-fade-in">
           <form onSubmit={handleSubmit} className="space-y-6">
             <h1 className="text-3xl font-extrabold text-center text-purple-800 font-['Playfair_Display']">
@@ -193,6 +193,7 @@ export default function Auth() {
             </p>
           </form>
         </div>
+        <div></div>
       </div>
       <Footer />
     </main>
