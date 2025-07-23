@@ -71,13 +71,13 @@ export default function Auth() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-rose-50 bg-[url('/african-fabric.jpg')] bg-cover bg-center relative">
-      <div class="absolute inset-0 bg-gradient-to-b from-black/60 to-black/50 z-0"></div>
+      <div class="absolute inset-0 bg-gradient-to-b from-black/30 to-black/40 z-0"></div>
 
       {loading && <DressLoader />}
       <Link href="/" className="fixed top-6 left-6 z-50 flex items-center space-x-2">
         <img src="/logo.svg" alt="Aunty Nwanne Logo" className="h-16 w-auto" />
       </Link>
-      <div className="min-h-screen flex flex-col-reverse md:flex-row items-center justify-center p-4 gap-8">
+      <div className="min-h-screen flex flex-col-reverse md:flex-row items-center justify-center p-4 mx-10 gap-8">
         <div className="relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all duration-500 hover:scale-105 animate-fade-in">
           <div className="absolute inset-0 bg-gray-900/30 rounded-2xl -z-10" />
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -196,7 +196,7 @@ export default function Auth() {
             </p>
           </form>
         </div>
-        <div className="relative w-full max-w-md  rounded-2xl shadow-xl p-8 text-center text-white space-y-4 animate-tilt">
+        <div className="relative w-full max-w-l shadow-xl text-center text-white space-y-4 animate-tilt">
           <div className="absolute inset-0 border-4 border-double border-yellow-500/50 rounded-2xl -z-10" />
           {mode === 'login' ? (
             <>
@@ -205,8 +205,8 @@ export default function Auth() {
             </>
           ) : (
             <>
-              <p className="text-4xl font-bold text-purple-800 font-['Playfair_Display'] tracking-wide">Join the Vibe! ✨</p>
-              <p className="text-lg text-gray-700">Create your account and step into a world of bold, timeless African fashion curated for you.</p>
+              <p className="text-7xl font-bold text-purple-400 tracking-wide">Join the Vibe! ✨</p>
+              <p className="text-3xl text-white">Create your account and step into a world of bold, timeless African fashion curated for you.</p>
             </>
           )}
         </div>
