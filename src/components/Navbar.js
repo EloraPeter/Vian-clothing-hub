@@ -7,13 +7,13 @@ import { useState } from 'react';
 export default function Navbar({ profile, onCartClick, cartItemCount, notifications = [] }) {
   const router = useRouter();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-
+  
   const unreadCount = notifications.filter((notif) => !notif.read).length;
 
   return (
     <nav className="bg-white shadow-md px-4 py-3 flex justify-between items-center sticky top-0 z-50">
       <Link href="/" className="flex items-center space-x-2">
-        <img src="/logo.svg" alt="Aunty Nwanne Logo" className="h-15 w-auto" />
+        <img src="/logo.svg" alt="Vian Clothing Hub Logo"  className="h-15 w-auto" />
       </Link>
 
       <div className="flex-1 mx-4">
