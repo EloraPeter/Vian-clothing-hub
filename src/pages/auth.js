@@ -77,7 +77,7 @@ export default function Auth() {
         href="/"
         className="fixed top-6 left-6 z-50 flex items-center space-x-2"
       >
-        <img src="/logo.svg" alt="Aunty Nwanne Logo" className="h-16 w-auto" />
+        <img src="/logo.svg" alt="Aunty Nwanne Logo" className="h-20 w-auto invert" />
       </Link>
       <div className="min-h-screen flex flex-col-reverse md:flex-row items-center justify-center px-4 md:px-12 md:py-20 py-8 gap-6 md:gap-8">
         <div className="relative bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md transform transition-all duration-500 hover:scale-105 animate-fade-in">
