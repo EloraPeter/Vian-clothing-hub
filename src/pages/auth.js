@@ -75,7 +75,7 @@ export default function Auth() {
       <Link href="/" className="flex items-center space-x-2 p-6">
         <img src="/logo.svg" alt="Aunty Nwanne Logo" className="h-12 w-auto" />
       </Link>
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="min-h-screen flex  justify-center p-4">
         <div className="relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all duration-500 hover:scale-105 animate-fade-in">
           <div className="absolute inset-0 bg-gray-900/30 rounded-2xl -z-10" />
           <form onSubmit={handleSubmit} className="space-y-6">
