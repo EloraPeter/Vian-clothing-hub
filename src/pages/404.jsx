@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import Footer from '@/components/footer';
 
 export default function NotFound() {
     return (
@@ -7,8 +6,8 @@ export default function NotFound() {
             <Link href="/" className="fixed top-6 left-6 z-50 flex items-center space-x-2 hover:shadow-glow transition-shadow duration-300">
                 <img src="/logo.svg" alt="Vian Clothing Hub Logo" className="h-20 w-auto" />
             </Link>
-            <div className="flex justify-centre">
-                <div className="min-h-screen relative p-8 max-w-lg w-full  text-left animate-fade-in">
+            <div className="flex items-center justify-centre min-h-screen ">
+                <div className="relative pl-10 max-w-lg w-full  text-left animate-fade-in">
                     <div className="mb-6">
                         <svg
                             className="w-24 h-24 mx-auto text-yellow-600 animate-pulse"
@@ -49,7 +48,6 @@ export default function NotFound() {
                     </div>
                 </div>
             </div>
-            <Footer />
         </main>
     );
 }
