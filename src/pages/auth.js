@@ -75,7 +75,7 @@ export default function Auth() {
       <Link href="/" className="flex items-center space-x-2 p-6">
         <img src="/logo.svg" alt="Aunty Nwanne Logo" className="h-12 w-auto" />
       </Link>
-      <div className="min-h-screen flex  justify-center p-4">
+      <div className="min-h-screen ml-50 p-4">
         <div className="relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all duration-500 hover:scale-105 animate-fade-in">
           <div className="absolute inset-0 bg-gray-900/30 rounded-2xl -z-10" />
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -99,7 +99,7 @@ export default function Auth() {
 
             <div className="relative">
               <input
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
+                className="w-full px-6 py-5 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
                 type="email"
                 placeholder="Email"
                 value={form.email}
@@ -110,7 +110,7 @@ export default function Auth() {
 
             <div className="relative">
               <input
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
+                className="w-full px-6 py-5 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Password"
                 value={form.password}
@@ -147,7 +147,7 @@ export default function Auth() {
             {mode === 'signup' && (
               <div className="relative">
                 <input
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
+                  className="w-full px-6 py-5 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
                   type={showConfirm ? 'text' : 'password'}
                   placeholder="Confirm Password"
                   value={form.confirm}
