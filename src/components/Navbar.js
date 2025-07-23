@@ -4,7 +4,6 @@ import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 
-
 export default function Navbar({ profile, onCartClick, cartItemCount, notifications = [] }) {
   const router = useRouter();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -13,8 +12,8 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
 
   return (
     <nav className="bg-white shadow-md px-4 py-3 flex justify-between items-center sticky top-0 z-50">
-      <Link href="/" className="flex items-center space-x-2 text-purple-700">
-        <img src="/logo.svg" alt="Aunty Nwanne Logo" className="h-15 w-auto fill-current text-purple-700" />
+      <Link href="/" className="flex items-center space-x-2">
+        <img src="/logo.svg" alt="Aunty Nwanne Logo" className="h-15 w-auto" />
       </Link>
 
       <div className="flex-1 mx-4">
