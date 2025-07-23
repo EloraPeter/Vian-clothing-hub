@@ -8,6 +8,7 @@ import Footer from '@/components/footer';
 import CartPanel from '@/components/CartPanel';
 import Link from 'next/link'
 import Image from 'next/image'
+import DressLoader from '@/components/DressLoader';
 import zxcvbn from 'zxcvbn';
 
 // Leaflet CSS
@@ -247,7 +248,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (loading) return <p className="p-6 text-center text-gray-600">Loading...</p>;
+if (loading) return <DressLoader />;
   if (error) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
   if (cart.length === 0) return (
     <main className="p-6 max-w-5xl mx-auto">
