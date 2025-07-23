@@ -195,17 +195,17 @@ export default function Auth() {
             </p>
           </form>
         </div>
-        <div className="relative w-full max-w-l shadow-xl text-center text-white space-y-4 animate-tilt">
+        <div className="relative w-full max-w-l text-left text-white space-y-4 animate-tilt">
           <div className="absolute inset-0 border-4 border-double border-yellow-500/50 rounded-2xl -z-10" />
           {mode === 'login' ? (
             <>
-              <p className="text-7xl font-bold text-purple-400 tracking-wide">Hey, Fashion Icon! 👑</p>
-              <p className="text-3xl text-white">Log in to dive into vibrant styles, track your orders, and unlock exclusive African fashion deals.</p>
+              <p className="text-7xl font-bold text-purple-400 tracking-wide">Hey, Fashion Icon!</p>
+              <p className="text-2xl text-white">Log in to dive into vibrant styles, track your orders, and unlock exclusive African fashion deals.</p>
             </>
           ) : (
             <>
-              <p className="text-7xl font-bold text-purple-400 tracking-wide">Join the Vibe! ✨</p>
-              <p className="text-3xl text-white">Create your account and step into a world of bold, timeless African fashion curated for you.</p>
+              <p className="text-7xl font-bold text-purple-400 tracking-wide">Join the Vibe!</p>
+              <p className="text-2xl text-white">Create your account and step into a world of bold, timeless African fashion curated for you.</p>
             </>
           )}
         </div>
