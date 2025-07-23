@@ -12,7 +12,9 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
 
   return (
     <nav className="bg-white shadow-md px-4 py-3 flex justify-between items-center sticky top-0 z-50">
-      <Link href="/" className="text-xl font-bold text-purple-700">Aunty Nwanne</Link>
+      <Link href="/" className="flex items-center space-x-2">
+        <img src="/logo.png" alt="Aunty Nwanne Logo" className="h-8 w-auto" />
+      </Link>
 
       <div className="flex-1 mx-4">
         <input
