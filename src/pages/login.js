@@ -49,7 +49,7 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full p-3 mb-4 border rounded"
+          className="w-full p-3 mb-4 border rounded text-black"
         />
 
         <div className="relative">
@@ -59,7 +59,7 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full p-3 mb-6 border rounded"
+            className="w-full p-3 mb-6 border rounded text-black"
           />
           <button
             type="button"
