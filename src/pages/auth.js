@@ -1,36 +1,36 @@
-import { useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
-import { useRouter } from 'next/router';
-import Link from 'next/link';
-import zxcvbn from 'zxcvbn';
-import Spinner from '@/components/Spinner';
-import DressLoader from '@/components/DressLoader';
-import Footer from '@/components/footer';
+import { useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import { useRouter } from "next/router";
+import Link from "next/link";
+import zxcvbn from "zxcvbn";
+import Spinner from "@/components/Spinner";
+import DressLoader from "@/components/DressLoader";
+import Footer from "@/components/footer";
 
 export default function Auth() {
   const router = useRouter();
-  const [mode, setMode] = useState('login');
-  const [form, setForm] = useState({ email: '', password: '', confirm: '' });
+  const [mode, setMode] = useState("login");
+  const [form, setForm] = useState({ email: "", password: "", confirm: "" });
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [strengthScore, setStrengthScore] = useState(0);
 
   const toggleMode = () => {
-    setMessage('');
-    setForm({ email: '', password: '', confirm: '' });
-    setMode(mode === 'login' ? 'signup' : 'login');
+    setMessage("");
+    setForm({ email: "", password: "", confirm: "" });
+    setMode(mode === "login" ? "signup" : "login");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage('');
+    setMessage("");
 
-    if (mode === 'signup') {
+    if (mode === "signup") {
       if (form.password !== form.confirm) {
-        setMessage('Passwords do not match');
+        setMessage("Passwords do not match");
         setLoading(false);
         return;
       }
@@ -41,7 +41,7 @@ export default function Auth() {
       });
 
       if (error) setMessage(error.message);
-      else setMessage('Signup successful! Please check your email to confirm.');
+      else setMessage("Signup successful! Please check your email to confirm.");
     } else {
       const { error } = await supabase.auth.signInWithPassword({
         email: form.email,
@@ -49,7 +49,7 @@ export default function Auth() {
       });
 
       if (error) setMessage(error.message);
-      else router.push('/dashboard');
+      else router.push("/dashboard");
     }
 
     setLoading(false);
@@ -66,27 +66,30 @@ export default function Auth() {
     setStrengthScore(zxcvbn(val).score);
   };
 
-  const strengthText = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
-  const strengthColor = ['#ef4444', '#f97316', '#facc15', '#4ade80', '#22c55e'];
+  const strengthText = ["Very Weak", "Weak", "Fair", "Good", "Strong"];
+  const strengthColor = ["#ef4444", "#f97316", "#facc15", "#4ade80", "#22c55e"];
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-rose-50 bg-[url('/african-fabric.jpg')] bg-cover bg-center relative">
       <div class="absolute inset-0 bg-gradient-to-b from-black/30 to-black/40 z-0"></div>
 
       {loading && <DressLoader />}
-      <Link href="/" className="fixed top-6 left-6 z-50 flex items-center space-x-2">
+      <Link
+        href="/"
+        className="fixed top-6 left-6 z-50 flex items-center space-x-2"
+      >
         <img src="/logo.svg" alt="Aunty Nwanne Logo" className="h-16 w-auto" />
       </Link>
       <div className="min-h-screen flex flex-col-reverse md:flex-row items-center justify-center p-4 mx-12 gap-8">
         <div className="relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-l transform transition-all duration-500 hover:scale-105 animate-fade-in">
           <form onSubmit={handleSubmit} className="space-y-6">
             <h1 className="text-3xl font-extrabold text-center text-purple-800 font-['Playfair_Display']">
-              {mode === 'login' ? 'Welcome Back' : 'Join the Style'}
+              {mode === "login" ? "Welcome Back" : "Join the Style"}
             </h1>
 
             <button
               type="button"
-              onClick={() => handleOAuth('google')}
+              onClick={() => handleOAuth("google")}
               className="flex items-center justify-center w-full bg-white border border-gray-300 text-gray-700 px-4 py-3 rounded-lg shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-300"
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -112,7 +115,7 @@ export default function Auth() {
             <div className="relative">
               <input
                 className="w-full px-6 py-5 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 value={form.password}
                 onChange={handlePasswordChange}
@@ -124,11 +127,11 @@ export default function Auth() {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800 text-sm transition-colors"
               >
-                {showPassword ? 'Hide' : 'Show'}
+                {showPassword ? "Hide" : "Show"}
               </button>
             </div>
 
-            {mode === 'signup' && form.password && (
+            {mode === "signup" && form.password && (
               <div className="relative">
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
@@ -145,14 +148,16 @@ export default function Auth() {
               </div>
             )}
 
-            {mode === 'signup' && (
+            {mode === "signup" && (
               <div className="relative">
                 <input
                   className="w-full px-6 py-5 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
-                  type={showConfirm ? 'text' : 'password'}
+                  type={showConfirm ? "text" : "password"}
                   placeholder="Confirm Password"
                   value={form.confirm}
-                  onChange={(e) => setForm({ ...form, confirm: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, confirm: e.target.value })
+                  }
                   required
                 />
                 <button
@@ -160,7 +165,7 @@ export default function Auth() {
                   onClick={() => setShowConfirm(!showConfirm)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800 text-sm transition-colors"
                 >
-                  {showConfirm ? 'Hide' : 'Show'}
+                  {showConfirm ? "Hide" : "Show"}
                 </button>
               </div>
             )}
@@ -172,40 +177,56 @@ export default function Auth() {
             >
               {loading ? (
                 <Spinner size="sm" color="white" />
-              ) : mode === 'login' ? (
-                'Log In'
+              ) : mode === "login" ? (
+                "Log In"
               ) : (
-                'Sign Up'
+                "Sign Up"
               )}
             </button>
 
             {message && (
-              <p className="text-sm text-center text-red-600 animate-pulse">{message}</p>
+              <p className="text-sm text-center text-red-600 animate-pulse">
+                {message}
+              </p>
             )}
 
             <p className="text-center text-sm text-gray-600">
-              {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+              {mode === "login"
+                ? "Don't have an account? "
+                : "Already have an account? "}
               <button
                 type="button"
                 onClick={toggleMode}
                 className="text-purple-700 font-semibold hover:underline transition-all duration-300"
               >
-                {mode === 'login' ? 'Sign Up' : 'Log In'}
+                {mode === "login" ? "Sign Up" : "Log In"}
               </button>
             </p>
           </form>
         </div>
         <div className="relative w-full max-w-l text-left text-white space-y-4 animate-tilt">
           <div className="absolute inset-0 border-4 border-double border-yellow-500/50 rounded-2xl -z-10" />
-          {mode === 'login' ? (
+          {mode === "login" ? (
             <>
-              <p className="text-7xl font-bold text-purple-400 tracking-wide">Hey, Fashion Icon!</p>
-              <p className="text-2xl text-white">Log in to dive into vibrant styles, track your orders, and unlock exclusive African fashion deals.</p>
+              <p className="text-7xl font-bold text-purple-400 tracking-wide">
+                Hey, Fashion Icon!
+              </p>
+              <p className="text-2xl text-white leading-relaxed">
+                Log in to explore a vibrant collection of authentic African
+                fashion, effortlessly track your stylish orders, and unlock
+                exclusive deals crafted just for you.
+              </p>{" "}
             </>
           ) : (
             <>
-              <p className="text-7xl font-bold text-purple-400 tracking-wide">Join the Vibe!</p>
-              <p className="text-2xl text-white">Create your account and step into a world of bold, timeless African fashion curated for you.</p>
+              <p className="text-7xl font-bold text-purple-400 tracking-wide">
+                Join the Vibe!
+              </p>
+              <p className="text-2xl text-white leading-relaxed">
+                Create your account today and begin your journey into a world of
+                bold, elegant, and timeless African fashion handpicked to
+                celebrate your unique style and story.
+              </p>
             </>
           )}
         </div>
