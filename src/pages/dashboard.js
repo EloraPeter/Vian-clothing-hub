@@ -23,14 +23,13 @@ export default function Dashboard() {
   const { wishlist } = useWishlist();
   const { cart } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
-
-  // Password visibility toggles
   const [showOldPass, setShowOldPass] = useState(false);
   const [showNewPass, setShowNewPass] = useState(false);
-
-  // Password strength meter state
   const [newPassword, setNewPassword] = useState('');
   const [strengthScore, setStrengthScore] = useState(0);
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   const handleNewPasswordChange = (e) => {
     const val = e.target.value;
@@ -38,11 +37,6 @@ export default function Dashboard() {
     setStrengthScore(zxcvbn(val).score);
   };
 
-  const [avatarFile, setAvatarFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [uploading, setUploading] = useState(false);
-
-  // Check session
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) {
@@ -53,14 +47,12 @@ export default function Dashboard() {
     });
   }, [router]);
 
-  // Fetch everything after user loads
   useEffect(() => {
     if (!user) return;
 
     async function fetchData() {
       setLoading(true);
       try {
-        // Fetch profile info
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('email, avatar_url, is_admin')
@@ -69,7 +61,6 @@ export default function Dashboard() {
         if (profileError) throw profileError;
         setProfile(profileData);
 
-        // Fetch custom orders
         const { data: ordersData, error: ordersError } = await supabase
           .from('custom_orders')
           .select('*')
@@ -78,7 +69,6 @@ export default function Dashboard() {
         if (ordersError) throw ordersError;
         setOrders(ordersData);
 
-        // Fetch ready-made product orders
         const { data: productOrdersData, error: productOrdersError } = await supabase
           .from('orders')
           .select('*, order_items(product_id, quantity, products(name, image_url, price))')
@@ -87,7 +77,6 @@ export default function Dashboard() {
         if (productOrdersError) throw productOrdersError;
         setProductOrders(productOrdersData);
 
-        // Fetch invoices
         const { data: invoicesData, error: invoicesError } = await supabase
           .from('invoices')
           .select('*, custom_orders(*)')
@@ -96,7 +85,6 @@ export default function Dashboard() {
         if (invoicesError) throw invoicesError;
         setInvoices(invoicesData);
 
-        // Fetch receipts
         const { data: receiptsData, error: receiptsError } = await supabase
           .from('receipts')
           .select('*, invoices(custom_orders(*))')
@@ -105,7 +93,6 @@ export default function Dashboard() {
         if (receiptsError) throw receiptsError;
         setReceipts(receiptsData);
 
-        // Fetch notifications
         const { data: notificationsData, error: notificationsError } = await supabase
           .from('notifications')
           .select('*')
@@ -179,13 +166,12 @@ export default function Dashboard() {
     }
 
     const handler = window.PaystackPop.setup({
-      key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY, // Replace with your Paystack public key
+      key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
       email: profile.email,
-      amount: (invoice.amount - (invoice.custom_orders.deposit || 5000)) * 100, // Amount in kobo (excluding deposit)
+      amount: (invoice.amount - (invoice.custom_orders.deposit || 5000)) * 100,
       currency: 'NGN',
       ref: `VIAN_${invoice.id}_${Date.now()}`,
       callback: async (response) => {
-        // Verify payment server-side
         const { error, data } = await supabase.functions.invoke('verify-paystack-payment', {
           body: { reference: response.reference },
         });
@@ -193,9 +179,7 @@ export default function Dashboard() {
           alert('Payment verification failed.');
           return;
         }
-        // Mark invoice as paid
         await supabase.from('invoices').update({ paid: true }).eq('id', invoice.id);
-        // Generate receipt
         const { pdfUrl, receiptId } = await generateReceiptPDF(invoice, response.reference);
         const receiptData = {
           id: receiptId,
@@ -207,7 +191,6 @@ export default function Dashboard() {
         };
         await supabase.from('receipts').insert([receiptData]);
         setReceipts((prev) => [receiptData, ...prev]);
-        // Update delivery status
         await supabase
           .from('custom_orders')
           .update({ delivery_status: 'in_progress' })
@@ -217,7 +200,6 @@ export default function Dashboard() {
             order.id === invoice.order_id ? { ...order, delivery_status: 'in_progress' } : order
           )
         );
-        // Notify user
         const notificationText = `Payment successful for order ID: ${invoice.order_id}. Delivery has started. Check your dashboard for the receipt: [Your App URL]`;
         await supabase.from('notifications').insert([
           {
@@ -229,7 +211,7 @@ export default function Dashboard() {
         ]);
         setNotifications((prev) => [
           {
-            id: Date.now(), // Temporary ID
+            id: Date.now(),
             user_id: user.id,
             message: notificationText,
             created_at: new Date().toISOString(),
@@ -275,7 +257,7 @@ export default function Dashboard() {
   return (
     <>
       <Script src="https://js.paystack.co/v1/inline.js" strategy="afterInteractive" />
-      <main className="min-h-screen bg-gray-100">
+      <main className="min-h-screen bg-gray-50">
         <Navbar
           profile={profile}
           onCartClick={() => setIsCartOpen(true)}
@@ -283,412 +265,430 @@ export default function Dashboard() {
           notifications={notifications}
         />
         <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-        <div className="max-w-5xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-6 text-purple-700 text-center">Customer Dashboard</h1>
+        <div className="container mx-auto px-4 py-8 max-w-7xl">
+          <h1 className="text-3xl md:text-4xl font-bold text-purple-800 mb-8 text-center">
+            Customer Dashboard
+          </h1>
 
-          {/* Notifications Section */}
-          <section className="mb-8 bg-white p-6 rounded-xl shadow-md">
-            <h2 className="text-2xl font-bold text-purple-700 mb-4">Notifications</h2>
-            {notifications.length === 0 ? (
-              <p className="text-gray-600">No notifications available.</p>
-            ) : (
-              <ul className="space-y-4">
-                {notifications.map((notif) => (
-                  <li
-                    key={notif.id}
-                    className={`border border-gray-300 p-4 rounded-lg ${notif.read ? 'bg-gray-100' : 'bg-purple-50'
-                      }`}
-                  >
-                    <p className="text-gray-700">{notif.message}</p>
-                    <p className="text-gray-500 text-sm">
-                      {new Date(notif.created_at).toLocaleString()}
-                    </p>
-                    {!notif.read && (
-                      <button
-                        onClick={() => markNotificationAsRead(notif.id)}
-                        className="mt-2 text-sm text-purple-600 hover:text-purple-800"
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column: Notifications and Profile */}
+            <div className="lg:col-span-1 space-y-6">
+              {/* Notifications Section */}
+              <section className="bg-white rounded-2xl shadow-lg p-6">
+                <h2 className="text-xl font-semibold text-purple-800 mb-4">Notifications</h2>
+                {notifications.length === 0 ? (
+                  <p className="text-gray-500">No notifications available.</p>
+                ) : (
+                  <ul className="space-y-3">
+                    {notifications.map((notif) => (
+                      <li
+                        key={notif.id}
+                        className={`p-4 rounded-lg border transition-colors ${
+                          notif.read ? 'bg-gray-100 border-gray-200' : 'bg-purple-50 border-purple-200'
+                        }`}
                       >
-                        Mark as Read
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+                        <p className="text-gray-700">{notif.message}</p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {new Date(notif.created_at).toLocaleString()}
+                        </p>
+                        {!notif.read && (
+                          <button
+                            onClick={() => markNotificationAsRead(notif.id)}
+                            className="mt-2 text-sm text-purple-600 hover:text-purple-800 transition-colors"
+                          >
+                            Mark as Read
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
 
-          {/* Invoices Section */}
-          <section className="mb-8 bg-white p-6 rounded-xl shadow-md">
-            <h2 className="text-2xl font-bold text-purple-700 mb-4">Invoices</h2>
-            {invoices.length === 0 ? (
-              <p className="text-gray-600">No invoices available.</p>
-            ) : (
-              <ul className="space-y-4">
-                {invoices.map((invoice) => (
-                  <li key={invoice.id} className="border border-gray-300 p-4 rounded-lg">
-                    <p className="text-gray-700"><strong>Order ID:</strong> {invoice.order_id}</p>
-                    <p className="text-gray-700"><strong>Fabric:</strong> {invoice.custom_orders.fabric}</p>
-                    <p className="text-gray-700"><strong>Style:</strong> {invoice.custom_orders.style}</p>
-                    <p className="text-gray-700"><strong>Deposit:</strong> ₦{Number(invoice.custom_orders.deposit || 5000).toLocaleString()}</p>
-                    <p className="text-gray-700"><strong>Balance:</strong> ₦{Number(invoice.amount - (invoice.custom_orders.deposit || 5000)).toLocaleString()}</p>
-                    <p className="text-gray-700"><strong>Total Amount:</strong> ₦{Number(invoice.amount).toLocaleString()}</p>
-                    <p className="text-gray-700"><strong>Status:</strong> {invoice.paid ? 'Paid' : 'Pending'}</p>
-                    <p className="text-gray-600 text-sm">
-                      <strong>Issued:</strong> {new Date(invoice.created_at).toLocaleString()}
-                    </p>
-                    {invoice.pdf_url && (
-                      <a
-                        href={invoice.pdf_url}
-                        className="text-purple-600 hover:text-purple-800 mr-4"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        View/Download Invoice
-                      </a>
-                    )}
-                    {!invoice.paid && (
-                      <button
-                        onClick={() => initiatePayment(invoice)}
-                        className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
-                      >
-                        Pay Now
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          {/* Receipts Section */}
-          <section className="mb-8 bg-white p-6 rounded-xl shadow-md">
-            <h2 className="text-2xl font-bold text-purple-700 mb-4">Receipts</h2>
-            {receipts.length === 0 ? (
-              <p className="text-gray-600">No receipts available.</p>
-            ) : (
-              <ul className="space-y-4">
-                {receipts.map((receipt) => (
-                  <li key={receipt.id} className="border border-gray-300 p-4 rounded-lg">
-                    <p className="text-gray-700"><strong>Order ID:</strong> {receipt.invoices.custom_orders.id}</p>
-                    <p className="text-gray-700"><strong>Fabric:</strong> {receipt.invoices.custom_orders.fabric}</p>
-                    <p className="text-gray-700"><strong>Style:</strong> {receipt.invoices.custom_orders.style}</p>
-                    <p className="text-gray-700"><strong>Deposit:</strong> ₦{Number(receipt.invoices.custom_orders.deposit || 5000).toLocaleString()}</p>
-                    <p className="text-gray-700"><strong>Balance Paid:</strong> ₦{Number(receipt.amount - (receipt.invoices.custom_orders.deposit || 5000)).toLocaleString()}</p>
-                    <p className="text-gray-700"><strong>Total Amount:</strong> ₦{Number(receipt.amount).toLocaleString()}</p>
-                    <p className="text-gray-700"><strong>Payment Reference:</strong> {receipt.payment_reference}</p>
-                    <p className="text-gray-600 text-sm">
-                      <strong>Issued:</strong> {new Date(receipt.created_at).toLocaleString()}
-                    </p>
-                    {receipt.pdf_url && (
-                      <a
-                        href={receipt.pdf_url}
-                        className="text-purple-600 hover:text-purple-800"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        View/Download Receipt
-                      </a>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          {/* Profile Section */}
-          <div className="mb-8 bg-white p-6 rounded-xl shadow-md max-w-xl mx-auto">
-            <h2 className="text-2xl font-bold text-purple-700 mb-4">Update Profile</h2>
-            <div className="flex items-center space-x-4 mb-4">
-              {previewUrl || profile?.avatar_url ? (
-                <img
-                  src={previewUrl || profile.avatar_url}
-                  alt="Avatar"
-                  className="w-16 h-16 rounded-full object-cover border border-gray-300"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
-                  No Pic
+              {/* Profile Section */}
+              <section className="bg-white rounded-2xl shadow-lg p-6">
+                <h2 className="text-xl font-semibold text-purple-800 mb-4">Update Profile</h2>
+                <div className="flex items-center space-x-4 mb-6">
+                  {previewUrl || profile?.avatar_url ? (
+                    <img
+                      src={previewUrl || profile.avatar_url}
+                      alt="Avatar"
+                      className="w-16 h-16 rounded-full object-cover border-2 border-purple-200"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-medium">
+                      No Pic
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        setAvatarFile(file);
+                        setPreviewUrl(URL.createObjectURL(file));
+                      }
+                    }}
+                    className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 transition-colors"
+                    disabled={uploading}
+                  />
                 </div>
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    setAvatarFile(file);
-                    setPreviewUrl(URL.createObjectURL(file));
-                  }
-                }}
-                className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 transition-colors"
-                disabled={uploading}
-              />
-            </div>
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    let avatar_url = profile.avatar_url;
 
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                let avatar_url = profile.avatar_url;
+                    if (avatarFile) {
+                      setUploading(true);
+                      const fileExt = avatarFile.name.split('.').pop();
+                      const fileName = `${user.id}.${fileExt}`;
+                      const filePath = `${fileName}`;
 
-                if (avatarFile) {
-                  setUploading(true);
-                  const fileExt = avatarFile.name.split('.').pop();
-                  const fileName = `${user.id}.${fileExt}`;
-                  const filePath = `${fileName}`;
+                      const { error: uploadError } = await supabase.storage.from('avatars').update(filePath, avatarFile);
 
-                  const { error: uploadError } = await supabase.storage.from('avatars').update(filePath, avatarFile);
+                      if (uploadError && uploadError.message.includes('The resource was not found')) {
+                        const { error: firstUploadError } = await supabase.storage.from('avatars').upload(filePath, avatarFile);
+                        if (firstUploadError) {
+                          alert('Upload failed: ' + firstUploadError.message);
+                          setUploading(false);
+                          return;
+                        }
+                      }
 
-                  if (uploadError && uploadError.message.includes('The resource was not found')) {
-                    const { error: firstUploadError } = await supabase.storage.from('avatars').upload(filePath, avatarFile);
-                    if (firstUploadError) {
-                      alert('Upload failed: ' + firstUploadError.message);
+                      if (uploadError) {
+                        alert('Upload failed: ' + uploadError.message);
+                        setUploading(false);
+                        return;
+                      }
+
+                      const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+                      avatar_url = data.publicUrl;
                       setUploading(false);
+                    }
+
+                    const { error } = await supabase
+                      .from('profiles')
+                      .update({ email: profile.email, avatar_url })
+                      .eq('id', user.id);
+
+                    if (error) alert('Update failed: ' + error.message);
+                    else {
+                      alert('Profile updated successfully');
+                      setProfile({ ...profile, avatar_url });
+                      setAvatarFile(null);
+                      setPreviewUrl(null);
+                    }
+                  }}
+                  className="space-y-4"
+                >
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
+                    <input
+                      type="email"
+                      value={profile?.email || ''}
+                      onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                      required
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full bg-purple-600 text-white font-semibold py-2 rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50"
+                    disabled={uploading}
+                  >
+                    {uploading ? 'Uploading...' : 'Save Changes'}
+                  </button>
+                </form>
+              </section>
+
+              {/* Password Change Section */}
+              <section className="bg-white rounded-2xl shadow-lg p-6">
+                <h2 className="text-xl font-semibold text-purple-800 mb-4">Change Password</h2>
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const oldPassword = e.target.old_password.value;
+                    const newPassword = e.target.new_password.value;
+
+                    const {
+                      data: { session },
+                    } = await supabase.auth.getSession();
+
+                    const email = session?.user?.email;
+
+                    if (!email) {
+                      alert("You're not logged in.");
                       return;
                     }
-                  }
 
-                  if (uploadError) {
-                    alert('Upload failed: ' + uploadError.message);
-                    setUploading(false);
-                    return;
-                  }
+                    const { error: signInError } = await supabase.auth.signInWithPassword({
+                      email,
+                      password: oldPassword,
+                    });
 
-                  const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-                  avatar_url = data.publicUrl;
-                  setUploading(false);
-                }
+                    if (signInError) {
+                      alert('Old password is incorrect.');
+                      return;
+                    }
 
-                const { error } = await supabase
-                  .from('profiles')
-                  .update({ email: profile.email, avatar_url })
-                  .eq('id', user.id);
+                    const { error: updateError } = await supabase.auth.updateUser({
+                      password: newPassword,
+                    });
 
-                if (error) alert('Update failed: ' + error.message);
-                else {
-                  alert('Profile updated successfully');
-                  setProfile({ ...profile, avatar_url });
-                  setAvatarFile(null);
-                  setPreviewUrl(null);
-                }
-              }}
-              className="space-y-6"
-            >
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
-                <input
-                  type="email"
-                  value={profile?.email || ''}
-                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-black"
-                  required
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-purple-600 text-white font-semibold py-2 rounded-md hover:bg-purple-700 transition-colors"
-                disabled={uploading}
-              >
-                {uploading ? 'Uploading...' : 'Save Changes'}
-              </button>
-            </form>
-          </div>
-
-          {/* Password Change Section */}
-          <div className="mb-8 bg-white p-6 rounded-xl shadow-md max-w-xl mx-auto">
-            <h2 className="text-2xl font-bold text-purple-700 mb-4">Change Password</h2>
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const oldPassword = e.target.old_password.value;
-                const newPassword = e.target.new_password.value;
-
-                const {
-                  data: { session },
-                } = await supabase.auth.getSession();
-
-                const email = session?.user?.email;
-
-                if (!email) {
-                  alert("You're not logged in.");
-                  return;
-                }
-
-                // Reauthenticate with old password
-                const { error: signInError } = await supabase.auth.signInWithPassword({
-                  email,
-                  password: oldPassword,
-                });
-
-                if (signInError) {
-                  alert('Old password is incorrect.');
-                  return;
-                }
-
-                // Update to new password
-                const { error: updateError } = await supabase.auth.updateUser({
-                  password: newPassword,
-                });
-
-                if (updateError) {
-                  alert('Password update failed: ' + updateError.message);
-                } else {
-                  alert('Password updated successfully!');
-                  e.target.reset();
-                  setNewPassword('');
-                  setStrengthScore(0);
-                }
-              }}
-              className="space-y-6"
-            >
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Old Password</label>
-                <div className="relative">
-                  <input
-                    type={showOldPass ? 'text' : 'password'}
-                    name="old_password"
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-black"
-                    placeholder="Enter old password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowOldPass(!showOldPass)}
-                    className="absolute right-3 top-2 text-gray-500 hover:text-gray-700"
-                  >
-                    {showOldPass ? 'Hide' : 'Show'}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-                <div className="relative">
-                  <input
-                    type={showNewPass ? 'text' : 'password'}
-                    name="new_password"
-                    value={newPassword}
-                    onChange={handleNewPasswordChange}
-                    required
-                    minLength={6}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-black"
-                    placeholder="Enter new password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPass(!showNewPass)}
-                    className="absolute right-3 top-2 text-gray-500 hover:text-gray-700"
-                  >
-                    {showNewPass ? 'Hide' : 'Show'}
-                  </button>
-                </div>
-
-                {newPassword && (
-                  <p
-                    className="mt-1 font-semibold"
-                    style={{ color: ['#ef4444', '#f97316', '#facc15', '#4ade80', '#22c55e'][strengthScore] }}
-                  >
-                    Password Strength: {['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'][strengthScore]}
-                  </p>
-                )}
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-purple-600 text-white font-semibold py-2 rounded-md hover:bg-purple-700 transition-colors"
-              >
-                Change Password
-              </button>
-            </form>
-          </div>
-
-          {/* Wishlist Section */}
-          <section className="mb-8 bg-white p-6 rounded-xl shadow-md">
-            <h2 className="text-2xl font-bold text-purple-700 mb-4">Wishlist</h2>
-            {wishlist.length === 0 ? (
-              <p className="text-gray-600">You have no items in your wishlist.</p>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {wishlist.map((item) => (
-                  <div key={item.id} className="bg-gray-50 p-3 rounded-lg shadow-sm text-center">
-                    <img src={item.image_url} alt={item.name} className="h-32 w-full object-cover rounded-lg mb-2" />
-                    <p className="font-medium text-gray-700">{item.name}</p>
-                    <p className="text-sm text-gray-600">
-                      {item.discount_percentage > 0 ? (
-                        <span>
-                          <span className="text-red-600 line-through">₦{Number(item.price).toLocaleString()}</span>{' '}
-                          <span className="text-green-600">
-                            ₦{(item.price * (1 - item.discount_percentage / 100)).toLocaleString()}
-                          </span>
-                        </span>
-                      ) : (
-                        <span className="text-purple-700">₦{Number(item.price).toLocaleString()}</span>
-                      )}
-                    </p>
+                    if (updateError) {
+                      alert('Password update failed: ' + updateError.message);
+                    } else {
+                      alert('Password updated successfully!');
+                      e.target.reset();
+                      setNewPassword('');
+                      setStrengthScore(0);
+                    }
+                  }}
+                  className="space-y-4"
+                >
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Old Password</label>
+                    <div className="relative">
+                      <input
+                        type={showOldPass ? 'text' : 'password'}
+                        name="old_password"
+                        required
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                        placeholder="Enter old password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowOldPass(!showOldPass)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showOldPass ? 'Hide' : 'Show'}
+                      </button>
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </section>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                    <div className="relative">
+                      <input
+                        type={showNewPass ? 'text' : 'password'}
+                        name="new_password"
+                        value={newPassword}
+                        onChange={handleNewPasswordChange}
+                        required
+                        minLength={6}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                        placeholder="Enter new password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPass(!showNewPass)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showNewPass ? 'Hide' : 'Show'}
+                      </button>
+                    </div>
+                    {newPassword && (
+                      <p
+                        className="mt-2 text-sm font-medium"
+                        style={{ color: ['#ef4444', '#f97316', '#facc15', '#4ade80', '#22c55e'][strengthScore] }}
+                      >
+                        Password Strength: {['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'][strengthScore]}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full bg-purple-600 text-white font-semibold py-2 rounded-md hover:bg-purple-700 transition-colors"
+                  >
+                    Change Password
+                  </button>
+                </form>
+              </section>
+            </div>
 
-          {/* Custom Orders Section */}
-          <section className="mb-8 bg-white p-6 rounded-xl shadow-md">
-            <h2 className="text-2xl font-bold text-purple-700 mb-4">Custom Orders</h2>
-            {orders.length === 0 ? (
-              <p className="text-gray-600">You have no custom orders yet.</p>
-            ) : (
-              <ul className="space-y-4">
-                {orders.map((order) => (
-                  <li key={order.id} className="border border-gray-300 p-4 rounded-lg">
-                    <p className="text-gray-700"><strong>Fabric:</strong> {order.fabric}</p>
-                    <p className="text-gray-700"><strong>Style:</strong> {order.style}</p>
-                    <p className="text-gray-700"><strong>Status:</strong> {order.status}</p>
-                    <p className="text-gray-700"><strong>Delivery Status:</strong> {order.delivery_status}</p>
-                    <p className="text-gray-600 text-sm">
-                      <strong>Ordered on:</strong> {new Date(order.created_at).toLocaleString()}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          {/* Product Orders Section */}
-          <section className="mb-8 bg-white p-6 rounded-xl shadow-md">
-            <h2 className="text-2xl font-bold text-purple-700 mb-4">Product Orders</h2>
-            {productOrders.length === 0 ? (
-              <p className="text-gray-600">You have no product orders yet.</p>
-            ) : (
-              <ul className="space-y-4">
-                {productOrders.map((order) => (
-                  <li key={order.id} className="border border-gray-300 p-4 rounded-lg">
-                    <p className="text-gray-700"><strong>Order ID:</strong> {order.id}</p>
-                    {order.order_items.map((item) => (
-                      <div key={item.product_id} className="flex items-center space-x-4">
-                        <img
-                          src={item.products.image_url}
-                          alt={item.products.name}
-                          className="w-16 h-16 object-cover rounded-lg border border-gray-300"
-                        />
-                        <div>
-                          <p className="text-gray-700"><strong>Product:</strong> {item.products.name}</p>
-                          <p className="text-gray-700"><strong>Price:</strong> ₦{Number(item.products.price).toLocaleString()}</p>
-                          <p className="text-gray-700"><strong>Quantity:</strong> {item.quantity}</p>
+            {/* Right Column: Orders and Invoices */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Invoices Section */}
+              <section className="bg-white rounded-2xl shadow-lg p-6">
+                <h2 className="text-xl font-semibold text-purple-800 mb-4">Invoices</h2>
+                {invoices.length === 0 ? (
+                  <p className="text-gray-500">No invoices available.</p>
+                ) : (
+                  <ul className="space-y-4">
+                    {invoices.map((invoice) => (
+                      <li key={invoice.id} className="border border-gray-200 p-4 rounded-lg">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-gray-700"><strong>Order ID:</strong> {invoice.order_id}</p>
+                            <p className="text-gray-700"><strong>Fabric:</strong> {invoice.custom_orders.fabric}</p>
+                            <p className="text-gray-700"><strong>Style:</strong> {invoice.custom_orders.style}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-700"><strong>Deposit:</strong> ₦{Number(invoice.custom_orders.deposit || 5000).toLocaleString()}</p>
+                            <p className="text-gray-700"><strong>Balance:</strong> ₦{Number(invoice.amount - (invoice.custom_orders.deposit || 5000)).toLocaleString()}</p>
+                            <p className="text-gray-700"><strong>Total Amount:</strong> ₦{Number(invoice.amount).toLocaleString()}</p>
+                            <p className="text-gray-700"><strong>Status:</strong> {invoice.paid ? 'Paid' : 'Pending'}</p>
+                          </div>
                         </div>
+                        <p className="text-sm text-gray-500 mt-2">
+                          <strong>Issued:</strong> {new Date(invoice.created_at).toLocaleString()}
+                        </p>
+                        <div className="mt-4 flex space-x-4">
+                          {invoice.pdf_url && (
+                            <a
+                              href={invoice.pdf_url}
+                              className="text-purple-600 hover:text-purple-800 font-medium"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              View/Download Invoice
+                            </a>
+                          )}
+                          {!invoice.paid && (
+                            <button
+                              onClick={() => initiatePayment(invoice)}
+                              className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors"
+                            >
+                              Pay Now
+                            </button>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+
+              {/* Receipts Section */}
+              <section className="bg-white rounded-2xl shadow-lg p-6">
+                <h2 className="text-xl font-semibold text-purple-800 mb-4">Receipts</h2>
+                {receipts.length === 0 ? (
+                  <p className="text-gray-500">No receipts available.</p>
+                ) : (
+                  <ul className="space-y-4">
+                    {receipts.map((receipt) => (
+                      <li key={receipt.id} className="border border-gray-200 p-4 rounded-lg">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-gray-700"><strong>Order ID:</strong> {receipt.invoices.custom_orders.id}</p>
+                            <p className="text-gray-700"><strong>Fabric:</strong> {receipt.invoices.custom_orders.fabric}</p>
+                            <p className="text-gray-700"><strong>Style:</strong> {receipt.invoices.custom_orders.style}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-700"><strong>Deposit:</strong> ₦{Number(receipt.invoices.custom_orders.deposit || 5000).toLocaleString()}</p>
+                            <p className="text-gray-700"><strong>Balance Paid:</strong> ₦{Number(receipt.amount - (receipt.invoices.custom_orders.deposit || 5000)).toLocaleString()}</p>
+                            <p className="text-gray-700"><strong>Total Amount:</strong> ₦{Number(receipt.amount).toLocaleString()}</p>
+                            <p className="text-gray-700"><strong>Payment Reference:</strong> {receipt.payment_reference}</p>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-500 mt-2">
+                          <strong>Issued:</strong> {new Date(receipt.created_at).toLocaleString()}
+                        </p>
+                        {receipt.pdf_url && (
+                          <a
+                            href={receipt.pdf_url}
+                            className="text-purple-600 hover:text-purple-800 font-medium mt-2 block"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            View/Download Receipt
+                          </a>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+
+              {/* Wishlist Section */}
+              <section className="bg-white rounded-2xl shadow-lg p-6">
+                <h2 className="text-xl font-semibold text-purple-800 mb-4">Wishlist</h2>
+                {wishlist.length === 0 ? (
+                  <p className="text-gray-500">You have no items in your wishlist.</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {wishlist.map((item) => (
+                      <div key={item.id} className="bg-gray-50 p-4 rounded-lg shadow-sm text-center">
+                        <img src={item.image_url} alt={item.name} className="h-40 w-full object-cover rounded-lg mb-3" />
+                        <p className="font-medium text-gray-700">{item.name}</p>
+                        <p className="text-sm text-gray-600">
+                          {item.discount_percentage > 0 ? (
+                            <span>
+                              <span className="text-red-600 line-through">₦{Number(item.price).toLocaleString()}</span>{' '}
+                              <span className="text-green-600">
+                                ₦{(item.price * (1 - item.discount_percentage / 100)).toLocaleString()}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="text-purple-700">₦{Number(item.price).toLocaleString()}</span>
+                          )}
+                        </p>
                       </div>
                     ))}
-                    <p className="text-gray-700"><strong>Status:</strong> {order.status}</p>
-                    <p className="text-gray-600 text-sm">
-                      <strong>Ordered on:</strong> {new Date(order.created_at).toLocaleString()}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+                  </div>
+                )}
+              </section>
+
+              {/* Custom Orders Section */}
+              <section className="bg-white rounded-2xl shadow-lg p-6">
+                <h2 className="text-xl font-semibold text-purple-800 mb-4">Custom Orders</h2>
+                {orders.length === 0 ? (
+                  <p className="text-gray-500">You have no custom orders yet.</p>
+                ) : (
+                  <ul className="space-y-4">
+                    {orders.map((order) => (
+                      <li key={order.id} className="border border-gray-200 p-4 rounded-lg">
+                        <p className="text-gray-700"><strong>Fabric:</strong> {order.fabric}</p>
+                        <p className="text-gray-700"><strong>Style:</strong> {order.style}</p>
+                        <p className="text-gray-700"><strong>Status:</strong> {order.status}</p>
+                        <p className="text-gray-700"><strong>Delivery Status:</strong> {order.delivery_status}</p>
+                        <p className="text-sm text-gray-500 mt-2">
+                          <strong>Ordered on:</strong> {new Date(order.created_at).toLocaleString()}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+
+              {/* Product Orders Section */}
+              <section className="bg-white rounded-2xl shadow-lg p-6">
+                <h2 className="text-xl font-semibold text-purple-800 mb-4">Product Orders</h2>
+                {productOrders.length === 0 ? (
+                  <p className="text-gray-500">You have no product orders yet.</p>
+                ) : (
+                  <ul className="space-y-4">
+                    {productOrders.map((order) => (
+                      <li key={order.id} className="border border-gray-200 p-4 rounded-lg">
+                        <p className="text-gray-700 font-medium">Order ID: {order.id}</p>
+                        {order.order_items.map((item) => (
+                          <div key={item.product_id} className="flex items-center space-x-4 mt-3">
+                            <img
+                              src={item.products.image_url}
+                              alt={item.products.name}
+                              className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                            />
+                            <div>
+                              <p className="text-gray-700"><strong>Product:</strong> {item.products.name}</p>
+                              <p className="text-gray-700"><strong>Price:</strong> ₦{Number(item.products.price).toLocaleString()}</p>
+                              <p className="text-gray-700"><strong>Quantity:</strong> {item.quantity}</p>
+                            </div>
+                          </div>
+                        ))}
+                        <p className="text-gray-700 mt-2"><strong>Status:</strong> {order.status}</p>
+                        <p className="text-sm text-gray-500 mt-2">
+                          <strong>Ordered on:</strong> {new Date(order.created_at).toLocaleString()}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </div>
+          </div>
 
           {/* Logout Button */}
-          <div className="text-center">
+          <div className="text-center mt-8">
             <button
               onClick={handleLogout}
               className="bg-red-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-red-700 transition-colors"
