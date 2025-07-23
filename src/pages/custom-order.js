@@ -5,6 +5,8 @@ import { useCart } from "@/context/CartContext";
 import CustomOrderForm from '@/components/CustomOrderForm';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/footer';
+import DressLoader from '@/components/DressLoader';
+
 
 
 export default function CustomOrderPage() {
@@ -39,6 +41,8 @@ export default function CustomOrderPage() {
     }
     fetchProfile();
   }, [router]);
+
+  if (loading) return <DressLoader />;
 
   return (
     <main className="min-h-screen mb-0 bg-gray-100 pb-0">

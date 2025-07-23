@@ -6,6 +6,8 @@ import { FaHeart, FaRegHeart, FaShoppingCart, FaStar, FaStarHalfAlt, FaRegStar }
 import Navbar from "@/components/Navbar";
 import Footer from '@/components/footer';
 import CartPanel from "@/components/CartPanel";
+import DressLoader from '@/components/DressLoader';
+
 
 export default function Home() {
     const [products, setProducts] = useState([]);
@@ -88,6 +90,8 @@ export default function Home() {
         }
         return stars;
     };
+
+    if (loading) return <DressLoader />;
 
     return (
         <div className="min-h-screen mb-0 bg-gray-100 pb-0 relative">
