@@ -75,7 +75,7 @@ export default function Auth() {
       <Link href="/" className="fixed top-6 left-6 z-50 flex items-center space-x-2">
         <img src="/logo.svg" alt="Aunty Nwanne Logo" className="h-16 w-auto" />
       </Link>
-      <div className="min-h-screen flex flex-col md:flex-row items-center justify-center p-4 gap-8">
+      <div className="min-h-screen flex flex-col-reverse md:flex-row items-center justify-center p-4 gap-8">
         <div className="relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all duration-500 hover:scale-105 animate-fade-in">
           <div className="absolute inset-0 bg-gray-900/30 rounded-2xl -z-10" />
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -194,16 +194,17 @@ export default function Auth() {
             </p>
           </form>
         </div>
-        <div className="w-full max-w-md rounded-2xl shadow-lg p-6 text-center text-gray-700 space-y-4 animate-fade-in">
+         <div className="relative w-full max-w-md  rounded-2xl shadow-xl p-8 text-center text-gray-800 space-y-4 animate-tilt">
+          <div className="absolute inset-0 border-4 border-double border-yellow-500/50 rounded-2xl -z-10" />
           {mode === 'login' ? (
             <>
-              <p className="text-xxl font-bold text-purple-400 ">Hey, fashion icon. 👑</p>
-              <p className="text-sm">Log in to shop your style, track orders, and unlock exclusive deals.</p>
+              <p className="text-4xl font-bold text-yellow-600 font-['Playfair_Display'] tracking-wide">Hey, Fashion Icon! 👑</p>
+              <p className="text-lg text-gray-700">Log in to dive into vibrant styles, track your orders, and unlock exclusive African fashion deals.</p>
             </>
           ) : (
             <>
-              <p className="text-xl font-semibold text-purple-800 ">Join the vibe. Wear the difference. ✨</p>
-              <p className="text-sm">Create your account and step into the world of timeless fashion, curated just for you.</p>
+              <p className="text-4xl font-bold text-purple-800 font-['Playfair_Display'] tracking-wide">Join the Vibe! ✨</p>
+              <p className="text-lg text-gray-700">Create your account and step into a world of bold, timeless African fashion curated for you.</p>
             </>
           )}
         </div>
