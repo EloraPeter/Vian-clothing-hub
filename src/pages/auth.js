@@ -71,6 +71,8 @@ export default function Auth() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-rose-50 bg-[url('/african-fabric.jpg')] bg-cover bg-center relative">
+      <div class="absolute inset-0 bg-gradient-to-b from-black/60 to-black/50 z-0"></div>
+
       {loading && <DressLoader />}
       <Link href="/" className="fixed top-6 left-6 z-50 flex items-center space-x-2">
         <img src="/logo.svg" alt="Aunty Nwanne Logo" className="h-16 w-auto" />
@@ -194,7 +196,7 @@ export default function Auth() {
             </p>
           </form>
         </div>
-         <div className="relative w-full max-w-md  rounded-2xl shadow-xl p-8 text-center text-gray-800 space-y-4 animate-tilt">
+        <div className="relative w-full max-w-md  rounded-2xl shadow-xl p-8 text-center text-white space-y-4 animate-tilt">
           <div className="absolute inset-0 border-4 border-double border-yellow-500/50 rounded-2xl -z-10" />
           {mode === 'login' ? (
             <>
