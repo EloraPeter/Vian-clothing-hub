@@ -13,40 +13,49 @@ import DressLoader from '@/components/DressLoader';
 export default function Home() {
     const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState(null);
-        const [isCartOpen, setIsCartOpen] = useState(false);
-    
+    const [isCartOpen, setIsCartOpen] = useState(false);
+
     const { addToCart } = useCart();
-        const { toggleWishlist, isInWishlist } = useWishlist();
+    const { toggleWishlist, isInWishlist } = useWishlist();
 
-    const categories = [
-        { name: 'Women’s Clothing', slug: 'womens-clothing', image: '/womens-clothing.jpg' },
-        { name: 'Men’s Clothing', slug: 'mens-clothing', image: '/mens-clothing.jpg' },
-        { name: 'Accessories', slug: 'accessories', image: '/accessories.jpg' },
-    ];
-
-    const newArrivals = [
-        { id: 1, name: 'Ankara Dress', price: 89.99, image: '/ankara-dress.jpg' },
-        { id: 2, name: 'Kente Shirt', price: 59.99, image: '/kente-shirt.jpg' },
-    ];
+    const [categories, setCategories] = useState([]);
+    const [newArrivals, setNewArrivals] = useState([]);
 
     // Fetch user profile
     useEffect(() => {
-        async function fetchProfile() {
-            const { data: { user }, error: userError } = await supabase.auth.getUser();
-            if (user) {
-                const { data: profileData, error: profileError } = await supabase
-                    .from("profiles")
-                    .select("*")
-                    .eq("id", user.id)
-                    .maybeSingle();
-                if (!profileError) setProfile(profileData);
-                else console.error("Profile fetch error:", profileError.message);
-            } else if (userError) console.error("User fetch error:", userError.message);
-        }
-        fetchProfile();
-    }, []);
+    async function fetchData() {
+      setLoading(true);
+      // Fetch user profile
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('email, avatar_url')
+          .eq('id', user.id)
+          .maybeSingle();
+        setProfile(profileData);
+      }
 
-    // if (loading) return <DressLoader />;
+      // Fetch categories
+      const { data: categoriesData } = await supabase
+        .from('categories')
+        .select('name, slug')
+        .is('parent_id', null); // Top-level categories
+      setCategories(categoriesData || []);
+
+      // Fetch new arrivals
+      const { data: productsData } = await supabase
+        .from('products')
+        .select('id, name, image_url, price, is_on_sale, discount_percentage, is_out_of_stock')
+        .eq('is_new', true)
+        .limit(8);
+      setNewArrivals(productsData || []);
+      setLoading(false);
+    }
+    fetchData();
+  }, []);
+
+  if (loading) return <DressLoader />;
 
 
     return (
@@ -58,54 +67,81 @@ export default function Home() {
             />
             <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
-            <div className="flex flex-col items-center justify-center p-6">
-                <div className="relative w-full max-w-5xl bg-white/90 rounded-2xl shadow-2xl p-8 text-center animate-fade-in mb-12">
-                    <div className="absolute inset-0 bg-gray-900/30 rounded-2xl -z-10" />
-                    <h1 className="text-5xl font-extrabold text-purple-800 font-['Playfair_Display'] tracking-wide mb-4">
-                        Welcome to Vian Clothing Hub
-                    </h1>
-                    <p className="text-lg text-gray-700 mb-6">
-                        Discover vibrant African fashion that celebrates style and culture.
-                    </p>
-                    <Link
-                        href="/shop"
-                        className="bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-700 shadow-md hover:shadow-lg transition-all duration-300"
-                    >
-                        Shop Now
-                    </Link>
-                </div>
-                <div className="w-full max-w-5xl">
-                    <h2 className="text-3xl font-bold text-purple-800 font-['Playfair_Display'] mb-6">Shop by Category</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {categories.map((category) => (
-                            <Link
-                                key={category.slug}
-                                href={`/category/${category.slug}`}
-                                className="relative bg-white/80 rounded-lg shadow-md p-4 hover:scale-105 transition-all duration-300"
-                            >
-                                <img src={category.image} alt={category.name} className="w-full h-48 object-cover rounded-lg" />
-                                <h3 className="text-xl font-semibold text-gray-800 mt-2">{category.name}</h3>
-                            </Link>
-                        ))}
-                    </div>
-                </div>
-                <div className="w-full max-w-5xl mt-12">
-                    <h2 className="text-3xl font-bold text-purple-800 font-['Playfair_Display'] mb-6">New Arrivals</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {newArrivals.map((product) => (
-                            <Link
-                                key={product.id}
-                                href={`/product/${product.id}`}
-                                className="relative bg-white/80 rounded-lg shadow-md p-4 hover:scale-105 transition-all duration-300"
-                            >
-                                <img src={product.image} alt={product.name} className="w-full h-48 object-cover rounded-lg" />
-                                <h3 className="text-xl font-semibold text-gray-800 mt-2">{product.name}</h3>
-                                <p className="text-gray-600">${product.price.toFixed(2)}</p>
-                            </Link>
-                        ))}
-                    </div>
-                </div>
+           <Head>
+        <title>Vian Clothing Hub - Nigeria’s Ultimate Fashion Destination</title>
+        <meta name="description" content="Shop trendy African and contemporary fashion at Vian Clothing Hub. Discover dresses, tops, accessories, and custom orders with nationwide delivery." />
+      </Head>
+      <main className="min-h-screen bg-gray-100" style={{ backgroundImage: "url('/african-fabric.jpg')", backgroundSize: 'cover' }}>
+        <Navbar profile={profile} />
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          {/* Hero Banner */}
+          <section className="relative text-center py-20 bg-purple-800 bg-opacity-80 rounded-2xl shadow-lg mb-12">
+            <h1 className="text-4xl md:text-5xl font-bold text-gold-500 font-playfair-display">
+              Welcome to Vian Clothing Hub
+            </h1>
+            <p className="text-lg text-white mt-4">
+              Discover Nigeria’s Finest Fashion – Trendy, Authentic, Affordable
+            </p>
+            <Link href="/shop">
+              <a className="mt-6 inline-block bg-gold-500 text-purple-800 font-semibold px-8 py-3 rounded-lg hover:bg-gold-600 transition-colors">
+                Shop Now
+              </a>
+            </Link>
+          </section>
+
+          {/* Category Tiles */}
+          <section className="mb-12">
+            <h2 className="text-3xl font-bold text-purple-800 font-playfair-display text-center mb-8">
+              Shop by Category
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {categories.map((category) => (
+                <Link key={category.slug} href={`/category/${category.slug}`}>
+                  <a className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 hover:border-purple-200">
+                    <h3 className="text-xl font-semibold text-purple-700">{category.name}</h3>
+                  </a>
+                </Link>
+              ))}
             </div>
+          </section>
+
+          {/* New Arrivals */}
+          <section>
+            <h2 className="text-3xl font-bold text-purple-800 font-playfair-display text-center mb-8">
+              New Arrivals
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {newArrivals.map((product) => (
+                <Link key={product.id} href={`/product/${product.id}`}>
+                  <a className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100">
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="w-full h-48 object-cover rounded-lg mb-4"
+                    />
+                    <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
+                    <p className="text-purple-700 font-semibold">
+                      {product.is_on_sale ? (
+                        <>
+                          <span className="line-through text-red-600">₦{Number(product.price).toLocaleString()}</span>
+                          <span className="ml-2 text-green-600">
+                            ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
+                          </span>
+                        </>
+                      ) : (
+                        `₦${Number(product.price).toLocaleString()}`
+                      )}
+                    </p>
+                    {product.is_out_of_stock && (
+                      <span className="text-red-600 text-sm">Out of Stock</span>
+                    )}
+                  </a>
+                </Link>
+              ))}
+            </div>
+          </section>
+        </div>
+        
             <Footer />
         </main>
     );
