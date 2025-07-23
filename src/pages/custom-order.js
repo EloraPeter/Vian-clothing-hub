@@ -12,7 +12,8 @@ import DressLoader from '@/components/DressLoader';
 export default function CustomOrderPage() {
   const [profile, setProfile] = useState(null);
   const router = useRouter();
-  
+  const [loading, setLoading] = useState(true);
+
 
 
   // Fetch user profile
