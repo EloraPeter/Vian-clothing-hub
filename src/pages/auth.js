@@ -77,9 +77,8 @@ export default function Auth() {
       <Link href="/" className="fixed top-6 left-6 z-50 flex items-center space-x-2">
         <img src="/logo.svg" alt="Aunty Nwanne Logo" className="h-16 w-auto" />
       </Link>
-      <div className="min-h-screen flex flex-col-reverse md:flex-row items-center justify-center p-4 mx-10 gap-8">
-        <div className="relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all duration-500 hover:scale-105 animate-fade-in">
-          <div className="absolute inset-0 bg-gray-900/30 rounded-2xl -z-10" />
+      <div className="min-h-screen flex flex-col-reverse md:flex-row items-center justify-center p-4 mx-12 gap-8">
+        <div className="relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-l transform transition-all duration-500 hover:scale-105 animate-fade-in">
           <form onSubmit={handleSubmit} className="space-y-6">
             <h1 className="text-3xl font-extrabold text-center text-purple-800 font-['Playfair_Display']">
               {mode === 'login' ? 'Welcome Back' : 'Join the Style'}
