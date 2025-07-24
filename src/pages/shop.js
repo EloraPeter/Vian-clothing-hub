@@ -44,7 +44,7 @@ const [categories, setCategories] = useState([]);
     useEffect(() => {
         async function fetchProducts() {
             setLoading(true);
-            const { data } = await supabase
+            const { data, error } = await supabase
                 .from('products')
                 .select('*, product_images(image_url)');
             if (error) console.error("Error fetching products:", error.message);
@@ -125,27 +125,19 @@ const [categories, setCategories] = useState([]);
                 {/* Filter/Sort Bar */}
                 <div className="mb-6 flex flex-wrap gap-4">
                     <select
-                        value={sortOption}
-                        onChange={(e) => setSortOption(e.target.value)}
-                        className="text-gray-600 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        aria-label="Sort products"
-                    >
-                        <option value="">Sort by: Default</option>
-                        <option value="price-asc">Price: Low to High</option>
-                        <option value="price-desc">Price: High to Low</option>
-                    </select>
-                    <select
-                        value={selectedCategory}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="text-gray-600 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        aria-label="Filter by category"
-                    >
-                        <option value="">All Categories</option>
-                        <option value="dresses">Dresses</option>
-                        <option value="tops">Tops</option>
-                        <option value="shirts">Shirts</option>
-                        <option value="accessories">Accessories</option>
-                    </select>
+  value={selectedCategory}
+  onChange={(e) => setSelectedCategory(e.target.value)}
+  className="text-gray-600 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+  aria-label="Filter by category"
+>
+  <option value="">All Categories</option>
+  {categories.map((cat) => (
+    <option key={cat.id} value={cat.id}>
+      {cat.name}
+    </option>
+  ))}
+</select>
+
                 </div>
 
                 {/* Product Grid */}
@@ -281,6 +273,8 @@ const [categories, setCategories] = useState([]);
                         Next
                     </button>
                 </div>
+
+
                 <section className="bg-gray-100 p-6 mb-8 text-left">
                     <h1 className="text-3xl font-bold text-purple-700 mb-4">Vian Clothing Hub – Nigeria’s Ultimate Fashion Destination</h1>
                     <p className="text-lg text-gray-600 mb-4">Discover the Best of African & Contemporary Fashion Online</p>
