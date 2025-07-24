@@ -517,7 +517,7 @@ export default function AdminPage() {
                                         className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 transition-colors"
                                         disabled={productUploading}
                                     />
-                                    {productData.imageFiles.length > 0 && (
+                                    {productData.imageFiles?.length > 0 && (
                                         <div className="mt-3 flex gap-2 flex-wrap">
                                             {productData.imageFiles.map((file, index) => (
                                                 <img
