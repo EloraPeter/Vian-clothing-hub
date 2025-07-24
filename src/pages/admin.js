@@ -21,7 +21,7 @@ export default function AdminPage() {
         price: '',
         description: '',
         category: '',
-        imageFile: null,
+        imageFile: [],
     });
     const [productPreviewUrl, setProductPreviewUrl] = useState(null);
     const [productUploading, setProductUploading] = useState(false);
@@ -316,7 +316,7 @@ export default function AdminPage() {
                 throw new Error('Product insert failed: ' + insertError.message);
             }
 
-            setProductData({ name: '', price: '', description: '', category: '', imageFile: null });
+            setProductData({ name: '', price: '', description: '', category: '', imageFiles: [] });
             setProductPreviewUrl(null);
             setProducts((prev) => [
                 {
