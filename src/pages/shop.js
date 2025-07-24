@@ -7,7 +7,6 @@ import Navbar from "@/components/Navbar";
 import Footer from '@/components/footer';
 import CartPanel from "@/components/CartPanel";
 import DressLoader from '@/components/DressLoader';
-import Breadcrumbs from '@/components/Breadcrumbs';
 
 
 
@@ -124,7 +123,6 @@ const [categories, setCategories] = useState([]);
                     <span className="block mt-2 h-1 w-20 bg-purple-500 mx-auto"></span>
                 </h1>
 
-                 <Breadcrumbs category={category} />
 
 
                 {/* Filter/Sort Bar */}
