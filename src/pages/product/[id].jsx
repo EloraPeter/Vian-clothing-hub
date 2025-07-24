@@ -18,6 +18,8 @@ export default function Product() {
     const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState(null);
     const { addToCart } = useCart();
+        const [isCartOpen, setIsCartOpen] = useState(false);
+
     const { toggleWishlist, isInWishlist } = useWishlist();
     const [additionalImages, setAdditionalImages] = useState([]);
     const [product, setProduct] = useState(null);
