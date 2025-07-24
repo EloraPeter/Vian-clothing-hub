@@ -59,14 +59,7 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
         </div>
         <Link href="/shop" className="hover:text-gold-500">Shop</Link>
         <Link href="/custom-order" className="hover:text-gold-500">Custom Order</Link>
-        {profile ? (
-          <>
-            <Link href="/dashboard" className="hover:text-gold-500">Dashboard</Link>
-            <button onClick={() => supabase.auth.signOut()} className="hover:text-gold-500">Log Out</button>
-          </>
-        ) : (
-          <Link href="/auth" className="hover:text-gold-500">Log In</Link>
-        )}
+        
         <div className="relative">
           <input
             type="text"
