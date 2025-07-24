@@ -5,6 +5,8 @@ import Link from "next/link";
 import zxcvbn from "zxcvbn";
 import Spinner from "@/components/Spinner";
 import DressLoader from "@/components/DressLoader";
+import Head from "next/head";
+
 
 export default function Auth() {
   const router = useRouter();

@@ -58,6 +58,20 @@ export default function Home() {
 
 
     return (
+        <>
+
+        <Head>
+  <title>Shop Ready-to-Wear Fashion - Vian Clothing Hub Nigeria</title>
+  <meta
+    name="description"
+    content="Browse Vian Clothing Hub's exclusive Ready-to-Wear collection. Discover trendy dresses, tops, and accessories with nationwide delivery across Nigeria."
+  />
+  <meta name="keywords" content="Ready-to-Wear, Nigerian Fashion, Dresses, Tops, Accessories, Vian Clothing Hub" />
+  <meta name="author" content="Vian Clothing Hub" />
+  <meta property="og:title" content="Shop Ready-to-Wear Fashion - Vian Clothing Hub Nigeria" />
+  <meta property="og:description" content="Explore our latest collection of stylish ready-to-wear fashion with fast delivery across Nigeria." />
+</Head>
+
         <main className="min-h-screen mb-0 bg-gray-100 pb-0 relative">
             <Navbar
                 profile={profile}
@@ -192,5 +206,6 @@ export default function Home() {
 
             <Footer />
         </main>
+        </>
     );
 }

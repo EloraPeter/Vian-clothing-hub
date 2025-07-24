@@ -2,6 +2,8 @@ import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/footer";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
+import Head from 'next/head';
+
 
 export default function FAQs({ profile }) {
   const [openFAQ, setOpenFAQ] = useState(null);
@@ -59,45 +61,57 @@ export default function FAQs({ profile }) {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Navbar profile={profile} />
-      <section className="max-w-4xl mx-auto px-4 py-12">
-        <h2 className="text-3xl font-bold mb-8 text-center text-purple-700">
-          Frequently Asked Questions
-        </h2>
-        <div className="space-y-6">
-          {faqs.map((faq, index) => (
-            <div
-              key={index}
-              className="border border-gray-300 rounded-xl p-5 shadow-sm bg-white"
-              role="article"
-              aria-label={`FAQ: ${faq.question}`}
-            >
-              <button
-                className="flex justify-between items-center w-full text-left"
-                onClick={() => toggleFAQ(index)}
-                aria-expanded={openFAQ === index}
-                aria-controls={`faq-answer-${index}`}
+    <><Head>
+      <title>FAQs - Vian Clothing Hub | Your Fashion Questions Answered</title>
+      <meta
+        name="description"
+        content="Find answers to frequently asked questions about ordering, delivery, payment methods, custom orders, and more at Vian Clothing Hub."
+      />
+      <meta name="keywords" content="Vian Clothing Hub FAQ, Fashion Questions, Delivery, Payment, Returns, Custom Orders" />
+      <meta name="author" content="Vian Clothing Hub" />
+      <meta property="og:title" content="FAQs - Vian Clothing Hub | Your Fashion Questions Answered" />
+      <meta property="og:description" content="Get detailed answers to your common questions about shopping at Vian Clothing Hub." />
+    </Head>
+      <div className="min-h-screen bg-gray-100">
+        <Navbar profile={profile} />
+        <section className="max-w-4xl mx-auto px-4 py-12">
+          <h2 className="text-3xl font-bold mb-8 text-center text-purple-700">
+            Frequently Asked Questions
+          </h2>
+          <div className="space-y-6">
+            {faqs.map((faq, index) => (
+              <div
+                key={index}
+                className="border border-gray-300 rounded-xl p-5 shadow-sm bg-white"
+                role="article"
+                aria-label={`FAQ: ${faq.question}`}
               >
-                <h3 className="font-semibold text-lg text-purple-700">
-                  {index + 1}. {faq.question}
-                </h3>
-                {openFAQ === index ? (
-                  <FaChevronUp className="w-5 h-5 text-purple-700" />
-                ) : (
-                  <FaChevronDown className="w-5 h-5 text-purple-700" />
+                <button
+                  className="flex justify-between items-center w-full text-left"
+                  onClick={() => toggleFAQ(index)}
+                  aria-expanded={openFAQ === index}
+                  aria-controls={`faq-answer-${index}`}
+                >
+                  <h3 className="font-semibold text-lg text-purple-700">
+                    {index + 1}. {faq.question}
+                  </h3>
+                  {openFAQ === index ? (
+                    <FaChevronUp className="w-5 h-5 text-purple-700" />
+                  ) : (
+                    <FaChevronDown className="w-5 h-5 text-purple-700" />
+                  )}
+                </button>
+                {openFAQ === index && (
+                  <div id={`faq-answer-${index}`} className="mt-2 text-gray-600">
+                    {faq.answer}
+                  </div>
                 )}
-              </button>
-              {openFAQ === index && (
-                <div id={`faq-answer-${index}`} className="mt-2 text-gray-600">
-                  {faq.answer}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-      <Footer />
-    </div>
+              </div>
+            ))}
+          </div>
+        </section>
+        <Footer />
+      </div>
+    </>
   );
 }
