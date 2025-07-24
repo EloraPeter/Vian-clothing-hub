@@ -60,7 +60,10 @@ export default function Home() {
 
 
     return (
-        
+        <Head>
+                <title>Vian Clothing Hub - Nigeria’s Ultimate Fashion Destination</title>
+                <meta name="description" content="Shop trendy African and contemporary fashion at Vian Clothing Hub. Discover dresses, tops, accessories, and custom orders with nationwide delivery." />
+            </Head>
         <main className="min-h-screen mb-0 bg-gray-100 pb-0 relative">
             <Navbar
                 profile={profile}
