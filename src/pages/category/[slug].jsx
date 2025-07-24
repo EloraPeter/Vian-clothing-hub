@@ -16,7 +16,7 @@ export default function Category() {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState(null);
-        const { addToCart } = useCart();
+const { addToCart, cart } = useCart();
     const [isCartOpen, setIsCartOpen] = useState(false);
     const { toggleWishlist, isInWishlist } = useWishlist();
     const { slug } = router.query;

@@ -18,7 +18,7 @@ export default function Shop() {
     const [productsPerPage] = useState(30);
     const [sortOption, setSortOption] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("");
-        const { addToCart } = useCart();
+const { addToCart, cart } = useCart();
     const [isCartOpen, setIsCartOpen] = useState(false);
 const [categories, setCategories] = useState([]);
     const { toggleWishlist, isInWishlist } = useWishlist();

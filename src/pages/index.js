@@ -14,7 +14,7 @@ import DressLoader from '@/components/DressLoader';
 export default function Home() {
     const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState(null);
-    const { addToCart } = useCart();
+const { addToCart, cart } = useCart();
     const [isCartOpen, setIsCartOpen] = useState(false);
     const { toggleWishlist, isInWishlist } = useWishlist();
     const [categories, setCategories] = useState([]);
