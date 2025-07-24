@@ -18,6 +18,7 @@ export default function Shop() {
     const [sortOption, setSortOption] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("");
     const [isCartOpen, setIsCartOpen] = useState(false);
+const [categories, setCategories] = useState([]);
 
     const { addToCart } = useCart();
     const { toggleWishlist, isInWishlist } = useWishlist();
@@ -52,6 +53,18 @@ export default function Shop() {
         }
         fetchProducts();
     }, []);
+
+    useEffect(() => {
+  async function fetchCategories() {
+    const { data: categoriesData, error } = await supabase
+      .from('categories')
+      .select('id, name, slug');
+    if (error) console.error("Error fetching categories:", error.message);
+    else setCategories(categoriesData);
+  }
+  fetchCategories();
+}, []);
+
 
     // Filter and sort products
     const displayedProducts = useMemo(() => {
