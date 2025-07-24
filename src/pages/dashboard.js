@@ -72,7 +72,7 @@ export default function Dashboard() {
 
         const { data: productOrdersData, error: productOrdersError } = await supabase
           .from('orders')
-          .select('*, order_items(product_id, quantity, products(name, image_url, price))')
+.select('*, order_items(product_id, quantity, products(name, image_url, price, product_images(image_url)))')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
         if (productOrdersError) throw productOrdersError;
