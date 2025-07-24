@@ -66,7 +66,7 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
             placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="px-3 py-2 rounded-lg text-black"
+            className="px-3 py-2 rounded-lg text-black hover:border-purple-700"
           />
           {suggestions.length > 0 && (
             <div className="absolute bg-white text-black shadow-lg rounded-lg mt-2 w-64">
