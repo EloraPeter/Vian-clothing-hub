@@ -6,6 +6,37 @@ import ProfileUploader from '@/components/ProfileUploader';
 import DressLoader from '@/components/DressLoader';
 import crypto from 'crypto';
 
+
+// pages/admin.js
+export async function getServerSideProps(context) {
+  const { user } = await supabase.auth.getUser(context.req);
+  if (!user) {
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      },
+    };
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (error || !data || !data.is_admin) {
+    return {
+      redirect: {
+        destination: '/login', // or '/unauthorized'
+        permanent: false,
+      },
+    };
+  }
+
+  return { props: {} };
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const [orders, setOrders] = useState([]);
