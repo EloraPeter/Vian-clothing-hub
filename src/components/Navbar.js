@@ -57,7 +57,7 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
             ))}
           </div>
         </div>
-        <Link href="/shop" className=" text-black hover:text-purple-500">Shop</Link>
+        <Link href="/shop" className="text-black hover:text-purple-500">Shop</Link>
         <Link href="/custom-order" className="text-black hover:text-purple-500">Custom Order</Link>
         
         <div className="relative">
