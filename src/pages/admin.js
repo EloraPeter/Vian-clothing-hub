@@ -265,7 +265,7 @@ export default function AdminPage() {
 
     const handleProductChange = (e) => {
         const { name, value, files } = e.target;
-        if (name === 'imageFile') {
+        if (name === 'imageFiles') {
             const file = files[0];
             if (file) {
                 setProductData((prev) => ({ ...prev, imageFile: file }));
@@ -514,9 +514,10 @@ export default function AdminPage() {
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
                                     <input
                                         type="file"
-                                        name="imageFile"
-                                        accept="image/*"
-                                        onChange={handleProductChange}
+  name="imageFiles"
+  accept="image/*"
+  multiple
+  onChange={handleProductChange}
                                         className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 transition-colors"
                                         disabled={productUploading}
                                     />
