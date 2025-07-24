@@ -15,10 +15,6 @@ import zxcvbn from 'zxcvbn';
 import 'leaflet/dist/leaflet.css';
 import '@maptiler/sdk/dist/maptiler-sdk.css';
 
-// Import Leaflet CSS and MapTiler CSS
-import 'leaflet/dist/leaflet.css';
-import '@maptiler/sdk/dist/maptiler-sdk.css';
-
 // Fix Leaflet marker icons
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -32,7 +28,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [mapCenter, setMapCenter] = useState([9.0820, 8.6753]); // Default to Nigeria center
-  const [marker, setMarker] = useState(null);
+const markerRef = useRef(null);
   const mapRef = useRef(null);
   const mapContainerRef = useRef(null);
   const router = useRouter();
@@ -86,7 +82,7 @@ export default function CheckoutPage() {
       setAddress(text);
       setMapCenter([center[1], center[0]]);
       mapRef.current.setView([center[1], center[0]], 14);
-      if (marker) marker.remove();
+      if (markerRef) marker.remove();
       const newMarker = L.marker([center[1], center[0]]).addTo(mapRef.current);
       setMarker(newMarker);
       setSelectedAddressId('');
@@ -255,9 +251,9 @@ if (loading) return <DressLoader />;
       <h1 className="text-3xl font-bold mb-6 text-purple-700 text-center">Checkout</h1>
       <p className="text-gray-600">
         Your cart is empty.{' '}
-        <link href="/" className="text-purple-600 hover:underline">
+        <Link href="/" className="text-purple-600 hover:underline">
           Continue shopping
-        </link>.
+        </Link>.
       </p>
     </main>
   );
