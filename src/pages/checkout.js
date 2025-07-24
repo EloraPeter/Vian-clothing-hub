@@ -28,7 +28,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [mapCenter, setMapCenter] = useState([9.0820, 8.6753]); // Default to Nigeria center
-const markerRef = useRef(null);
+  const [marker, setMarker] = useState(null);
   const mapRef = useRef(null);
   const mapContainerRef = useRef(null);
   const router = useRouter();
@@ -82,7 +82,7 @@ const markerRef = useRef(null);
       setAddress(text);
       setMapCenter([center[1], center[0]]);
       mapRef.current.setView([center[1], center[0]], 14);
-      if (markerRef) marker.remove();
+      if (marker) marker.remove();
       const newMarker = L.marker([center[1], center[0]]).addTo(mapRef.current);
       setMarker(newMarker);
       setSelectedAddressId('');
