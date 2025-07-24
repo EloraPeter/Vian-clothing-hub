@@ -68,11 +68,14 @@ export default function Product() {
 
             // Fetch related products
             const { data: relatedData } = await supabase
-                .from('products')
-                .select('id, name, image_url, price, is_on_sale, discount_percentage')
-                .eq('category_id', productData?.category_id)
-                .neq('id', id)
-                .limit(4);
+                SELECT p2.product_id, p.name, p.image_url, p.price, p.is_on_sale, p.discount_percentage, COUNT(*) as purchase_count
+FROM order_items p1
+JOIN order_items p2 ON p1.order_id = p2.order_id AND p1.product_id != p2.product_id
+JOIN products p ON p2.product_id = p.id
+WHERE p1.product_id = :current_product_id
+GROUP BY p2.product_id, p.name, p.image_url, p.price, p.is_on_sale, p.discount_percentage
+ORDER BY purchase_count DESC
+LIMIT 4;
             setRelatedProducts(relatedData || []);
             setLoading(false);
         }

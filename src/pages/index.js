@@ -60,6 +60,7 @@ export default function Home() {
 
 
     return (
+        
         <main className="min-h-screen mb-0 bg-gray-100 pb-0 relative">
             <Navbar
                 profile={profile}
@@ -68,10 +69,7 @@ export default function Home() {
             />
             <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
-            <Head>
-                <title>Vian Clothing Hub - Nigeria’s Ultimate Fashion Destination</title>
-                <meta name="description" content="Shop trendy African and contemporary fashion at Vian Clothing Hub. Discover dresses, tops, accessories, and custom orders with nationwide delivery." />
-            </Head>
+            
             <div className="max-w-7xl mx-auto px-4 py-12">
                 {/* Hero Banner */}
                 <section className="relative text-center py-20 mb-12">
