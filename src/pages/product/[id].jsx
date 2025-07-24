@@ -127,145 +127,143 @@ export default function Product() {
 
     return (
         <>
-        <Head>
-        <title>{product?.name} - Vian Clothing Hub</title>
-        <meta name="description" content={product?.description} />
-      </Head>
-        <main className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-rose-50 bg-[url('/african-fabric.jpg')] bg-cover bg-center relative">
-            <Navbar
-                profile={profile}
-                onCartClick={() => setIsCartOpen(true)}
-                cartItemCount={useCart().cart.length}
-            />
-            <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-            <div className="max-w-7xl mx-auto px-4 py-12">
-          <Breadcrumbs product={product} category={product?.categories} />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Images */}
-            <div>
-              <img
-                src={mainImage}
-                alt={product?.name}
-                className="w-full h-96 object-cover rounded-lg mb-4"
-              />
-              <div className="flex gap-2">
-                {[product?.image_url, ...additionalImages].map((image, i) => (
-                  <img
-                    key={i}
-                    src={image}
-                    alt={`${product?.name} ${i + 1}`}
-                    className="w-20 h-20 object-cover rounded-lg cursor-pointer hover:opacity-80"
-                    onClick={() => setMainImage(image)}
-                  />
-                ))}
-              </div>
-            </div>
-            {/* Details */}
-            <div>
-              <h1 className="text-3xl font-bold text-purple-800 font-playfair-display mb-4">
-                {product?.name}
-              </h1>
-              <div className="flex gap-2 mb-4">{renderStars(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length || 0)}</div>
-              <p className="text-purple-700 font-semibold text-xl mb-4">
-                {product?.is_on_sale ? (
-                  <>
-                    <span className="line-through text-red-600">₦{Number(product.price).toLocaleString()}</span>
-                    <span className="ml-2 text-green-600">
-                      ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
-                    </span>
-                  </>
-                ) : (
-                  `₦${Number(product.price).toLocaleString()}`
-                )}
-              </p>
-              <p className="text-gray-600 mb-4">{product?.description}</p>
-              <button
-                onClick={() => addToCart({ ...product, quantity: 1 })}
-                disabled={product?.is_out_of_stock}
-                className={`w-full py-3 rounded-lg flex items-center justify-center gap-2 font-medium ${
-                  product?.is_out_of_stock ? 'bg-gray-400 cursor-not-allowed text-white' : 'bg-purple-600 hover:bg-purple-700 text-white'
-                }`}
-              >
-                <FaShoppingCart />
-                {product?.is_out_of_stock ? 'Out of Stock' : 'Add to Cart'}
-              </button>
-            </div>
-          </div>
-          {/* Reviews */}
-          <section className="mt-12">
-            <h2 className="text-2xl font-bold text-purple-800 font-playfair-display mb-4">Customer Reviews</h2>
-            {reviews.length === 0 ? (
-              <p className="text-gray-600">No reviews yet.</p>
-            ) : (
-              <ul className="space-y-4">
-                {reviews.map((review, i) => (
-                  <li key={i} className="border p-4 rounded-lg">
-                    <div className="flex gap-2 mb-2">{renderStars(review.rating)}</div>
-                    <p className="text-gray-600">{review.comment}</p>
-                    <p className="text-sm text-gray-500">{new Date(review.created_at).toLocaleString()}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <form onSubmit={handleReviewSubmit} className="mt-6 space-y-4">
-              <select
-                value={newReview.rating}
-                onChange={(e) => setNewReview({ ...newReview, rating: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg text-gray-700"
-                required
-              >
-                <option value="">Select Rating</option>
-                {[1, 2, 3, 4, 5].map((r) => (
-                  <option key={r} value={r}>{r} Stars</option>
-                ))}
-              </select>
-              <textarea
-                value={newReview.comment}
-                onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg text-gray-700"
-                placeholder="Write your review"
-              />
-              <button
-                type="submit"
-                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
-              >
-                Submit Review
-              </button>
-            </form>
-          </section>
-          {/* Related Products */}
-          <section className="mt-12">
-            <h2 className="text-2xl font-bold text-purple-800 font-playfair-display mb-4">Related Products</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {relatedProducts.map((product) => (
-                <Link key={product.id} href={`/product/${product.id}`}>
-                  <a className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100">
-                    <img
-                      src={product.image_url}
-                      alt={product.name}
-                      className="w-full h-48 object-cover rounded-lg mb-4"
-                    />
-                    <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
-                    <p className="text-purple-700 font-semibold">
-                      {product.is_on_sale ? (
-                        <>
-                          <span className="line-through text-red-600">₦{Number(product.price).toLocaleString()}</span>
-                          <span className="ml-2 text-green-600">
-                            ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
-                          </span>
-                        </>
-                      ) : (
-                        `₦${Number(product.price).toLocaleString()}`
-                      )}
-                    </p>
-                  </a>
-                </Link>
-              ))}
-            </div>
-          </section>
-        </div>
-            <Footer />
-        </main>
+            <Head>
+                <title>{product?.name} - Vian Clothing Hub</title>
+                <meta name="description" content={product?.description} />
+            </Head>
+            <main className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-rose-50 bg-[url('/african-fabric.jpg')] bg-cover bg-center relative">
+                <Navbar
+                    profile={profile}
+                    onCartClick={() => setIsCartOpen(true)}
+                    cartItemCount={useCart().cart.length}
+                />
+                <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+                <div className="max-w-7xl mx-auto px-4 py-12">
+                    <Breadcrumbs product={product} category={product?.categories} />
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* Images */}
+                        <div>
+                            <img
+                                src={mainImage}
+                                alt={product?.name}
+                                className="w-full h-96 object-cover rounded-lg mb-4"
+                            />
+                            <div className="flex gap-2">
+                                {[product?.image_url, ...additionalImages].map((image, i) => (
+                                    <img
+                                        key={i}
+                                        src={image}
+                                        alt={`${product?.name} ${i + 1}`}
+                                        className="w-20 h-20 object-cover rounded-lg cursor-pointer hover:opacity-80"
+                                        onClick={() => setMainImage(image)}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                        {/* Details */}
+                        <div>
+                            <h1 className="text-3xl font-bold text-purple-800 font-playfair-display mb-4">
+                                {product?.name}
+                            </h1>
+                            <div className="flex gap-2 mb-4">{renderStars(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length || 0)}</div>              <p className="text-purple-700 font-semibold text-xl mb-4">
+                                {product?.is_on_sale ? (
+                                    <>
+                                        <span className="line-through text-red-600">₦{Number(product.price).toLocaleString()}</span>
+                                        <span className="ml-2 text-green-600">
+                                            ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
+                                        </span>
+                                    </>
+                                ) : (
+                                    `₦${Number(product.price).toLocaleString()}`
+                                )}
+                            </p>
+                            <p className="text-gray-600 mb-4">{product?.description}</p>
+                            <button
+                                onClick={() => addToCart({ ...product, quantity: 1 })}
+                                disabled={product?.is_out_of_stock}
+                                className={`w-full py-3 rounded-lg flex items-center justify-center gap-2 font-medium ${product?.is_out_of_stock ? 'bg-gray-400 cursor-not-allowed text-white' : 'bg-purple-600 hover:bg-purple-700 text-white'
+                                    }`}
+                            >
+                                <FaShoppingCart />
+                                {product?.is_out_of_stock ? 'Out of Stock' : 'Add to Cart'}
+                            </button>
+                        </div>
+                    </div>
+                    {/* Reviews */}
+                    <section className="mt-12">
+                        <h2 className="text-2xl font-bold text-purple-800 font-playfair-display mb-4">Customer Reviews</h2>
+                        {reviews.length === 0 ? (
+                            <p className="text-gray-600">No reviews yet.</p>
+                        ) : (
+                            <ul className="space-y-4">
+                                {reviews.map((review, i) => (
+                                    <li key={i} className="border p-4 rounded-lg">
+                                        <div className="flex gap-2 mb-2">{renderStars(review.rating)}</div>
+                                        <p className="text-gray-600">{review.comment}</p>
+                                        <p className="text-sm text-gray-500">{new Date(review.created_at).toLocaleString()}</p>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                        <form onSubmit={handleReviewSubmit} className="mt-6 space-y-4">
+                            <select
+                                value={newReview.rating}
+                                onChange={(e) => setNewReview({ ...newReview, rating: e.target.value })}
+                                className="w-full px-3 py-2 border rounded-lg text-gray-700"
+                                required
+                            >
+                                <option value="">Select Rating</option>
+                                {[1, 2, 3, 4, 5].map((r) => (
+                                    <option key={r} value={r}>{r} Stars</option>
+                                ))}
+                            </select>
+                            <textarea
+                                value={newReview.comment}
+                                onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
+                                className="w-full px-3 py-2 border rounded-lg text-gray-700"
+                                placeholder="Write your review"
+                            />
+                            <button
+                                type="submit"
+                                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+                            >
+                                Submit Review
+                            </button>
+                        </form>
+                    </section>
+                    {/* Related Products */}
+                    <section className="mt-12">
+                        <h2 className="text-2xl font-bold text-purple-800 font-playfair-display mb-4">Related Products</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {relatedProducts.map((product) => (
+                                <Link key={product.id} href={`/product/${product.id}`}>
+                                    <a className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100">
+                                        <img
+                                            src={product.image_url}
+                                            alt={product.name}
+                                            className="w-full h-48 object-cover rounded-lg mb-4"
+                                        />
+                                        <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
+                                        <p className="text-purple-700 font-semibold">
+                                            {product.is_on_sale ? (
+                                                <>
+                                                    <span className="line-through text-red-600">₦{Number(product.price).toLocaleString()}</span>
+                                                    <span className="ml-2 text-green-600">
+                                                        ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                `₦${Number(product.price).toLocaleString()}`
+                                            )}
+                                        </p>
+                                    </a>
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+                </div>
+                <Footer />
+            </main>
         </>
     );
 }
