@@ -19,10 +19,8 @@ export default function Shop() {
     const [sortOption, setSortOption] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("");
         const { addToCart } = useCart();
-
     const [isCartOpen, setIsCartOpen] = useState(false);
 const [categories, setCategories] = useState([]);
-
     const { toggleWishlist, isInWishlist } = useWishlist();
 
     // Fetch user profile
