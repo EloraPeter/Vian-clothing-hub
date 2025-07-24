@@ -144,22 +144,21 @@ export default function Product() {
             {/* Images */}
             <div>
               <img
-                src={product?.image_url}
+                src={mainImage}
                 alt={product?.name}
                 className="w-full h-96 object-cover rounded-lg mb-4"
               />
-              {additionalImages.length > 0 && (
-                <div className="flex gap-2">
-                  {additionalImages.map((image, i) => (
-                    <img
-                      key={i}
-                      src={image}
-                      alt={`${product?.name} ${i + 1}`}
-                      className="w-20 h-20 object-cover rounded-lg"
-                    />
-                  ))}
-                </div>
-              )}
+              <div className="flex gap-2">
+                {[product?.image_url, ...additionalImages].map((image, i) => (
+                  <img
+                    key={i}
+                    src={image}
+                    alt={`${product?.name} ${i + 1}`}
+                    className="w-20 h-20 object-cover rounded-lg cursor-pointer hover:opacity-80"
+                    onClick={() => setMainImage(image)}
+                  />
+                ))}
+              </div>
             </div>
             {/* Details */}
             <div>

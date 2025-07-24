@@ -74,6 +74,7 @@ export default function Category() {
     if (loading) return <DressLoader />;
 
     return (
+        <>
         <Head>
         <title>{category?.name} - Vian Clothing Hub</title>
         <meta name="description" content={`Shop ${category?.name} at Vian Clothing Hub. Discover trendy African and contemporary fashion.`} />
@@ -157,5 +158,6 @@ export default function Category() {
         </div>
             <Footer />
         </main>
+        </>
     );
 }
