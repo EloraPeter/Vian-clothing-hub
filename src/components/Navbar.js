@@ -3,12 +3,42 @@ import { FaShoppingCart, FaBell } from 'react-icons/fa';
 import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function Navbar({ profile, onCartClick, cartItemCount, notifications = [] }) {
   const router = useRouter();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  
+  const [categories, setCategories] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
   const unreadCount = notifications.filter((notif) => !notif.read).length;
+
+  useEffect(() => {
+    async function fetchCategories() {
+      const { data } = await supabase
+        .from('categories')
+        .select('name, slug')
+        .is('parent_id', null);
+      setCategories(data || []);
+    }
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    async function fetchSuggestions() {
+      if (searchQuery) {
+        const { data } = await supabase
+          .from('products')
+          .select('id, name, image_url')
+          .ilike('name', `%${searchQuery}%`)
+          .limit(5);
+        setSuggestions(data || []);
+      } else {
+        setSuggestions([]);
+      }
+    }
+    fetchSuggestions();
+  }, [searchQuery]);
 
   return (
     <nav className="bg-white shadow-md px-4 py-3 flex justify-between items-center sticky top-0 z-50">
