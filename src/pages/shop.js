@@ -43,8 +43,10 @@ export default function Shop() {
     useEffect(() => {
         async function fetchProducts() {
             setLoading(true);
-            const { data, error } = await supabase.from("products").select("*");
-            if (error) console.error("Error fetching products:", error.message);
+const { data } = await supabase
+  .from('products')
+  .select('*, product_images(image_url)');
+              if (error) console.error("Error fetching products:", error.message);
             else setProducts(data);
             setLoading(false);
         }
@@ -55,8 +57,8 @@ export default function Shop() {
     const displayedProducts = useMemo(() => {
         let result = [...products];
         if (selectedCategory) {
-            result = result.filter((p) => p.category === selectedCategory);
-        }
+  result = result.filter((p) => p.category_id === selectedCategory);
+}
         if (sortOption === "price-asc") {
             result.sort((a, b) => a.price - b.price);
         } else if (sortOption === "price-desc") {
