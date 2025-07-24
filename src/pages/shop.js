@@ -57,8 +57,9 @@ const [categories, setCategories] = useState([]);
     useEffect(() => {
   async function fetchCategories() {
     const { data: categoriesData, error } = await supabase
-      .from('categories')
-      .select('id, name, slug');
+  .from('categories')
+  .select('id, name, slug, parent_id')
+  .order('parent_id, name');
     if (error) console.error("Error fetching categories:", error.message);
     else setCategories(categoriesData);
   }
