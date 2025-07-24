@@ -277,68 +277,64 @@ export default function AdminPage() {
     };
 
     const handleProductSubmit = async (e) => {
-        e.preventDefault();
-        if (!productData.name || !productData.price || !productData.description || !productData.imageFile) {
-            alert('Please fill in all required fields and select an image.');
-            return;
-        }
+  e.preventDefault();
+  if (!productData.name || !productData.price || !productData.description || productData.imageFiles.length === 0) {
+    alert('Please fill in all required fields and upload at least one image.');
+    return;
+  }
 
-        setProductUploading(true);
-        try {
-            const fileExt = productData.imageFile.name.split('.').pop();
-            const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-            const filePath = `products/${fileName}`;
+  setProductUploading(true);
+  try {
+    const imageUrls = [];
 
-            const { error: uploadError } = await supabase.storage
-                .from('products')
-                .upload(filePath, productData.imageFile);
+    for (const file of productData.imageFiles) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `products/${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from('products').upload(fileName, file);
+      if (uploadError) throw new Error('Upload failed: ' + uploadError.message);
 
-            if (uploadError) {
-                throw new Error('Image upload failed: ' + uploadError.message);
-            }
+      const { data: urlData } = supabase.storage.from('products').getPublicUrl(fileName);
+      imageUrls.push(urlData.publicUrl);
+    }
 
-            const { data: urlData } = supabase.storage.from('products').getPublicUrl(filePath);
-            const image_url = urlData.publicUrl;
+    const { data: productInsert, error: insertError } = await supabase
+      .from('products')
+      .insert({
+        name: productData.name,
+        price: parseFloat(productData.price),
+        description: productData.description,
+        category: productData.category || null,
+        image_url: imageUrls[0] || '',
+        is_on_sale: false,
+        discount_percentage: 0,
+        is_out_of_stock: false,
+        is_new: false,
+      })
+      .select()
+      .single();
 
-            const { error: insertError } = await supabase.from('products').insert({
-                name: productData.name,
-                price: parseFloat(productData.price),
-                description: productData.description,
-                category: productData.category || null,
-                image_url,
-                is_on_sale: false,
-                discount_percentage: 0,
-                is_out_of_stock: false,
-                is_new: false,
-            });
+    if (insertError) throw new Error('Insert failed: ' + insertError.message);
 
-            if (insertError) {
-                throw new Error('Product insert failed: ' + insertError.message);
-            }
+    if (imageUrls.length > 1) {
+      await supabase.from('product_images').insert(
+        imageUrls.slice(1).map((url) => ({
+          product_id: productInsert.id,
+          image_url: url,
+        }))
+      );
+    }
 
-            setProductData({ name: '', price: '', description: '', category: '', imageFiles: [] });
-            setProductPreviewUrl(null);
-            setProducts((prev) => [
-                {
-                    name: productData.name,
-                    price: parseFloat(productData.price),
-                    description: productData.description,
-                    category: productData.category || null,
-                    image_url,
-                    is_on_sale: false,
-                    discount_percentage: 0,
-                    is_out_of_stock: false,
-                    is_new: false,
-                },
-                ...prev,
-            ]);
-            alert('Product added successfully!');
-        } catch (error) {
-            alert(error.message);
-        } finally {
-            setProductUploading(false);
-        }
-    };
+    setProductData({ name: '', price: '', description: '', category: '', imageFiles: [] });
+    setProductPreviewUrl(null);
+    setProducts((prev) => [productInsert, ...prev]);
+    alert('Product added with multiple images!');
+  } catch (error) {
+    alert(error.message);
+  } finally {
+    setProductUploading(false);
+  }
+};
+
 
     const handleDeleteProduct = async (id) => {
         if (!confirm(`Are you sure you want to delete product ID ${id}?`)) return;
