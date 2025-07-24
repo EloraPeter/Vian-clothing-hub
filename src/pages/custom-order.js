@@ -6,6 +6,8 @@ import CustomOrderForm from '@/components/CustomOrderForm';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/footer';
 import DressLoader from '@/components/DressLoader';
+import Head from "next/head";
+
 
 
 
@@ -47,6 +49,18 @@ export default function CustomOrderPage() {
   if (loading) return <DressLoader />;
 
   return (
+    <>
+    <Head>
+        <title>Custom Order - Vian Clothing Hub</title>
+        <meta
+          name="description"
+          content="Create a personalized fashion order at Vian Clothing Hub. Choose your style, fabric, and specifications for a unique outfit made just for you."
+        />
+        <meta name="keywords" content="custom fashion order, Vian Clothing Hub, tailored outfits, custom clothing Nigeria" />
+        <meta name="author" content="Vian Clothing Hub" />
+        <meta property="og:title" content="Custom Order - Vian Clothing Hub" />
+        <meta property="og:description" content="Submit your custom clothing order with Vian Clothing Hub and bring your fashion vision to life." />
+      </Head>
     <main className="min-h-screen mb-0 bg-gray-100 pb-0">
       <Navbar profile={profile} />
       <div className="">
@@ -58,6 +72,7 @@ export default function CustomOrderPage() {
       <Footer />
 
     </main >
+    </>
 
   );
 }
