@@ -51,6 +51,7 @@ export default function Product() {
                 .eq('id', id)
                 .single();
             setProduct(productData);
+            setMainImage(productData?.image_url);
 
             // Fetch additional images
             const { data: imagesData } = await supabase
@@ -68,15 +69,25 @@ export default function Product() {
 
             // Fetch related products
             const { data: relatedData } = await supabase
-                SELECT p2.product_id, p.name, p.image_url, p.price, p.is_on_sale, p.discount_percentage, COUNT(*) as purchase_count
-FROM order_items p1
-JOIN order_items p2 ON p1.order_id = p2.order_id AND p1.product_id != p2.product_id
-JOIN products p ON p2.product_id = p.id
-WHERE p1.product_id = :current_product_id
-GROUP BY p2.product_id, p.name, p.image_url, p.price, p.is_on_sale, p.discount_percentage
-ORDER BY purchase_count DESC
-LIMIT 4;
+                .from('products')
+                .select('id, name, image_url, price, is_on_sale, discount_percentage')
+                .eq('category_id', productData?.category_id)
+                .neq('id', id)
+                .limit(4);
             setRelatedProducts(relatedData || []);
+
+            // Fetch frequently bought together
+            const { data: freqData } = await supabase
+                .from('order_items')
+                .select('products(id, name, image_url, price, is_on_sale, discount_percentage)')
+                .eq('order_id', supabase
+                    .from('order_items')
+                    .select('order_id')
+                    .eq('product_id', id)
+                )
+                .neq('product_id', id)
+                .limit(4);
+            setFrequentlyBought(freqData?.map((item) => item.products) || []);
             setLoading(false);
         }
         fetchData();
@@ -115,6 +126,7 @@ LIMIT 4;
 
 
     return (
+        <>
         <Head>
         <title>{product?.name} - Vian Clothing Hub</title>
         <meta name="description" content={product?.description} />
@@ -255,5 +267,6 @@ LIMIT 4;
         </div>
             <Footer />
         </main>
+        </>
     );
 }
