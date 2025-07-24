@@ -201,7 +201,7 @@ cartItemCount={cart.length}
                                             loading="lazy"
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
-                                            <span className="text-white text-sm font-medium">{product.category || 'Uncategorized'}</span>
+                                            <span className="text-white text-sm font-medium">{categories.name || 'Uncategorized'}</span>
                                         </div>
                                     </div>
                                 </a>
