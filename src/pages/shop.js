@@ -43,10 +43,10 @@ export default function Shop() {
     useEffect(() => {
         async function fetchProducts() {
             setLoading(true);
-const { data } = await supabase
-  .from('products')
-  .select('*, product_images(image_url)');
-              if (error) console.error("Error fetching products:", error.message);
+            const { data } = await supabase
+                .from('products')
+                .select('*, product_images(image_url)');
+            if (error) console.error("Error fetching products:", error.message);
             else setProducts(data);
             setLoading(false);
         }
@@ -57,8 +57,8 @@ const { data } = await supabase
     const displayedProducts = useMemo(() => {
         let result = [...products];
         if (selectedCategory) {
-  result = result.filter((p) => p.category_id === selectedCategory);
-}
+            result = result.filter((p) => p.category_id === selectedCategory);
+        }
         if (sortOption === "price-asc") {
             result.sort((a, b) => a.price - b.price);
         } else if (sortOption === "price-desc") {
@@ -232,11 +232,10 @@ const { data } = await supabase
                                         is_out_of_stock: product.is_out_of_stock,
                                     })}
                                     disabled={product.is_out_of_stock}
-                                    className={`mt-4 w-full py-3 rounded-lg flex items-center justify-center gap-2 transition-colors duration-200 font-medium ${
-                                        product.is_out_of_stock
+                                    className={`mt-4 w-full py-3 rounded-lg flex items-center justify-center gap-2 transition-colors duration-200 font-medium ${product.is_out_of_stock
                                             ? 'bg-gray-400 cursor-not-allowed text-white'
                                             : 'bg-purple-600 hover:bg-purple-700 text-white'
-                                    }`}
+                                        }`}
                                     aria-label={`Add ${product.name} to cart`}
                                 >
                                     <FaShoppingCart className="w-4 h-4" />
