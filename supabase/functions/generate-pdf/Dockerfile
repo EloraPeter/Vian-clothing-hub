@@ -1,14 +1,13 @@
 FROM denoland/deno:1.46.3
-
-RUN apt-get update && apt-get install -y \
-    latexmk \
-    texlive-latex-base \
-    texlive-fonts-recommended \
-    texlive-fonts-extra \
-    texlive-latex-extra \
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* \
+    && for i in 1 2 3; do apt-get update --fix-missing && break || sleep 5; done \
+    && for i in 1 2 3; do apt-get install -y --no-install-recommends \
+        latexmk \
+        texlive-latex-base \
+        texlive-latex-extra \
+        && break || sleep 5; done \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
-COPY . .
-CMD ["deno", "run", "--allow-all", "index.ts"]
+COPY index.ts shop.js admin.js Invoice.tex Receipt.tex ./
+CMD ["deno", "run", "--allow-net", "--allow-read=/app,/tmp", "--allow-write=/app,/tmp", "--allow-run=latexmk", "index.ts"]
