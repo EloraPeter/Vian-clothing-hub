@@ -113,7 +113,7 @@ const [categories, setCategories] = useState([]);
             <Navbar
                 profile={profile}
                 onCartClick={() => setIsCartOpen(true)}
-                cartItemCount={useCart().cart.length}
+cartItemCount={cart.length}
             />
             <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
             <div className="max-w-7xl mx-auto px-4 py-12">

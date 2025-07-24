@@ -17,7 +17,7 @@ export default function Product() {
     const { id } = router.query;
     const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState(null);
-    const { addToCart } = useCart();
+const { addToCart, cart } = useCart();
         const [isCartOpen, setIsCartOpen] = useState(false);
 
     const { toggleWishlist, isInWishlist } = useWishlist();
@@ -137,7 +137,7 @@ export default function Product() {
                 <Navbar
                     profile={profile}
                     onCartClick={() => setIsCartOpen(true)}
-                    cartItemCount={useCart().cart.length}
+cartItemCount={cart.length}
                 />
                 <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
                 <div className="max-w-7xl mx-auto px-4 py-12">

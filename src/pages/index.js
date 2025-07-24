@@ -62,7 +62,7 @@ const { addToCart, cart } = useCart();
             <Navbar
                 profile={profile}
                 onCartClick={() => setIsCartOpen(true)}
-                cartItemCount={useCart().cart.length}
+cartItemCount={cart.length}
             />
             <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
