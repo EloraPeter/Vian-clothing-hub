@@ -266,11 +266,11 @@ export default function AdminPage() {
     const handleProductChange = (e) => {
         const { name, value, files } = e.target;
         if (name === 'imageFiles') {
-            const file = files[0];
-            if (file) {
-                setProductData((prev) => ({ ...prev, imageFile: file }));
-                setProductPreviewUrl(URL.createObjectURL(file));
-            }
+  const fileList = Array.from(files);
+           if (fileList.length > 0) {
+    setProductData((prev) => ({ ...prev, imageFiles: fileList }));
+    setProductPreviewUrl(URL.createObjectURL(fileList[0]));
+  }
         } else {
             setProductData((prev) => ({ ...prev, [name]: value }));
         }
