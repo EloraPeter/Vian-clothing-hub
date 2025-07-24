@@ -7,6 +7,8 @@ import Navbar from "@/components/Navbar";
 import Footer from '@/components/footer';
 import CartPanel from "@/components/CartPanel";
 import DressLoader from '@/components/DressLoader';
+import Breadcrumbs from '@/components/Breadcrumbs';
+
 
 
 export default function Shop() {
