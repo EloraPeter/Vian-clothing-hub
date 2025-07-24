@@ -277,56 +277,7 @@ cartItemCount={cart.length}
                 </div>
 
 
-                <section className="bg-gray-100 p-6 mb-8 text-left">
-                    <h1 className="text-3xl font-bold text-purple-700 mb-4">Vian Clothing Hub – Nigeria’s Ultimate Fashion Destination</h1>
-                    <p className="text-lg text-gray-600 mb-4">Discover the Best of African & Contemporary Fashion Online</p>
-                    <p className="text-md text-gray-600 mb-4">
-                        Welcome to Vian Clothing Hub, your No.1 online fashion store in Nigeria. From trendy ready-to-wear styles to elegant custom pieces, Vian Clothing Hub offers you the convenience of shopping premium-quality fashion items from the comfort of your home, workplace, or even on-the-go.
-                    </p>
-                    <p className="text-md text-gray-600 mb-4">
-                        Our platform was built for modern Nigerians who want stylish, affordable, and expressive fashion—delivered fast and stress-free. Whether you&rsquo;re in Lagos, Asaba, Abuja, or anywhere in Nigeria, Vian Clothing Hub delivers style to your doorstep.
-                    </p>
-                    <p className="text-lg font-semibold text-purple-700 mb-2">🔥 Trendy, Original, and Affordable</p>
-                    <p className="text-md text-gray-600 mb-4">
-                        We take pride in offering authentic and stylish fashion that reflects your personality. Whether you&rsquo;re going to a wedding, brunch, work, church, or simply dressing up for yourself, Vian Clothing Hub has the perfect outfit.
-                    </p>
-                    <p className="text-md text-gray-600 mb-4">
-                        Shop from our wide collection of:
-                    </p>
-                    <ul className="list-disc list-inside mt-2 text-gray-600">
-                        <li>Women’s Ready-to-Wear Gowns, Two-Pieces & Casuals</li>
-                        <li>Men’s Traditional & Smart Casual Looks</li>
-                        <li>Unisex Streetwear, Jackets, Tees, and Joggers</li>
-                        <li>Matching Couple Styles</li>
-                        <li>African-Inspired Prints (Ankara, Adire, Aso Oke)</li>
-                    </ul>
-                    <p className="text-md text-gray-600">Plus, we stock accessories like handbags, jewelry, headwraps, bonnets, scarves, and more — all made to match your outfits perfectly.</p>
-
-                    <p className="text-lg font-semibold text-purple-700 mb-2">✨ What Makes Vian Clothing Hub Special?</p>
-                    <ul className="list-disc list-inside text-gray-600 mb-4">
-                        <li>🎯 Authenticity Guaranteed: Every piece is made or sourced with quality in mind.</li>
-                        <li>🚚 Nationwide Delivery: From Lagos to Asaba to Kano — we ship everywhere!</li>
-                        <li>💳 Flexible Payments: Pay on delivery or online with your card, transfer, or USSD.</li>
-                        <li>♻️ Easy Returns: Not satisfied? Return it within 7 days. No stress, no wahala.</li>
-                        <li>🔥 Flash Sales & Discounts: Enjoy up to 50% off during our Style Weeks.</li>
-                        <li>🌍 Made in Nigeria, Loved Everywhere.</li>
-                    </ul>
-                    <p className="text-lg font-semibold text-purple-700 mb-2">🧵 Custom Orders & Bespoke Tailoring</p>
-                    <p className="text-md text-gray-600 mb-4">
-                        Looking for something made just for you? At Vian Clothing Hub, you can place custom orders for events, bridal parties, corporate uniforms, and more. Our talented in-house tailors and fashion designers are ready to bring your dream outfit to life.
-                    </p>
-                    <p className="text-md text-gray-600 mb-4">
-                        Just send us your measurements and preferred style via WhatsApp or our style form, and we’ll do the magic.
-                    </p>
-                    <p className="text-lg font-semibold text-purple-700 mb-2">💄 Beauty, Lifestyle & More</p>
-                    <p className="text-md text-gray-600 mb-4">
-                        Complete your look with our Vian Beauty and Lifestyle Collection — featuring skincare, wigs, bonnets, beauty sets, and home fragrances to keep you glowing from head to toe.
-                    </p>
-                    <p className="text-md text-gray-600 mb-4">
-                        📱 Shop On the Go
-                        Visit our website anytime, or shop directly via our WhatsApp store. Follow us on social media @vianclothinghub to see new arrivals, style inspiration, and exclusive offers.
-                    </p>
-                </section>
+               
             </div>
             <Footer />
         </div>
