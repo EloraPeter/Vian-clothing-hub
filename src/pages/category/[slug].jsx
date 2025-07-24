@@ -128,8 +128,7 @@ export default function Category() {
           {/* Product Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {products.map((product) => (
-              <Link key={product.id} href={`/product/${product.id}`}>
-                <a className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100">
+              <Link key={product.id} href={`/product/${product.id}`} className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100">
                   <img
                     src={product.image_url}
                     alt={product.name}
@@ -151,7 +150,6 @@ export default function Category() {
                   {product.is_out_of_stock && (
                     <span className="text-red-600 text-sm">Out of Stock</span>
                   )}
-                </a>
               </Link>
             ))}
           </div>
