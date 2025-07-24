@@ -71,6 +71,32 @@ export default function Auth() {
   const strengthColor = ["#ef4444", "#f97316", "#facc15", "#4ade80", "#22c55e"];
 
   return (
+    <>
+    <Head>
+  <title>{mode === "login" ? "Login - Vian Clothing Hub" : "Sign Up - Vian Clothing Hub"}</title>
+  <meta
+    name="description"
+    content={
+      mode === "login"
+        ? "Login to your Vian Clothing Hub account and access stylish collections, exclusive deals, and order tracking."
+        : "Create your Vian Clothing Hub account to explore bold and authentic African fashion tailored to your vibe."
+    }
+  />
+  <meta name="author" content="Vian Clothing Hub" />
+  <meta name="keywords" content="Vian Clothing Hub, Login, Signup, African fashion, User account" />
+  <meta
+    property="og:title"
+    content={mode === "login" ? "Login - Vian Clothing Hub" : "Sign Up - Vian Clothing Hub"}
+  />
+  <meta
+    property="og:description"
+    content={
+      mode === "login"
+        ? "Access your Vian Clothing Hub account and keep up with the style."
+        : "Join Vian Clothing Hub and step into your fashion era."
+    }
+  />
+</Head>
     <main className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-rose-50 bg-[url('/african-fabric.jpg')] bg-cover bg-center relative">
       <div class="absolute inset-0 bg-gradient-to-b from-black/30 to-black/40 z-0"></div>
 
@@ -231,6 +257,6 @@ export default function Auth() {
           )}
         </div>
       </div>
-    </main>
+    </main></>
   );
 }
