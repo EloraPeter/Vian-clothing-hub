@@ -93,7 +93,7 @@ export default function Home() {
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         {categories.map((category) => (
-                            <Link key={category.slug} href={`/category/${category.slug}`} className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 hover:border-purple-200">
+                            <Link key={category.slug} href={`/category/${category?.slug}`} className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 hover:border-purple-200">
 
                                 <h3 className="text-xl font-semibold text-purple-700">{category.name}</h3>
 
