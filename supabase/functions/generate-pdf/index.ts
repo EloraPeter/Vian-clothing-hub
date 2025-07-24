@@ -1,6 +1,6 @@
 import { serve } from 'std/http/server.ts';
 import { createClient } from '@supabase/supabase-js';
-import { exec } from 'https://deno.land/x/execute@v1.2.0/mod.ts';
+import { exec } from 'https://deno.land/x/execute@v1.1.0/mod.ts';
 import { v4 as uuidv4 } from 'https://deno.land/std@0.224.0/uuid/mod.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
