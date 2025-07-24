@@ -20,9 +20,10 @@ export default function Breadcrumbs({ category, product }) {
         {crumbs.map((crumb, i) => (
           <li key={i} className="flex items-center">
             {crumb.href ? (
-              <Link href={crumb.href}>
-                <a className="text-purple-600 hover:text-purple-800">{crumb.name}</a>
-              </Link>
+             <Link href={crumb.href} className="text-purple-600 hover:text-purple-800">
+  {crumb.name}
+</Link>
+
             ) : (
               <span className="text-gray-900">{crumb.name}</span>
             )}

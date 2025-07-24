@@ -238,8 +238,7 @@ export default function Product() {
                         <h2 className="text-2xl font-bold text-purple-800 font-playfair-display mb-4">Related Products</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                             {relatedProducts.map((product) => (
-                                <Link key={product.id} href={`/product/${product.id}`}>
-                                    <a className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100">
+                                <Link key={product.id} href={`/product/${product.id}`} className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100">
                                         <img
                                             src={product.image_url}
                                             alt={product.name}
@@ -258,7 +257,6 @@ export default function Product() {
                                                 `₦${Number(product.price).toLocaleString()}`
                                             )}
                                         </p>
-                                    </a>
                                 </Link>
                             ))}
                         </div>
