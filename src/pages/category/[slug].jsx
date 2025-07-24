@@ -69,22 +69,7 @@ export default function Category() {
         fetchData();
     }, [slug, filters]);
 
-    // Fetch user profile
-    useEffect(() => {
-        async function fetchProfile() {
-            const { data: { user }, error: userError } = await supabase.auth.getUser();
-            if (user) {
-                const { data: profileData, error: profileError } = await supabase
-                    .from("profiles")
-                    .select("*")
-                    .eq("id", user.id)
-                    .maybeSingle();
-                if (!profileError) setProfile(profileData);
-                else console.error("Profile fetch error:", profileError.message);
-            } else if (userError) console.error("User fetch error:", userError.message);
-        }
-        fetchProfile();
-    }, []);
+
 
     if (loading) return <DressLoader />;
 
