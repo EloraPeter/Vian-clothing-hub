@@ -122,6 +122,9 @@ const [categories, setCategories] = useState([]);
                     <span className="block mt-2 h-1 w-20 bg-purple-500 mx-auto"></span>
                 </h1>
 
+                 <Breadcrumbs category={category} />
+
+
                 {/* Filter/Sort Bar */}
                 <div className="mb-6 flex flex-wrap gap-4">
                     <select
