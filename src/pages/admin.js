@@ -266,74 +266,74 @@ export default function AdminPage() {
     const handleProductChange = (e) => {
         const { name, value, files } = e.target;
         if (name === 'imageFiles') {
-  const fileList = Array.from(files);
-           if (fileList.length > 0) {
-    setProductData((prev) => ({ ...prev, imageFiles: fileList }));
-    setProductPreviewUrl(URL.createObjectURL(fileList[0]));
-  }
+            const fileList = Array.from(files);
+            if (fileList.length > 0) {
+                setProductData((prev) => ({ ...prev, imageFiles: fileList }));
+                setProductPreviewUrl(URL.createObjectURL(fileList[0]));
+            }
         } else {
             setProductData((prev) => ({ ...prev, [name]: value }));
         }
     };
 
     const handleProductSubmit = async (e) => {
-  e.preventDefault();
-  if (!productData.name || !productData.price || !productData.description || productData.imageFiles.length === 0) {
-    alert('Please fill in all required fields and upload at least one image.');
-    return;
-  }
+        e.preventDefault();
+        if (!productData.name || !productData.price || !productData.description || productData.imageFiles.length === 0) {
+            alert('Please fill in all required fields and upload at least one image.');
+            return;
+        }
 
-  setProductUploading(true);
-  try {
-    const imageUrls = [];
+        setProductUploading(true);
+        try {
+            const imageUrls = [];
 
-    for (const file of productData.imageFiles) {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `products/${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage.from('products').upload(fileName, file);
-      if (uploadError) throw new Error('Upload failed: ' + uploadError.message);
+            for (const file of productData.imageFiles) {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `products/${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+                const { error: uploadError } = await supabase.storage.from('products').upload(fileName, file);
+                if (uploadError) throw new Error('Upload failed: ' + uploadError.message);
 
-      const { data: urlData } = supabase.storage.from('products').getPublicUrl(fileName);
-      imageUrls.push(urlData.publicUrl);
-    }
+                const { data: urlData } = supabase.storage.from('products').getPublicUrl(fileName);
+                imageUrls.push(urlData.publicUrl);
+            }
 
-    const { data: productInsert, error: insertError } = await supabase
-      .from('products')
-      .insert({
-        name: productData.name,
-        price: parseFloat(productData.price),
-        description: productData.description,
-        category: productData.category || null,
-        image_url: imageUrls[0] || '',
-        is_on_sale: false,
-        discount_percentage: 0,
-        is_out_of_stock: false,
-        is_new: false,
-      })
-      .select()
-      .single();
+            const { data: productInsert, error: insertError } = await supabase
+                .from('products')
+                .insert({
+                    name: productData.name,
+                    price: parseFloat(productData.price),
+                    description: productData.description,
+                    category: productData.category || null,
+                    image_url: imageUrls[0] || '',
+                    is_on_sale: false,
+                    discount_percentage: 0,
+                    is_out_of_stock: false,
+                    is_new: false,
+                })
+                .select()
+                .single();
 
-    if (insertError) throw new Error('Insert failed: ' + insertError.message);
+            if (insertError) throw new Error('Insert failed: ' + insertError.message);
 
-    if (imageUrls.length > 1) {
-      await supabase.from('product_images').insert(
-        imageUrls.slice(1).map((url) => ({
-          product_id: productInsert.id,
-          image_url: url,
-        }))
-      );
-    }
+            if (imageUrls.length > 1) {
+                await supabase.from('product_images').insert(
+                    imageUrls.slice(1).map((url) => ({
+                        product_id: productInsert.id,
+                        image_url: url,
+                    }))
+                );
+            }
 
-    setProductData({ name: '', price: '', description: '', category: '', imageFiles: [] });
-    setProductPreviewUrl(null);
-    setProducts((prev) => [productInsert, ...prev]);
-    alert('Product added with multiple images!');
-  } catch (error) {
-    alert(error.message);
-  } finally {
-    setProductUploading(false);
-  }
-};
+            setProductData({ name: '', price: '', description: '', category: '', imageFiles: [] });
+            setProductPreviewUrl(null);
+            setProducts((prev) => [productInsert, ...prev]);
+            alert('Product added with multiple images!');
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            setProductUploading(false);
+        }
+    };
 
 
     const handleDeleteProduct = async (id) => {
@@ -435,8 +435,8 @@ export default function AdminPage() {
                                     onClick={handleAvatarChange}
                                     disabled={uploading || !avatarFile}
                                     className={`w-full py-2 rounded-md font-semibold text-white transition-colors ${uploading || !avatarFile
-                                            ? 'bg-gray-400 cursor-not-allowed'
-                                            : 'bg-purple-600 hover:bg-purple-700'
+                                        ? 'bg-gray-400 cursor-not-allowed'
+                                        : 'bg-purple-600 hover:bg-purple-700'
                                         }`}
                                 >
                                     {uploading ? 'Uploading...' : 'Update Picture'}
@@ -510,27 +510,33 @@ export default function AdminPage() {
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
                                     <input
                                         type="file"
-  name="imageFiles"
-  accept="image/*"
-  multiple
-  onChange={handleProductChange}
+                                        name="imageFiles"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={handleProductChange}
                                         className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 transition-colors"
                                         disabled={productUploading}
                                     />
-                                    {productPreviewUrl && (
-                                        <img
-                                            src={productPreviewUrl}
-                                            alt="Product Preview"
-                                            className="mt-3 w-24 h-24 object-cover rounded-md border border-gray-200"
-                                        />
+                                    {productData.imageFiles.length > 0 && (
+                                        <div className="mt-3 flex gap-2 flex-wrap">
+                                            {productData.imageFiles.map((file, index) => (
+                                                <img
+                                                    key={index}
+                                                    src={URL.createObjectURL(file)}
+                                                    alt={`Preview ${index + 1}`}
+                                                    className="w-24 h-24 object-cover rounded-md border border-gray-200"
+                                                />
+                                            ))}
+                                        </div>
                                     )}
+
                                 </div>
                                 <button
                                     type="submit"
                                     disabled={productUploading}
                                     className={`w-full py-2 rounded-md font-semibold text-white transition-colors ${productUploading
-                                            ? 'bg-gray-400 cursor-not-allowed'
-                                            : 'bg-purple-600 hover:bg-purple-700'
+                                        ? 'bg-gray-400 cursor-not-allowed'
+                                        : 'bg-purple-600 hover:bg-purple-700'
                                         }`}
                                 >
                                     {productUploading ? 'Uploading...' : 'Add Product'}
@@ -586,8 +592,8 @@ export default function AdminPage() {
                                                                     })
                                                                 }
                                                                 className={`px-3 py-1 rounded-md text-sm font-medium ${product.is_on_sale
-                                                                        ? 'bg-red-600 text-white'
-                                                                        : 'bg-purple-600 text-white hover:bg-purple-700'
+                                                                    ? 'bg-red-600 text-white'
+                                                                    : 'bg-purple-600 text-white hover:bg-purple-700'
                                                                     }`}
                                                             >
                                                                 {product.is_on_sale ? 'Remove Sale' : 'Mark as On Sale'}
@@ -599,8 +605,8 @@ export default function AdminPage() {
                                                                     })
                                                                 }
                                                                 className={`px-3 py-1 rounded-md text-sm font-medium ${product.is_out_of_stock
-                                                                        ? 'bg-red-600 text-white'
-                                                                        : 'bg-purple-600 text-white hover:bg-purple-700'
+                                                                    ? 'bg-red-600 text-white'
+                                                                    : 'bg-purple-600 text-white hover:bg-purple-700'
                                                                     }`}
                                                             >
                                                                 {product.is_out_of_stock
@@ -614,8 +620,8 @@ export default function AdminPage() {
                                                                     })
                                                                 }
                                                                 className={`px-3 py-1 rounded-md text-sm font-medium ${product.is_new
-                                                                        ? 'bg-red-600 text-white'
-                                                                        : 'bg-purple-600 text-white hover:bg-purple-700'
+                                                                    ? 'bg-red-600 text-white'
+                                                                    : 'bg-purple-600 text-white hover:bg-purple-700'
                                                                     }`}
                                                             >
                                                                 {product.is_new ? 'Remove New' : 'Mark as New'}
