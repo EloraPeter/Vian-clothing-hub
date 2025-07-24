@@ -59,15 +59,16 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
         </div>
         <Link href="/shop" className="text-black hover:text-purple-500">Shop</Link>
         <Link href="/custom-order" className="text-black hover:text-purple-500">Custom Order</Link>
-        
+
         <div className="relative">
           <input
             type="text"
             placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="px-3 py-2 rounded-lg text-black hover:border-purple-700"
+            className="px-3 py-2 rounded-lg text-black border border-gray-300 focus:border-purple-700 hover:border-purple-700 focus:outline-none"
           />
+
           {suggestions.length > 0 && (
             <div className="absolute bg-white text-black shadow-lg rounded-lg mt-2 w-64">
               {suggestions.map((product) => (
