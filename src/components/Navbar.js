@@ -57,8 +57,8 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
             ))}
           </div>
         </div>
-        <Link href="/shop" className="hover:text-gold-500">Shop</Link>
-        <Link href="/custom-order" className="hover:text-gold-500">Custom Order</Link>
+        <Link href="/shop" className=" text-black hover:text-purple-500">Shop</Link>
+        <Link href="/custom-order" className="text-black hover:text-purple-500">Custom Order</Link>
         
         <div className="relative">
           <input
@@ -66,10 +66,10 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
             placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="px-3 py-2 rounded-lg text-gray-800"
+            className="px-3 py-2 rounded-lg text-black"
           />
           {suggestions.length > 0 && (
-            <div className="absolute bg-white text-gray-800 shadow-lg rounded-lg mt-2 w-64">
+            <div className="absolute bg-white text-black shadow-lg rounded-lg mt-2 w-64">
               {suggestions.map((product) => (
                 <Link key={product.id} href={`/product/${product.id}`} className="flex items-center px-4 py-2 hover:bg-purple-100">
                   <img src={product.image_url} alt={product.name} className="w-10 h-10 object-cover rounded mr-2" />
