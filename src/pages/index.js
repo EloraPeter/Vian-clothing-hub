@@ -37,9 +37,9 @@ export default function Home() {
 
             // Fetch categories
             const { data: categoriesData } = await supabase
-                .from('categories')
-                .select('name, slug')
-                .is('parent_id', null); // Top-level categories
+  .from('categories')
+  .select('id, name, slug, parent_id')
+  .order('parent_id, name'); // Top-level categories
             setCategories(categoriesData || []);
 
             // Fetch new arrivals
