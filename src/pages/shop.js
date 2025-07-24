@@ -18,10 +18,11 @@ export default function Shop() {
     const [productsPerPage] = useState(30);
     const [sortOption, setSortOption] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("");
+        const { addToCart } = useCart();
+
     const [isCartOpen, setIsCartOpen] = useState(false);
 const [categories, setCategories] = useState([]);
 
-    const { addToCart } = useCart();
     const { toggleWishlist, isInWishlist } = useWishlist();
 
     // Fetch user profile
