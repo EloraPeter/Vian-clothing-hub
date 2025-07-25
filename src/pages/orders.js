@@ -51,6 +51,18 @@ export default function OrderTrackingPage() {
     fetchData();
   }, [router]);
 
+  useEffect(() => {
+  const subscription = supabase
+    .channel('orders')
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `user_id=eq.${user.id}` }, (payload) => {
+      setOrders((prev) =>
+        prev.map((order) => (order.id === payload.new.id ? payload.new : order))
+      );
+    })
+    .subscribe();
+  return () => supabase.removeChannel(subscription);
+}, [user]);
+
   // Status colors
   const getStatusColor = (status) => {
     switch (status) {
