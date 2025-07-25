@@ -602,9 +602,9 @@ export default function CheckoutPage() {
         <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
         <form onSubmit={handleOrder} className="max-w-5xl mx-auto p-6">
-          <form onSubmit={handleOrder} className="max-w-5xl mx-auto p-6">
+          {/* <form onSubmit={handleOrder} className="max-w-5xl mx-auto p-6">
             <Script src="https://js.paystack.co/v2/inline.js" strategy="afterInteractive" />
-          </form>
+          </form> */}
           <h1 className="text-3xl font-bold mb-6 text-blue-600 dark:text-blue-400 text-center">Checkout</h1>
 
           <section className="mb-8 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
