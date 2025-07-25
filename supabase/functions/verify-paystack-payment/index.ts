@@ -7,7 +7,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const paystackSecretKey = Deno.env.get('PAYSTACK_SECRET_KEY')!;
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*', // Allow all origins or specify 'http://localhost:3000' for development
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-client-info, apikey',
 };
@@ -16,10 +16,9 @@ serve(async (req) => {
   console.log(`Received ${req.method} request to /verify-paystack-payment`, {
     headers: Object.fromEntries(req.headers),
     url: req.url,
-    body: req.method === 'POST' ? await req.json() : null highs,
+    body: req.method === 'POST' ? await req.json() : null,
   });
 
-  // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
