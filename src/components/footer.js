@@ -24,10 +24,14 @@ const Footer = () => {
                         <li><Link href="/custom-order" className="text-gray-300 hover:text-gold-300">Custom Orders</Link></li>
                         <li><Link href="/returns" className="text-gray-300 hover:text-gold-300">Returns & Refunds</Link></li>
                         <li><Link href="/faqs" className="text-gray-300 hover:text-gold-300">FAQs</Link></li>
-                        <li><Link href="/cookies-policy" className="text-purple-600 hover:underline">Cookies Policy</Link></li>
-                        <li><Link href="/terms-of-service" className="text-purple-600 hover:underline">Terms of Service</Link></li>
-                        <li><Link href="/terms-and-conditions" className="text-purple-600 hover:underline">Terms and Conditions</Link></li>
 
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 className="text-lg font-semibold text-purple-400 mb-4">Legal</h3>
+                    <ul className="space-y-2">
+                        <li><Link href="/policies" className="text-gray-300 hover:text-purple-400">Policies</Link></li>
                     </ul>
                 </div>
 

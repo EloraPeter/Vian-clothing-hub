@@ -30,11 +30,11 @@ export default function CookieConsent() {
       <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
         <p className="text-sm">
           We use cookies to enhance your experience on Vian Clothing Hub. By continuing, you agree to our{' '}
-          <Link href="/cookies-policy" className="text-purple-400 hover:underline">
+          <Link href="/policies?section=cookies" className="text-purple-400 hover:underline">
             Cookies Policy
           </Link>{' '}
           and{' '}
-          <Link href="/terms-of-service" className="text-purple-400 hover:underline">
+          <Link href="/policies?section=terms-of-service" className="text-purple-400 hover:underline">
             Terms of Service
           </Link>.
         </p>
