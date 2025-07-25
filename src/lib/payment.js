@@ -39,14 +39,6 @@ const verifyPayment = async ({ reference, setError, setIsPaying, orderCallback, 
   }
 };
 
-// Set up global callback only in browser
-const PAYSTACK_CALLBACK_ID = `paystack_callback_${Date.now()}`;
-if (typeof window !== 'undefined') {
-  window[PAYSTACK_CALLBACK_ID] = (response) => {
-    window.postMessage({ type: 'PAYSTACK_PAYMENT', reference: response.reference }, '*');
-  };
-}
-
 export const initiatePayment = ({
   email,
   totalPrice,
@@ -98,20 +90,15 @@ export const initiatePayment = ({
       return;
     }
 
-    const handleMessage = (event) => {
-      if (event.data.type === 'PAYSTACK_PAYMENT') {
-        verifyPayment({ reference: event.data.reference, setError, setIsPaying, orderCallback, useApiFallback })
-          .then((success) => {
-            window.removeEventListener('message', handleMessage);
-            resolve(success);
-          })
-          .catch((err) => {
-            window.removeEventListener('message', handleMessage);
-            reject(err);
-          });
-      }
-    };
-    window.addEventListener('message', handleMessage);
+    // Store parameters for callback
+    const callbackParams = { setError, setIsPaying, orderCallback, useApiFallback };
+
+    // Define a simple, serializable callback function
+    function paystackCallback(response) {
+      verifyPayment({ reference: response.reference, ...callbackParams })
+        .then((success) => resolve(success))
+        .catch((err) => reject(err));
+    }
 
     try {
       const reference = `VIAN_ORDER_${Date.now()}`;
@@ -129,11 +116,10 @@ export const initiatePayment = ({
         amount: totalPrice * 100,
         currency: 'NGN',
         reference,
-        callback: window[PAYSTACK_CALLBACK_ID],
+        callback: paystackCallback,
         onClose: () => {
           setError('Payment cancelled.');
           setIsPaying(false);
-          window.removeEventListener('message', handleMessage);
           reject(new Error('Payment cancelled'));
         },
       });
@@ -141,7 +127,6 @@ export const initiatePayment = ({
       console.error('Paystack error:', err.message);
       setError('Failed to initialize payment: ' + err.message);
       setIsPaying(false);
-      window.removeEventListener('message', handleMessage);
       reject(err);
     }
   });

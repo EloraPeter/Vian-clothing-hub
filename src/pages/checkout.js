@@ -439,78 +439,77 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleOrder = async (e) => {
-    e.preventDefault();
-    setIsPaying(true);
-    setError(null);
+ const handleOrder = async (e) => {
+  e.preventDefault();
+  setIsPaying(true);
+  setError(null);
 
-    if (!address) {
-      setError('Please enter or select a delivery address.');
+  if (!address) {
+    setError('Please enter or select a delivery address.');
+    setIsPaying(false);
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
+      {
+        headers: { 'User-Agent': 'VianClothingHub/1.0[](https://vianclothinghub.com)' },
+      }
+    );
+    const data = await response.json();
+    if (!data[0]) {
+      setError('Invalid delivery address. Please select a valid address.');
       setIsPaying(false);
       return;
     }
+    const { lat, lon } = data[0];
 
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
+    const placeOrder = async (paymentReference) => {
+      const { error } = await supabase.from('orders').insert([
         {
-          headers: { 'User-Agent': 'VianClothingHub/1.0[](https://vianclothinghub.com)' },
-        }
-      );
-      const data = await response.json();
-      if (!data[0]) {
-        setError('Invalid delivery address. Please select a valid address.');
-        setIsPaying(false);
-        return;
-      }
-      const { lat, lon } = data[0];
+          user_id: user.id,
+          items: cart.map((item) => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            discount_percentage: item.discount_percentage || 0,
+            image_url: item.image_url,
+          })),
+          address,
+          lat: parseFloat(lat),
+          lng: parseFloat(lon),
+          status: 'processing',
+          total: totalPrice,
+          created_at: new Date().toISOString(),
+          payment_reference: paymentReference,
+        },
+      ]);
+      if (error) throw error;
+      clearCart();
+      router.push('/orders');
+      alert('Payment successful! Order placed.');
+    };
 
-      const placeOrder = async (paymentReference) => {
-        const { error } = await supabase.from('orders').insert([
-          {
-            user_id: user.id,
-            items: cart.map((item) => ({
-              id: item.id,
-              name: item.name,
-              price: item.price,
-              quantity: item.quantity,
-              discount_percentage: item.discount_percentage || 0,
-              image_url: item.image_url,
-            })),
-            address,
-            lat: parseFloat(lat),
-            lng: parseFloat(lon),
-            status: 'processing',
-            total: totalPrice,
-            created_at: new Date().toISOString(),
-            payment_reference: paymentReference,
-          },
-        ]);
-        if (error) throw error;
-        clearCart();
-        router.push('/orders');
-        alert('Payment successful! Order placed.');
-      };
+    const success = await initiatePayment({
+      email: profile?.email || user.email,
+      totalPrice,
+      setError,
+      setIsPaying,
+      orderCallback: placeOrder,
+      useApiFallback: true,
+    });
 
-      // Use the Promise-based initiatePayment
-      const success = await initiatePayment({
-        email: profile?.email || user.email,
-        totalPrice,
-        setError,
-        setIsPaying,
-        orderCallback: placeOrder,
-        useApiFallback: true,
-      });
-
-      if (!success) {
-        throw new Error('Payment initiation failed');
-      }
-    } catch (err) {
-      console.error('Order error:', err.message);
-      setError('Order failed: ' + err.message);
-      setIsPaying(false);
+    if (!success) {
+      throw new Error('Payment initiation failed');
     }
-  };
+  } catch (err) {
+    console.error('Order error:', err.message);
+    setError('Order failed: ' + err.message);
+    setIsPaying(false);
+  }
+};
 
   if (loading) return <DressLoader />;
   if (error && !isPaying) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
