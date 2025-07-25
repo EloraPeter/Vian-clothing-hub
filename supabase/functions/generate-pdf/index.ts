@@ -140,7 +140,7 @@ const supabase = createClient(
 
 serve(async (req) => {
 
-   🛡️ Handle CORS preflight
+  //  🛡️ Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', {
       status: 200,
@@ -227,7 +227,10 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ url: urlData.publicUrl }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
     });
   } catch (error) {
     console.error('Error in generate-pdf:', error);
