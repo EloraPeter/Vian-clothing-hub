@@ -9,7 +9,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import DressLoader from '@/components/DressLoader';
 import 'leaflet/dist/leaflet.css';
-import '@maptiler/sdk/dist/maptiler-sdk.css';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
@@ -30,18 +29,16 @@ export default function CheckoutPage() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [editAddressId, setEditAddressId] = useState(null);
-
-  const MAPTILER_API_KEY = process.env.NEXT_PUBLIC_MAPTILER_API_KEY;
+  const [searchResults, setSearchResults] = useState([]);
 
   useEffect(() => {
-    if (!mapContainerRef.current || !MAPTILER_API_KEY || typeof window === 'undefined') return;
+    if (!mapContainerRef.current || typeof window === 'undefined') return;
 
-    let L, MaptilerLayer, MaptilerGeocoder;
+    let L;
     try {
       L = require('leaflet');
-      ({ MaptilerLayer, MaptilerGeocoder } = require('@maptiler/leaflet-maptilersdk'));
     } catch (err) {
-      setError('Failed to load map libraries. Please try again later.');
+      setError('Failed to load map library. Please try again later.');
       console.error('Map library error:', err);
       return;
     }
@@ -61,63 +58,112 @@ export default function CheckoutPage() {
       zoom: 10,
     });
 
-    try {
-      const maptilerLayer = new MaptilerLayer({
-        apiKey: MAPTILER_API_KEY,
-        style: 'streets-v2',
-      }).addTo(mapRef.current);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(mapRef.current);
 
-      const geocoder = new MaptilerGeocoder({
-        apiKey: MAPTILER_API_KEY,
-        placeholder: 'Search for an address',
-        language: 'en',
-        limit: 5,
-      });
-      geocoder.addTo(mapRef.current);
+    const searchControl = L.control({ position: 'topleft' });
+    searchControl.onAdd = () => {
+      const div = L.DomUtil.create('div', 'leaflet-control-search');
+      div.innerHTML = `
+        <input type="text" id="searchInput" placeholder="Search for an address" style="width: 200px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;" />
+        <div id="searchResults" style="background: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; display: none;"></div>
+      `;
+      return div;
+    };
+    searchControl.addTo(mapRef.current);
 
-      geocoder.on('select', (result) => {
-        const { center, text } = result;
-        setAddress(text);
-        setMapCenter([center[1], center[0]]);
-        mapRef.current.setView([center[1], center[0]], 14);
-        if (marker) marker.remove();
-        const newMarker = L.marker([center[1], center[0]]).addTo(mapRef.current);
-        setMarker(newMarker);
-        setSelectedAddressId('');
-        setIsEditingAddress(false);
-        setEditAddressId(null);
-      });
+    const searchInput = document.getElementById('searchInput');
+    const searchResultsDiv = document.getElementById('searchResults');
 
-      mapRef.current.on('click', async (e) => {
-        const { lat, lng } = e.latlng;
-        setMapCenter([lat, lng]);
-        mapRef.current.setView([lat, lng], 14);
-        if (marker) marker.remove();
-        const newMarker = L.marker([lat, lng]).addTo(mapRef.current);
-        setMarker(newMarker);
-        try {
-          const response = await fetch(
-            `https://api.maptiler.com/geocoding/${lng},${lat}.json?key=${MAPTILER_API_KEY}`
-          );
-          if (!response.ok) {
-            throw new Error('Reverse geocoding failed');
+    const debounce = (func, delay) => {
+      let timeout;
+      return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), delay);
+      };
+    };
+
+    const performSearch = debounce(async (query) => {
+      if (!query) {
+        setSearchResults([]);
+        searchResultsDiv.style.display = 'none';
+        return;
+      }
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5`,
+          {
+            headers: { 'User-Agent': 'VianClothingHub/1.0 (https://vianclothinghub.com)' },
           }
-          const data = await response.json();
-          if (data.features[0]) {
-            setAddress(data.features[0].place_name);
+        );
+        if (!response.ok) throw new Error('Search failed');
+        const data = await response.json();
+        setSearchResults(data);
+        searchResultsDiv.style.display = data.length ? 'block' : 'none';
+        searchResultsDiv.innerHTML = data
+          .map(
+            (result, index) => `
+              <div class="search-result" data-index="${index}" style="padding: 5px; cursor: pointer; border-bottom: 1px solid #eee;">
+                ${result.display_name}
+              </div>
+            `
+          )
+          .join('');
+        const resultElements = searchResultsDiv.querySelectorAll('.search-result');
+        resultElements.forEach((el) => {
+          el.addEventListener('click', () => {
+            const index = el.getAttribute('data-index');
+            const result = data[index];
+            setAddress(result.display_name);
+            setMapCenter([parseFloat(result.lat), parseFloat(result.lon)]);
+            mapRef.current.setView([parseFloat(result.lat), parseFloat(result.lon)], 14);
+            if (marker) marker.remove();
+            const newMarker = L.marker([parseFloat(result.lat), parseFloat(result.lon)]).addTo(mapRef.current);
+            setMarker(newMarker);
             setSelectedAddressId('');
             setIsEditingAddress(false);
             setEditAddressId(null);
+            searchResultsDiv.style.display = 'none';
+            searchInput.value = result.display_name;
+          });
+        });
+      } catch (err) {
+        console.error('Search error:', err);
+        setSearchResults([]);
+        searchResultsDiv.style.display = 'none';
+      }
+    }, 500);
+
+    searchInput.addEventListener('input', (e) => performSearch(e.target.value));
+
+    mapRef.current.on('click', async (e) => {
+      const { lat, lng } = e.latlng;
+      setMapCenter([lat, lng]);
+      mapRef.current.setView([lat, lng], 14);
+      if (marker) marker.remove();
+      const newMarker = L.marker([lat, lng]).addTo(mapRef.current);
+      setMarker(newMarker);
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+          {
+            headers: { 'User-Agent': 'VianClothingHub/1.0 (https://vianclothinghub.com)' },
           }
-        } catch (err) {
-          setError('Failed to fetch address. Please try again.');
-          console.error('Reverse geocode error:', err);
+        );
+        if (!response.ok) throw new Error('Reverse geocoding failed');
+        const data = await response.json();
+        if (data.display_name) {
+          setAddress(data.display_name);
+          setSelectedAddressId('');
+          setIsEditingAddress(false);
+          setEditAddressId(null);
         }
-      });
-    } catch (err) {
-      setError('Failed to initialize map. Please check your API key or try again later.');
-      console.error('Map initialization error:', err);
-    }
+      } catch (err) {
+        setError('Failed to fetch address. Please try again.');
+        console.error('Reverse geocode error:', err);
+      }
+    });
 
     return () => {
       if (mapRef.current) {
@@ -125,7 +171,7 @@ export default function CheckoutPage() {
         mapRef.current = null;
       }
     };
-  }, [MAPTILER_API_KEY, mapCenter]);
+  }, [mapCenter]);
 
   useEffect(() => {
     async function fetchData() {
@@ -192,22 +238,25 @@ export default function CheckoutPage() {
     }
     try {
       const response = await fetch(
-        `https://api.maptiler.com/geocoding/${encodeURIComponent(address)}.json?key=${MAPTILER_API_KEY}`
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
+        {
+          headers: { 'User-Agent': 'VianClothingHub/1.0 (https://vianclothinghub.com)' },
+        }
       );
       const data = await response.json();
-      if (!data.features[0]) {
+      if (!data[0]) {
         setError('Invalid address. Please enter a valid address.');
         return;
       }
-      const { center } = data.features[0];
+      const { lat, lon } = data[0];
 
       if (isEditingAddress && editAddressId) {
         const { error } = await supabase
           .from('addresses')
           .update({
             address,
-            lat: center[1],
-            lng: center[0],
+            lat: parseFloat(lat),
+            lng: parseFloat(lon),
           })
           .eq('id', editAddressId)
           .eq('user_id', user.id);
@@ -218,8 +267,8 @@ export default function CheckoutPage() {
           {
             user_id: user.id,
             address,
-            lat: center[1],
-            lng: center[0],
+            lat: parseFloat(lat),
+            lng: parseFloat(lon),
           },
         ]);
         if (error) throw error;
@@ -294,14 +343,17 @@ export default function CheckoutPage() {
     }
     try {
       const response = await fetch(
-        `https://api.maptiler.com/geocoding/${encodeURIComponent(address)}.json?key=${MAPTILER_API_KEY}`
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
+        {
+          headers: { 'User-Agent': 'VianClothingHub/1.0 (https://vianclothinghub.com)' },
+        }
       );
       const data = await response.json();
-      if (!data.features[0]) {
+      if (!data[0]) {
         setError('Invalid delivery address. Please select a valid address.');
         return;
       }
-      const { center } = data.features[0];
+      const { lat, lon } = data[0];
 
       const { error } = await supabase.from('orders').insert([
         {
@@ -315,8 +367,8 @@ export default function CheckoutPage() {
             image_url: item.image_url,
           })),
           address,
-          lat: center[1],
-          lng: center[0],
+          lat: parseFloat(lat),
+          lng: parseFloat(lon),
           status: 'awaiting_payment',
           total: totalPrice,
           created_at: new Date().toISOString(),
@@ -389,7 +441,7 @@ export default function CheckoutPage() {
         </section>
 
         <section className="mb-8 bg-white p-6 rounded-xl shadow-md">
-          <h2 className="text-2xl font-bold mb-4 text-purple-700">Delivery Address</h2>
+          <h2 className="text-2xl font-bold text-purple-700 mb-4">Delivery Address</h2>
           {savedAddresses.length > 0 && (
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">Select Saved Address</label>
@@ -440,7 +492,7 @@ export default function CheckoutPage() {
           </div>
           <button
             onClick={handleSaveAddress}
-            className="mb-4 bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors"
+            className="mb-4 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
           >
             {isEditingAddress ? 'Update Address' : 'Save Address'}
           </button>
@@ -450,7 +502,7 @@ export default function CheckoutPage() {
 
         <button
           onClick={handleOrder}
-          className="w-full bg-purple-600 text-white px-6 py-3 rounded-md hover:bg-purple-700 transition-colors font-semibold"
+          className="w-full bg-purple-600 text-white px-6 py-3 rounded-md hover:bg-purple-700 font-semibold"
           disabled={!address}
         >
           Confirm & Place Order
