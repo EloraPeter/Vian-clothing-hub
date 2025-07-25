@@ -32,6 +32,7 @@ export default function CheckoutPage() {
   const [editAddressId, setEditAddressId] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [isPaying, setIsPaying] = useState(false);
+  const [paystackLoaded, setPaystackLoaded] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -374,7 +375,6 @@ export default function CheckoutPage() {
 
       const { data: newAddresses } = await supabase
         .from('addresses')
-        .select('id, address, lat, lng')
         .eq('user_id', user.id);
       setSavedAddresses(newAddresses || []);
       setSelectedAddressId(isEditingAddress ? editAddressId : newAddresses[newAddresses.length - 1].id);
@@ -461,7 +461,7 @@ export default function CheckoutPage() {
   };
 
   const initiatePayment = async (orderCallback) => {
-    if (!window.PaystackPop) {
+    if (!paystackLoaded || !window.PaystackPop) {
       setError('Paystack SDK not loaded. Please try again.');
       setIsPaying(false);
       return;
@@ -500,6 +500,7 @@ export default function CheckoutPage() {
         email,
         amount,
         reference,
+        currency: 'NGN',
       });
 
       const handler = new window.PaystackPop();
@@ -515,7 +516,7 @@ export default function CheckoutPage() {
             console.log('Invoking verify-paystack-payment with reference:', response.reference);
             const { data: { session } } = await supabase.auth.getSession();
             const { data, error } = await supabase.functions.invoke('verify-paystack-payment', {
-              body: { reference: response.reference },
+              body: JSON.stringify({ reference: response.reference }),
               headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${session?.access_token || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
@@ -626,7 +627,18 @@ export default function CheckoutPage() {
 
   return (
     <>
-      <Script src="https://js.paystack.co/v2/inline.js" strategy="beforeInteractive" />
+      <Script
+        src="https://js.paystack.co/v2/inline.js"
+        strategy="beforeInteractive"
+        onLoad={() => {
+          console.log('Paystack SDK loaded');
+          setPaystackLoaded(true);
+        }}
+        onError={(e) => {
+          console.error('Paystack SDK failed to load:', e);
+          setError('Failed to load Paystack SDK. Please try again.');
+        }}
+      />
       <main className="min-h-screen bg-gray-100 dark:bg-gray-900">
         <Navbar
           profile={profile}
@@ -635,7 +647,7 @@ export default function CheckoutPage() {
         />
         <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
-        <form onSubmit={handleOrder} className="max-w-5xl mx-auto p-6">
+        <form id="paystack-form" onSubmit={handleOrder} className="max-w-5xl mx-auto p-6">
           <h1 className="text-3xl font-bold mb-6 text-blue-600 dark:text-blue-400 text-center">Checkout</h1>
 
           <section className="mb-8 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
@@ -643,7 +655,14 @@ export default function CheckoutPage() {
             <ul className="space-y-4">
               {cart.map((item) => (
                 <li key={item.id} className="flex items-center space-x-4 border-b border-gray-300 dark:border-gray-600 pb-4">
-                  <Image src={item.image_url} alt={item.name} width={64} height={64} className="object-cover rounded-lg border border-gray-300 dark:border-gray-600" />
+                  <Image
+                    src={item.image_url}
+                    alt={item.name}
+                    width={64}
+                    height={64}
+                    className="object-cover rounded-lg border border-gray-300 dark:border-gray-600"
+                    onError={() => console.error(`Failed to load image: ${item.image_url}`)}
+                  />
                   <div className="flex-1">
                     <p className="text-gray-700 dark:text-gray-200 font-medium">{item.name}</p>
                     <p className="text-gray-600 dark:text-gray-400">
@@ -733,7 +752,7 @@ export default function CheckoutPage() {
           <button
             type="submit"
             className="w-full bg-blue-600 dark:bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 font-semibold disabled:bg-gray-400 dark:disabled:bg-gray-600"
-            disabled={!address || isPaying}
+            disabled={!address || isPaying || !paystackLoaded}
           >
             {isPaying ? 'Processing...' : 'Confirm & Pay'}
           </button>
