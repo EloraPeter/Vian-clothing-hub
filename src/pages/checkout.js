@@ -451,7 +451,7 @@ export default function CheckoutPage() {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
         {
-          headers: { 'User-Agent': 'VianClothingHub/1.0 (https://vianclothinghub.com)' },
+          headers: { 'User-Agent': 'VianClothingHub/1.0[](https://vianclothinghub.com)' },
         }
       );
       const data = await response.json();
@@ -489,14 +489,14 @@ export default function CheckoutPage() {
         alert('Payment successful! Order placed.');
       };
 
-      // Try Supabase first, fallback to API route if it fails
+      // Use the Promise-based initiatePayment
       const success = await initiatePayment({
         email: profile?.email || user.email,
         totalPrice,
         setError,
         setIsPaying,
         orderCallback: placeOrder,
-        useApiFallback: true, // Set to false to try Supabase first
+        useApiFallback: true,
       });
 
       if (!success) {

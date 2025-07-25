@@ -1,6 +1,45 @@
 import { supabase } from '@/lib/supabaseClient';
 
-export const initiatePayment = async ({
+// Utility function to verify payment, defined outside initiatePayment to avoid closure issues
+const verifyPayment = async ({ reference, setError, setIsPaying, orderCallback, useApiFallback }) => {
+  try {
+    let verificationResponse;
+    if (useApiFallback) {
+      const apiResponse = await fetch('/api/verify-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reference }),
+      });
+      verificationResponse = await apiResponse.json();
+      console.log('API verification response:', verificationResponse);
+    } else {
+      const { data, error } = await supabase.functions.invoke('verify-paystack-payment', {
+        body: { reference },
+        headers: { 'Content-Type': 'application/json' },
+      });
+      verificationResponse = { data, error };
+      console.log('Supabase verification response:', { data, error });
+    }
+
+    const { data, error } = verificationResponse;
+    if (error || !data?.success) {
+      console.error('Payment verification error:', error || data?.error);
+      setError('Payment verification failed. Please contact support.');
+      setIsPaying(false);
+      return false;
+    }
+    await orderCallback(reference);
+    setIsPaying(false);
+    return true;
+  } catch (err) {
+    console.error('Verification error:', err.message);
+    setError('Payment verification failed: ' + err.message);
+    setIsPaying(false);
+    return false;
+  }
+};
+
+export const initiatePayment = ({
   email,
   totalPrice,
   setError,
@@ -8,103 +47,75 @@ export const initiatePayment = async ({
   orderCallback,
   useApiFallback = false,
 }) => {
-  if (!window.PaystackPop) {
-    setError('Paystack SDK not loaded. Please try again.');
-    setIsPaying(false);
-    return false;
-  }
-
-  if (!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY) {
-    setError('Paystack public key is missing.');
-    setIsPaying(false);
-    return false;
-  }
-
-  if (!email) {
-    setError('No valid email found for payment.');
-    setIsPaying(false);
-    return false;
-  }
-
-  if (totalPrice <= 0) {
-    setError('Invalid order amount.');
-    setIsPaying(false);
-    return false;
-  }
-
-  if (typeof orderCallback !== 'function') {
-    setError('Invalid callback function provided.');
-    setIsPaying(false);
-    return false;
-  }
-
-  const verifyPayment = async (reference) => {
-    try {
-      let verificationResponse;
-      if (useApiFallback) {
-        const apiResponse = await fetch('/api/verify-payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ reference }),
-        });
-        verificationResponse = await apiResponse.json();
-        console.log('API verification response:', verificationResponse);
-      } else {
-        const { data, error } = await supabase.functions.invoke('verify-paystack-payment', {
-          body: { reference },
-          headers: { 'Content-Type': 'application/json' },
-        });
-        verificationResponse = { data, error };
-        console.log('Supabase verification response:', { data, error });
-      }
-
-      const { data, error } = verificationResponse;
-      if (error || !data?.success) {
-        console.error('Payment verification error:', error || data?.error);
-        setError('Payment verification failed. Please contact support.');
-        setIsPaying(false);
-        return false;
-      }
-      await orderCallback(reference);
-      return true;
-    } catch (err) {
-      console.error('Verification error:', err.message);
-      setError('Payment verification failed: ' + err.message);
+  return new Promise((resolve, reject) => {
+    if (!window.PaystackPop) {
+      setError('Paystack SDK not loaded. Please try again.');
       setIsPaying(false);
-      return false;
+      reject(new Error('Paystack SDK not loaded'));
+      return;
     }
-  };
 
-  try {
-    const reference = `VIAN_ORDER_${Date.now()}`;
-    console.log('Initiating Paystack payment with:', {
-      key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY.slice(0, 10) + '...',
-      email,
-      amount: totalPrice * 100,
-      reference,
-    });
+    if (!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY) {
+      setError('Paystack public key is missing.');
+      setIsPaying(false);
+      reject(new Error('Paystack public key missing'));
+      return;
+    }
 
-    const handler = new window.PaystackPop();
-    handler.open({
-      key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-      email,
-      amount: totalPrice * 100,
-      currency: 'NGN',
-      reference,
-      callback: (response) => {
-        // Minimal callback to avoid serialization issues
-        verifyPayment(response.reference);
-      },
-      onClose: () => {
-        setError('Payment cancelled.');
-        setIsPaying(false);
-      },
-    });
-    return true;
-  } catch (err) {
-    console.error('Paystack error:', err.message);
-    setError('Failed to initialize payment: ' + err.message);
-    setIsPaying(false);
-    return false;
-  }
+    if (!email) {
+      setError('No valid email found for payment.');
+      setIsPaying(false);
+      reject(new Error('No valid email'));
+      return;
+    }
+
+    if (totalPrice <= 0) {
+      setError('Invalid order amount.');
+      setIsPaying(false);
+      reject(new Error('Invalid order amount'));
+      return;
+    }
+
+    if (typeof orderCallback !== 'function') {
+      setError('Invalid callback function provided.');
+      setIsPaying(false);
+      reject(new Error('Invalid callback function'));
+      return;
+    }
+
+    try {
+      const reference = `VIAN_ORDER_${Date.now()}`;
+      console.log('Initiating Paystack payment with:', {
+        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY.slice(0, 10) + '...',
+        email,
+        amount: totalPrice * 100,
+        reference,
+      });
+
+      const handler = new window.PaystackPop();
+      handler.open({
+        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
+        email,
+        amount: totalPrice * 100, // Convert to kobo
+        currency: 'NGN',
+        reference,
+        callback: (response) => {
+          // Minimal callback to avoid serialization issues
+          verifyPayment({ reference: response.reference, setError, setIsPaying, orderCallback, useApiFallback })
+            .then((success) => resolve(success))
+            .catch((err) => reject(err));
+        },
+        onClose: () => {
+          setError('Payment cancelled.');
+          setIsPaying(false);
+          reject(new Error('Payment cancelled'));
+        },
+      });
+    } catch (err) {
+      console.error('Paystack error:', err.message);
+      setError('Failed to initialize payment: ' + err.message);
+      setIsPaying(false);
+      reject(err);
+    }
+  });
 };
