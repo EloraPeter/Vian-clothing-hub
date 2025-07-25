@@ -9,5 +9,5 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/* \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-COPY index.ts Invoice.tex Receipt.tex ../../../public/logo.png ./
+COPY index.ts Invoice.tex Receipt.tex ../public/logo.png ./
 CMD ["deno", "run", "--allow-net", "--allow-read=/app,/tmp", "--allow-write=/app,/tmp", "--allow-run=latexmk", "index.ts"]
