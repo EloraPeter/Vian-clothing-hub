@@ -124,7 +124,7 @@ export default function CheckoutPage() {
         </button>
         <div
           id="searchResults"
-          class="hidden bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg mt-1 max-h-48 overflow-y-auto z-[1000]"
+          class="hidden bg-white dark:bg-gray-800 border border-gray-600 rounded-md shadow-md mt-1 max-h-48 overflow-y-auto z-[1000]"
         ></div>
       `;
       L.DomEvent.disableClickPropagation(div);
@@ -177,7 +177,7 @@ export default function CheckoutPage() {
         const resultElements = searchResultsDiv.querySelectorAll('.search-result');
         resultElements.forEach((el) => {
           el.addEventListener('click', () => {
-            const index = el.getAttribute('data-index');
+            const index = el.getAttribute('index');
             const result = data[index];
             setAddress(result.display_name);
             setMapCenter([parseFloat(result.lat), parseFloat(result.lon)]);
@@ -261,7 +261,7 @@ export default function CheckoutPage() {
       marker.setLatLng(mapCenter);
     } catch (err) {
       console.error('Leaflet update error:', err);
-      setMarker(null); // Reset marker if error occurs
+      setMarker(null);
     }
   }, [mapCenter, marker]);
 
@@ -468,47 +468,57 @@ export default function CheckoutPage() {
     }
 
     try {
+      const email = profile?.email || user.email;
+      const amount = totalPrice * 100;
+      const reference = `VIAN_ORDER_${Date.now()}`;
       console.log('Initiating Paystack payment with:', {
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-        email: profile?.email || user.email,
-        amount: totalPrice * 100,
-        reference: `VIAN_ORDER_${Date.now()}`,
+        email,
+        amount,
+        reference,
       });
 
       const handler = new window.PaystackPop();
       handler.newTransaction({
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-        email: profile?.email || user.email,
-        amount: totalPrice * 100, // Convert to kobo
+        email,
+        amount, // In kobo
         currency: 'NGN',
-        reference: `VIAN_ORDER_${Date.now()}`,
+        reference,
         callback: async (response) => {
           console.log('Paystack callback response:', response);
           try {
+            console.log('Invoking verify-paystack-payment with reference:', response.reference);
             const { data, error } = await supabase.functions.invoke('verify-paystack-payment', {
               body: { reference: response.reference },
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabase.auth.getSession().then(({ data: { session } }) => session?.access_token || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)}`,
+              },
             });
+            console.log('Supabase function response:', { data, error });
             if (error || !data.success) {
               console.error('Payment verification error:', error || data.error);
-              setError('Payment verification failed.');
+              setError(`Payment verification failed: ${error?.message || data.error}`);
               setIsPaying(false);
               return;
             }
             await orderCallback(response.reference);
           } catch (err) {
             console.error('Supabase function error:', err);
-            setError('Payment verification failed: ' + err.message);
+            setError(`Payment verification failed: ${err.message}`);
             setIsPaying(false);
           }
         },
         onClose: () => {
+          console.log('Paystack payment cancelled');
           setError('Payment cancelled.');
           setIsPaying(false);
         },
       });
     } catch (err) {
       console.error('Paystack initialization error:', err);
-      setError('Failed to initialize payment: ' + err.message);
+      setError(`Failed to initialize payment: ${err.message}`);
       setIsPaying(false);
     }
   };
@@ -540,6 +550,7 @@ export default function CheckoutPage() {
       const { lat, lon } = data[0];
 
       const placeOrder = async (paymentReference) => {
+        console.log('Placing order with reference:', paymentReference);
         const { error } = await supabase.from('orders').insert([
           {
             user_id: user.id,
@@ -569,7 +580,7 @@ export default function CheckoutPage() {
       await initiatePayment(placeOrder);
     } catch (err) {
       console.error('Order error:', err);
-      setError('Order failed: ' + err.message);
+      setError(`Order failed: ${err.message}`);
       setIsPaying(false);
     }
   };
@@ -590,7 +601,7 @@ export default function CheckoutPage() {
 
   return (
     <>
-      <Script src="https://js.paystack.co/v2/inline.js" strategy="afterInteractive" />
+      <Script src="https://js.paystack.co/v2/inline.js" strategy="beforeInteractive" />
       <main className="min-h-screen bg-gray-100 dark:bg-gray-900">
         <Navbar
           profile={profile}
