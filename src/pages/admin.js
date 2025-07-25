@@ -137,7 +137,7 @@ export default function AdminPage() {
       DEPOSIT: Number(order.deposit || 5000).toLocaleString(),
       BALANCE: Number(amount - (order.deposit || 5000)).toLocaleString(),
       AMOUNT: Number(amount).toLocaleString(),
-      DATE: new Date().toLocaleDateString(),
+      DATE: new Date().toLocaleDateString().split('T')[0],
     };
 
     const { data, error } = await supabase.functions.invoke('generate-pdf', {
