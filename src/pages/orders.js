@@ -109,9 +109,9 @@ export default function OrderTrackingPage() {
           {orders.length === 0 ? (
             <p className="text-gray-600 text-center">
               You have no orders yet.{' '}
-              <LINK href="/" className="text-purple-600 hover:underline">
+              <Link href="/" className="text-purple-600 hover:underline">
                 Continue shopping
-              </LINK>.
+              </Link>.
             </p>
           ) : (
             <div className="space-y-6">
