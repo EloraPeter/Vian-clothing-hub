@@ -10,6 +10,14 @@ const nextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/offline',
+        destination: '/offline',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
