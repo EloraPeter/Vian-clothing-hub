@@ -11,6 +11,7 @@ if (!supabaseUrl || !supabaseKey) {
 }
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // return new Response("Method not allowed", { status: 405, headers });
 
 
 serve(async (req) => {
