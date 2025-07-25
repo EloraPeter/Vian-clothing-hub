@@ -9,17 +9,15 @@ const paystackSecretKey = Deno.env.get('PAYSTACK_SECRET_KEY')!;
 const corsHeaders = {
   'Access-Control-Allow-Origin': 'http://localhost:3000',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-client-info',
 };
 
 serve(async (req) => {
-  // Log request details
   console.log(`Received ${req.method} request to /verify-paystack-payment`, {
     headers: Object.fromEntries(req.headers),
     url: req.url,
   });
 
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
@@ -46,7 +44,6 @@ serve(async (req) => {
 
     console.log(`Verifying Paystack transaction with reference: ${reference}`);
 
-    // Verify payment with Paystack
     const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
       method: 'GET',
       headers: {
