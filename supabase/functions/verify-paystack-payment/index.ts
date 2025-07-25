@@ -16,6 +16,7 @@ serve(async (req) => {
   console.log(`Received ${req.method} request to /verify-paystack-payment`, {
     headers: Object.fromEntries(req.headers),
     url: req.url,
+    body: req.method === 'POST' ? await req.json() : null,
   });
 
   if (req.method === 'OPTIONS') {
@@ -53,11 +54,27 @@ serve(async (req) => {
     });
 
     const result = await response.json();
-    console.log('Paystack verification response:', result);
+    console.log('Paystack verification response:', JSON.stringify(result, null, 2));
+
+    if (!response.ok) {
+      console.error('Paystack API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        message: result.message || 'Unknown error',
+      });
+      return new Response(JSON.stringify({ success: false, error: 'Paystack API error: ' + (result.message || 'Unknown error') }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     if (!result.status || result.data.status !== 'success') {
-      console.error('Paystack verification failed:', result.message || 'Unknown error');
-      return new Response(JSON.stringify({ success: false, error: 'Payment verification failed' }), {
+      console.error('Paystack verification failed:', {
+        status: result.status,
+        message: result.message || 'Unknown error',
+        data: result.data,
+      });
+      return new Response(JSON.stringify({ success: false, error: 'Payment verification failed: ' + (result.message || 'Unknown error') }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -68,7 +85,10 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error in verify-paystack-payment:', error);
+    console.error('Error in verify-paystack-payment:', {
+      message: error.message,
+      stack: error.stack,
+    });
     return new Response(JSON.stringify({ success: false, error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -468,29 +468,30 @@ export default function CheckoutPage() {
     }
 
     try {
+      const reference = `VIAN_ORDER_${Date.now()}`;
       console.log('Initiating Paystack payment with:', {
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
         email: profile?.email || user.email,
         amount: totalPrice * 100,
-        reference: `VIAN_ORDER_${Date.now()}`,
+        reference,
       });
 
-      const handler = new window.PaystackPop();
-      handler.newTransaction({
+      const handler = window.PaystackPop.setup({
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
         email: profile?.email || user.email,
         amount: totalPrice * 100, // Convert to kobo
         currency: 'NGN',
-        reference: `VIAN_ORDER_${Date.now()}`,
+        reference,
         callback: async (response) => {
           console.log('Paystack callback response:', response);
           try {
             const { data, error } = await supabase.functions.invoke('verify-paystack-payment', {
               body: { reference: response.reference },
+              headers: { 'Content-Type': 'application/json' },
             });
             if (error || !data.success) {
               console.error('Payment verification error:', error || data.error);
-              setError('Payment verification failed.');
+              setError('Payment verification failed. Please contact support.');
               setIsPaying(false);
               return;
             }
@@ -506,6 +507,7 @@ export default function CheckoutPage() {
           setIsPaying(false);
         },
       });
+      handler.openIframe(); // Explicitly open the Paystack iframe
     } catch (err) {
       console.error('Paystack initialization error:', err);
       setError('Failed to initialize payment: ' + err.message);
@@ -600,6 +602,9 @@ export default function CheckoutPage() {
         <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
         <form onSubmit={handleOrder} className="max-w-5xl mx-auto p-6">
+          <form onSubmit={handleOrder} className="max-w-5xl mx-auto p-6">
+            <Script src="https://js.paystack.co/v2/inline.js" strategy="afterInteractive" />
+          </form>
           <h1 className="text-3xl font-bold mb-6 text-blue-600 dark:text-blue-400 text-center">Checkout</h1>
 
           <section className="mb-8 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
