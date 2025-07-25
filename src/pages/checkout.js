@@ -14,8 +14,6 @@ import zxcvbn from 'zxcvbn';
 // Leaflet CSS
 import 'leaflet/dist/leaflet.css';
 import '@maptiler/sdk/dist/maptiler-sdk.css';
-
-// Fix Leaflet marker icons
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
