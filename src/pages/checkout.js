@@ -2,24 +2,16 @@ import { useCart } from '@/context/CartContext';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
-import dynamic from 'next/dynamic';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/footer';
 import CartPanel from '@/components/CartPanel';
-import Link from 'next/link'
-import Image from 'next/image'
+import Link from 'next/link';
+import Image from 'next/image';
 import DressLoader from '@/components/DressLoader';
-import zxcvbn from 'zxcvbn';
-
-// Leaflet CSS
 import 'leaflet/dist/leaflet.css';
 import '@maptiler/sdk/dist/maptiler-sdk.css';
-// import L from 'leaflet';
-// import { MaptilerLayer, MaptilerGeocoder } from '@maptiler/leaflet-maptilersdk';
-
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-
 
 export default function CheckoutPage() {
   const { cart, totalPrice, clearCart } = useCart();
@@ -33,23 +25,27 @@ export default function CheckoutPage() {
   const [marker, setMarker] = useState(null);
   const mapRef = useRef(null);
   const mapContainerRef = useRef(null);
-  
   const router = useRouter();
   const [profile, setProfile] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [editAddressId, setEditAddressId] = useState(null);
 
-  // MapTiler API key
   const MAPTILER_API_KEY = process.env.NEXT_PUBLIC_MAPTILER_API_KEY;
 
-  // Initialize Leaflet map (client-side only)
   useEffect(() => {
     if (!mapContainerRef.current || !MAPTILER_API_KEY || typeof window === 'undefined') return;
 
-    const L = require('leaflet');
+    let L, MaptilerLayer, MaptilerGeocoder;
+    try {
+      L = require('leaflet');
+      ({ MaptilerLayer, MaptilerGeocoder } = require('@maptiler/leaflet-maptilersdk'));
+    } catch (err) {
+      setError('Failed to load map libraries. Please try again later.');
+      console.error('Map library error:', err);
+      return;
+    }
 
-    // Set default Leaflet icon
     const DefaultIcon = L.icon({
       iconUrl: markerIcon.src,
       shadowUrl: markerShadow.src,
@@ -60,70 +56,68 @@ export default function CheckoutPage() {
     });
     L.Marker.prototype.options.icon = DefaultIcon;
 
-    // Initialize map
     mapRef.current = L.map(mapContainerRef.current, {
       center: mapCenter,
       zoom: 10,
     });
 
-    // Add MapTiler layer
-    const maptilerLayer = new MaptilerLayer({
-      apiKey: NEXT_PUBLIC_MAPTILER_API_KEY,
-      style: 'streets-v2',
-    }).addTo(mapRef.current);
+    try {
+      const maptilerLayer = new MaptilerLayer({
+        apiKey: MAPTILER_API_KEY,
+        style: 'streets-v2',
+      }).addTo(mapRef.current);
 
-    // Add geocoding control
-    const geocoder = new MaptilerGeocoder({
-      apiKey: NEXT_PUBLIC_MAPTILER_API_KEY,
-      placeholder: 'Search for an address',
-      language: 'en',
-      limit: 5,
-    });
-    geocoder.addTo(mapRef.current);
+      const geocoder = new MaptilerGeocoder({
+        apiKey: MAPTILER_API_KEY,
+        placeholder: 'Search for an address',
+        language: 'en',
+        limit: 5,
+      });
+      geocoder.addTo(mapRef.current);
 
-    // Handle geocoding result
-    geocoder.on('select', (result) => {
-      const { center, text } = result;
-      setAddress(text);
-      setMapCenter([center[1], center[0]]);
-      mapRef.current.setView([center[1], center[0]], 14);
-      if (marker) marker.remove();
-      const newMarker = L.marker([center[1], center[0]]).addTo(mapRef.current);
-      setMarker(newMarker);
-      setSelectedAddressId('');
-      setIsEditingAddress(false);
-      setEditAddressId(null);
-    });
+      geocoder.on('select', (result) => {
+        const { center, text } = result;
+        setAddress(text);
+        setMapCenter([center[1], center[0]]);
+        mapRef.current.setView([center[1], center[0]], 14);
+        if (marker) marker.remove();
+        const newMarker = L.marker([center[1], center[0]]).addTo(mapRef.current);
+        setMarker(newMarker);
+        setSelectedAddressId('');
+        setIsEditingAddress(false);
+        setEditAddressId(null);
+      });
 
-    // Handle map click for reverse geocoding
-    mapRef.current.on('click', async (e) => {
-      const { lat, lng } = e.latlng;
-      setMapCenter([lat, lng]);
-      mapRef.current.setView([lat, lng], 14);
-      if (marker) marker.remove();
-      const newMarker = L.marker([lat, lng]).addTo(mapRef.current);
-      setMarker(newMarker);
-      try {
-        const response = await fetch(
-          `https://api.maptiler.com/geocoding/${lng},${lat}.json?key=${MAPTILER_API_KEY}`
-        );
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Reverse geocoding failed:", errorText);
-          return;
+      mapRef.current.on('click', async (e) => {
+        const { lat, lng } = e.latlng;
+        setMapCenter([lat, lng]);
+        mapRef.current.setView([lat, lng], 14);
+        if (marker) marker.remove();
+        const newMarker = L.marker([lat, lng]).addTo(mapRef.current);
+        setMarker(newMarker);
+        try {
+          const response = await fetch(
+            `https://api.maptiler.com/geocoding/${lng},${lat}.json?key=${MAPTILER_API_KEY}`
+          );
+          if (!response.ok) {
+            throw new Error('Reverse geocoding failed');
+          }
+          const data = await response.json();
+          if (data.features[0]) {
+            setAddress(data.features[0].place_name);
+            setSelectedAddressId('');
+            setIsEditingAddress(false);
+            setEditAddressId(null);
+          }
+        } catch (err) {
+          setError('Failed to fetch address. Please try again.');
+          console.error('Reverse geocode error:', err);
         }
-        const data = await response.json();
-        if (data.features[0]) {
-          setAddress(data.features[0].place_name);
-          setSelectedAddressId('');
-          setIsEditingAddress(false);
-          setEditAddressId(null);
-        }
-      } catch (err) {
-        console.error('Reverse geocode error:', err);
-        setError('Failed to fetch address. Please try again.');
-      }
-    });
+      });
+    } catch (err) {
+      setError('Failed to initialize map. Please check your API key or try again later.');
+      console.error('Map initialization error:', err);
+    }
 
     return () => {
       if (mapRef.current) {
@@ -131,9 +125,8 @@ export default function CheckoutPage() {
         mapRef.current = null;
       }
     };
-  }, [MAPTILER_API_KEY]);
+  }, [MAPTILER_API_KEY, mapCenter]);
 
-  // Check session and fetch addresses
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
@@ -168,7 +161,6 @@ export default function CheckoutPage() {
     fetchData();
   }, [router]);
 
-  // Handle saved address selection
   const handleSavedAddressChange = (e) => {
     const addressId = e.target.value;
     setSelectedAddressId(addressId);
@@ -193,7 +185,6 @@ export default function CheckoutPage() {
     }
   };
 
-  // Save or update address
   const handleSaveAddress = async () => {
     if (!address) {
       setError('Please enter a valid address.');
@@ -209,9 +200,8 @@ export default function CheckoutPage() {
         return;
       }
       const { center } = data.features[0];
-      
+
       if (isEditingAddress && editAddressId) {
-        // Update existing address
         const { error } = await supabase
           .from('addresses')
           .update({
@@ -224,7 +214,6 @@ export default function CheckoutPage() {
         if (error) throw error;
         alert('Address updated successfully!');
       } else {
-        // Save new address
         const { error } = await supabase.from('addresses').insert([
           {
             user_id: user.id,
@@ -236,7 +225,7 @@ export default function CheckoutPage() {
         if (error) throw error;
         alert('Address saved successfully!');
       }
-      
+
       const { data: newAddresses } = await supabase
         .from('addresses')
         .select('id, address, lat, lng')
@@ -251,7 +240,6 @@ export default function CheckoutPage() {
     }
   };
 
-  // Edit address
   const handleEditAddress = (addr) => {
     setIsEditingAddress(true);
     setEditAddressId(addr.id);
@@ -265,7 +253,6 @@ export default function CheckoutPage() {
     }
   };
 
-  // Delete address
   const handleDeleteAddress = async (addressId) => {
     if (!confirm('Are you sure you want to delete this address?')) return;
     try {
@@ -300,7 +287,6 @@ export default function CheckoutPage() {
     }
   };
 
-  // Place order
   const handleOrder = async () => {
     if (!address) {
       setError('Please enter or select a delivery address.');
@@ -316,7 +302,7 @@ export default function CheckoutPage() {
         return;
       }
       const { center } = data.features[0];
-      
+
       const { error } = await supabase.from('orders').insert([
         {
           user_id: user.id,
@@ -370,7 +356,6 @@ export default function CheckoutPage() {
       <div className="max-w-5xl mx-auto p-6">
         <h1 className="text-3xl font-bold mb-6 text-purple-700 text-center">Checkout</h1>
 
-        {/* Cart Summary */}
         <section className="mb-8 bg-white p-6 rounded-xl shadow-md">
           <h2 className="text-2xl font-bold text-purple-700 mb-4">Cart Summary</h2>
           <ul className="space-y-4">
@@ -403,16 +388,15 @@ export default function CheckoutPage() {
           <p className="text-xl font-bold text-purple-700 mt-4">Subtotal: ₦{totalPrice.toLocaleString()}</p>
         </section>
 
-        {/* Delivery Address */}
         <section className="mb-8 bg-white p-6 rounded-xl shadow-md">
-          <h2 className="text-2xl font-bold text-purple-700 mb-4">Delivery Address</h2>
+          <h2 className="text-2xl font-bold mb-4 text-purple-700">Delivery Address</h2>
           {savedAddresses.length > 0 && (
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">Select Saved Address</label>
               <select
                 value={selectedAddressId}
                 onChange={handleSavedAddressChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none text-black focus:ring-2 focus:ring-purple-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
               >
                 <option value="">Select an address</option>
                 {savedAddresses.map((addr) => (
@@ -451,7 +435,7 @@ export default function CheckoutPage() {
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="Enter delivery address"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-black"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
             />
           </div>
           <button
@@ -461,9 +445,9 @@ export default function CheckoutPage() {
             {isEditingAddress ? 'Update Address' : 'Save Address'}
           </button>
           <div className="h-64 w-full" ref={mapContainerRef}></div>
+          {error && <p className="text-red-600 mt-2">{error}</p>}
         </section>
 
-        {/* Confirm Order */}
         <button
           onClick={handleOrder}
           className="w-full bg-purple-600 text-white px-6 py-3 rounded-md hover:bg-purple-700 transition-colors font-semibold"
