@@ -12,6 +12,8 @@ export default function OrderTrackingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const router = useRouter();
+    const [user, setUser] = useState(null);
+  
 
   // Fetch user profile and orders
   useEffect(() => {
@@ -52,6 +54,8 @@ export default function OrderTrackingPage() {
   }, [router]);
 
   useEffect(() => {
+      if (!user) return; // <-- guard: do nothing if user is null
+
   const subscription = supabase
     .channel('orders')
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `user_id=eq.${user.id}` }, (payload) => {
