@@ -48,7 +48,7 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
           <img src="/logo.svg" alt="Vian Clothing Hub Logo" className="h-10 sm:h-12 w-auto" />
         </Link>
 
-        <div className="relative w-full sm:w-64">
+        <div className="relative w-full sm:w-64 mx-4">
           <input
             type="text"
             placeholder="Search products..."
