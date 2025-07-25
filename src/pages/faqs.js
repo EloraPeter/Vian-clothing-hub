@@ -36,7 +36,7 @@ export default function FAQs({ profile }) {
     {
       question: "How long does delivery take?",
       answer:
-        "Delivery typically takes 1–3 working days within Delta State and 3–7 working days nationwide. You'll receive tracking details once your order is shipped.",
+        "Delivery typically takes 1–3 working days within Abuja (F.C.T) and 3–7 working days nationwide. You'll receive tracking details once your order is shipped.",
     },
     {
       question: "Do you deliver outside Nigeria?",

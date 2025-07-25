@@ -25,15 +25,15 @@ const Footer = () => {
                         <li><Link href="/returns" className="text-gray-300 hover:text-gold-300">Returns & Refunds</Link></li>
                         <li><Link href="/faqs" className="text-gray-300 hover:text-gold-300">FAQs</Link></li>
                         <li><Link href="/cookies-policy" className="text-purple-600 hover:underline">Cookies Policy</Link></li>
-      <li><Link href="/terms-of-service" className="text-purple-600 hover:underline">Terms of Service</Link></li>
-      <li><Link href="/terms-and-conditions" className="text-purple-600 hover:underline">Terms and Conditions</Link></li>
-                    
+                        <li><Link href="/terms-of-service" className="text-purple-600 hover:underline">Terms of Service</Link></li>
+                        <li><Link href="/terms-and-conditions" className="text-purple-600 hover:underline">Terms and Conditions</Link></li>
+
                     </ul>
                 </div>
 
                 <div>
                     <h4 className="font-bold text-lg mb-3 text-purple-100">Contact</h4>
-                    <p className="text-gray-300">WhatsApp: <a href="https://wa.me/234XXXXXXXXXX" className="text-gold-300 hover:underline">+234 XXX XXX XXXX</a></p>
+                    <p className="text-gray-300">WhatsApp: <a href="https://wa.me/2348038879285" className="text-gold-300 hover:underline">+234 803 8879 285</a></p>
                     <p className="text-gray-300">Email: <a href="mailto:support@vianclothinghub.com" className="text-gold-300 hover:underline">support@vianclothinghub.com</a></p>
                     <p className="text-gray-300">Instagram: <a href="https://instagram.com/vianclothinghub" className="text-gold-300 hover:underline">@vianclothinghub</a></p>
                 </div>
