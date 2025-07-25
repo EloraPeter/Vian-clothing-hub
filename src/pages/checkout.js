@@ -114,17 +114,17 @@ export default function CheckoutPage() {
           type="text"
           id="searchInput"
           placeholder="Search for an address"
-          class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white hover:border-purple-400 transition-colors"
+          class="flex-1 px-4 py-2 border border-gray-600 rounded-xl py-4 px-4 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:border-blue-400 dark:focus:ring-blue-400 transition-colors"
         />
         <button
           id="clearSearch"
-          class="bg-gray-200 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-300 transition-colors"
+          class="bg-gray-200 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors"
         >
           Clear
         </button>
         <div
           id="searchResults"
-          class="hidden bg-white border border-gray-300 rounded-md shadow-lg mt-1 max-h-48 overflow-y-auto z-[1000]"
+          class="hidden bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg mt-1 max-h-48 overflow-y-auto z-[1000]"
         ></div>
       `;
       L.DomEvent.disableClickPropagation(div);
@@ -166,7 +166,7 @@ export default function CheckoutPage() {
           .map(
             (result, index) => `
               <div
-                class="search-result px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-700 cursor-pointer border-b border-gray-200 last:border-b-0"
+                class="search-result px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-blue-600 dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-blue-400 cursor-pointer border-b border-gray-200 dark:border-gray-600 last:border-b-0"
                 data-index="${index}"
               >
                 ${result.display_name}
@@ -256,8 +256,13 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (!mapRef.current || !marker) return;
 
-    mapRef.current.setView(mapCenter, 14);
-    marker.setLatLng(mapCenter);
+    try {
+      mapRef.current.setView(mapCenter, 14);
+      marker.setLatLng(mapCenter);
+    } catch (err) {
+      console.error('Leaflet update error:', err);
+      setMarker(null); // Reset marker if error occurs
+    }
   }, [mapCenter, marker]);
 
   const handleSavedAddressChange = (e) => {
@@ -269,12 +274,17 @@ export default function CheckoutPage() {
       setMapCenter([selected.lat || 9.0820, selected.lng || 8.6753]);
       if (mapRef.current) {
         mapRef.current.setView([selected.lat || 9.0820, selected.lng || 8.6753], 14);
-        if (marker) {
-          marker.setLatLng([selected.lat, selected.lng]);
-        } else {
-          const L = require('leaflet');
-          const newMarker = L.marker([selected.lat, selected.lng]).addTo(mapRef.current);
-          setMarker(newMarker);
+        try {
+          if (marker) {
+            marker.setLatLng([selected.lat, selected.lng]);
+          } else {
+            const L = require('leaflet');
+            const newMarker = L.marker([selected.lat, selected.lng]).addTo(mapRef.current);
+            setMarker(newMarker);
+          }
+        } catch (err) {
+          console.error('Marker set error:', err);
+          setMarker(null);
         }
       }
       setIsEditingAddress(false);
@@ -282,7 +292,11 @@ export default function CheckoutPage() {
     } else {
       setAddress('');
       if (marker) {
-        marker.remove();
+        try {
+          marker.remove();
+        } catch (err) {
+          console.error('Marker remove error:', err);
+        }
         setMarker(null);
       }
       setIsEditingAddress(false);
@@ -355,12 +369,17 @@ export default function CheckoutPage() {
     setMapCenter([addr.lat || 9.0820, addr.lng || 8.6753]);
     if (mapRef.current) {
       mapRef.current.setView([addr.lat || 9.0820, addr.lng || 8.6753], 14);
-      if (marker) {
-        marker.setLatLng([addr.lat, addr.lng]);
-      } else {
-        const L = require('leaflet');
-        const newMarker = L.marker([addr.lat, addr.lng]).addTo(mapRef.current);
-        setMarker(newMarker);
+      try {
+        if (marker) {
+          marker.setLatLng([addr.lat, addr.lng]);
+        } else {
+          const L = require('leaflet');
+          const newMarker = L.marker([addr.lat, addr.lng]).addTo(mapRef.current);
+          setMarker(newMarker);
+        }
+      } catch (err) {
+        console.error('Marker edit error:', err);
+        setMarker(null);
       }
     }
   };
@@ -387,18 +406,27 @@ export default function CheckoutPage() {
         setMapCenter([newAddresses[0].lat || 9.0820, newAddresses[0].lng || 8.6753]);
         if (mapRef.current) {
           mapRef.current.setView([newAddresses[0].lat || 9.0820, newAddresses[0].lng || 8.6753], 14);
-          if (marker) {
-            marker.setLatLng([newAddresses[0].lat, newAddresses[0].lng]);
-          } else {
-            const L = require('leaflet');
-            const newMarker = L.marker([newAddresses[0].lat, newAddresses[0].lng]).addTo(mapRef.current);
-            setMarker(newMarker);
+          try {
+            if (marker) {
+              marker.setLatLng([newAddresses[0].lat, newAddresses[0].lng]);
+            } else {
+              const L = require('leaflet');
+              const newMarker = L.marker([newAddresses[0].lat, newAddresses[0].lng]).addTo(mapRef.current);
+              setMarker(newMarker);
+            }
+          } catch (err) {
+            console.error('Marker delete error:', err);
+            setMarker(null);
           }
         }
       } else {
         setMapCenter([9.0820, 8.6753]);
         if (marker) {
-          marker.remove();
+          try {
+            marker.remove();
+          } catch (err) {
+            console.error('Marker remove error:', err);
+          }
           setMarker(null);
         }
       }
@@ -444,7 +472,7 @@ export default function CheckoutPage() {
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
         email: profile?.email || user.email,
         amount: totalPrice * 100,
-        ref: `VIAN_ORDER_${Date.now()}`,
+        reference: `VIAN_ORDER_${Date.now()}`,
       });
 
       const handler = new window.PaystackPop();
@@ -454,29 +482,26 @@ export default function CheckoutPage() {
         amount: totalPrice * 100, // Convert to kobo
         currency: 'NGN',
         reference: `VIAN_ORDER_${Date.now()}`,
-        callback: function (response) {
+        callback: async (response) => {
           console.log('Paystack callback response:', response);
-          supabase.functions.invoke('verify-paystack-payment', {
-            body: { reference: response.reference },
-          }).then(({ error, data }) => {
+          try {
+            const { data, error } = await supabase.functions.invoke('verify-paystack-payment', {
+              body: { reference: response.reference },
+            });
             if (error || !data.success) {
-              console.error('Payment verification error:', error);
+              console.error('Payment verification error:', error || data.error);
               setError('Payment verification failed.');
               setIsPaying(false);
               return;
             }
-            orderCallback(response.reference).catch((err) => {
-              console.error('Order processing error:', err);
-              setError('Order processing failed: ' + err.message);
-              setIsPaying(false);
-            });
-          }).catch((err) => {
+            await orderCallback(response.reference);
+          } catch (err) {
             console.error('Supabase function error:', err);
             setError('Payment verification failed: ' + err.message);
             setIsPaying(false);
-          });
+          }
         },
-        onClose: function () {
+        onClose: () => {
           setError('Payment cancelled.');
           setIsPaying(false);
         },
@@ -553,10 +578,10 @@ export default function CheckoutPage() {
   if (error && !isPaying) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
   if (cart.length === 0) return (
     <main className="p-6 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-purple-700 text-center">Checkout</h1>
+      <h1 className="text-3xl font-bold mb-6 text-blue-600 text-center">Checkout</h1>
       <p className="text-gray-600">
         Your cart is empty.{' '}
-        <Link href="/" className="text-purple-600 hover:underline">
+        <Link href="/" className="text-blue-600 hover:underline">
           Continue shopping
         </Link>.
       </p>
@@ -566,7 +591,7 @@ export default function CheckoutPage() {
   return (
     <>
       <Script src="https://js.paystack.co/v2/inline.js" strategy="afterInteractive" />
-      <main className="min-h-screen bg-gray-100">
+      <main className="min-h-screen bg-gray-100 dark:bg-gray-900">
         <Navbar
           profile={profile}
           onCartClick={() => setIsCartOpen(true)}
@@ -575,49 +600,49 @@ export default function CheckoutPage() {
         <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
         <form onSubmit={handleOrder} className="max-w-5xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-6 text-purple-700 text-center">Checkout</h1>
+          <h1 className="text-3xl font-bold mb-6 text-blue-600 dark:text-blue-400 text-center">Checkout</h1>
 
-          <section className="mb-8 bg-white p-6 rounded-xl shadow-md">
-            <h2 className="text-2xl font-bold text-purple-700 mb-4">Cart Summary</h2>
+          <section className="mb-8 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+            <h2 className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-4">Cart Summary</h2>
             <ul className="space-y-4">
               {cart.map((item) => (
-                <li key={item.id} className="flex items-center space-x-4 border-b border-gray-300 pb-4">
-                  <img src={item.image_url} alt={item.name} className="w-16 h-16 object-cover rounded-lg border border-gray-300" />
+                <li key={item.id} className="flex items-center space-x-4 border-b border-gray-300 dark:border-gray-600 pb-4">
+                  <img src={item.image_url} alt={item.name} className="w-16 h-16 object-cover rounded-lg border border-gray-300 dark:border-gray-600" />
                   <div className="flex-1">
-                    <p className="text-gray-700 font-medium">{item.name}</p>
-                    <p className="text-gray-600">
+                    <p className="text-gray-700 dark:text-gray-200 font-medium">{item.name}</p>
+                    <p className="text-gray-600 dark:text-gray-400">
                       {item.discount_percentage > 0 ? (
                         <span>
-                          <span className="text-red-600 line-through">₦{Number(item.price).toLocaleString()}</span>{' '}
-                          <span className="text-green-600">
+                          <span className="text-red-600 dark:text-red-400 line-through">₦{Number(item.price).toLocaleString()}</span>{' '}
+                          <span className="text-green-600 dark:text-green-400">
                             ₦{(item.price * (1 - item.discount_percentage / 100)).toLocaleString()}
                           </span>
                         </span>
                       ) : (
-                        <span className="text-purple-700">₦{Number(item.price).toLocaleString()}</span>
+                        <span className="text-blue-600 dark:text-blue-400">₦{Number(item.price).toLocaleString()}</span>
                       )}
                     </p>
-                    <p className="text-gray-600">Quantity: {item.quantity}</p>
-                    {item.is_out_of_stock && <p className="text-red-600 text-sm">Out of Stock</p>}
+                    <p className="text-gray-600 dark:text-gray-400">Quantity: {item.quantity}</p>
+                    {item.is_out_of_stock && <p className="text-red-600 dark:text-red-400 text-sm">Out of Stock</p>}
                   </div>
-                  <p className="text-gray-700 font-medium">
+                  <p className="text-gray-700 dark:text-gray-200 font-medium">
                     Total: ₦{((item.discount_percentage > 0 ? item.price * (1 - item.discount_percentage / 100) : item.price) * item.quantity).toLocaleString()}
                   </p>
                 </li>
               ))}
             </ul>
-            <p className="text-xl font-bold text-purple-700 mt-4">Subtotal: ₦{totalPrice.toLocaleString()}</p>
+            <p className="text-xl font-bold text-blue-600 dark:text-blue-400 mt-4">Subtotal: ₦{totalPrice.toLocaleString()}</p>
           </section>
 
-          <section className="mb-8 bg-white p-6 rounded-xl shadow-md">
-            <h2 className="text-2xl font-bold text-purple-700 mb-4">Delivery Address</h2>
+          <section className="mb-8 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+            <h2 className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-4">Delivery Address</h2>
             {savedAddresses.length > 0 && (
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Select Saved Address</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Select Saved Address</label>
                 <select
                   value={selectedAddressId}
                   onChange={handleSavedAddressChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:text-gray-200 dark:hover:border-blue-400 dark:focus:ring-blue-400"
                 >
                   <option value="">Select an address</option>
                   {savedAddresses.map((addr) => (
@@ -626,18 +651,18 @@ export default function CheckoutPage() {
                 </select>
                 <div className="mt-4 grid grid-cols-1 gap-4">
                   {savedAddresses.map((addr) => (
-                    <div key={addr.id} className="flex justify-between items-center border-b border-gray-200 pb-2">
-                      <span className="text-gray-700">{addr.address}</span>
+                    <div key={addr.id} className="flex justify-between items-center border-b border-gray-200 dark:border-gray-600 pb-2">
+                      <span className="text-gray-700 dark:text-gray-200">{addr.address}</span>
                       <div>
                         <button
                           onClick={() => handleEditAddress(addr)}
-                          className="text-blue-600 hover:underline mr-4"
+                          className="text-blue-600 dark:text-blue-400 hover:underline mr-4"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDeleteAddress(addr.id)}
-                          className="text-red-600 hover:underline"
+                          className="text-red-600 dark:text-red-400 hover:underline"
                         >
                           Delete
                         </button>
@@ -648,7 +673,7 @@ export default function CheckoutPage() {
               </div>
             )}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 {isEditingAddress ? 'Edit Address' : 'Enter or Search Address'}
               </label>
               <input
@@ -656,22 +681,22 @@ export default function CheckoutPage() {
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="Enter delivery address"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:text-gray-200 dark:hover:border-blue-400 dark:focus:ring-blue-400"
               />
             </div>
             <button
               onClick={handleSaveAddress}
-              className="mb-4 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+              className="mb-4 bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
             >
               {isEditingAddress ? 'Update Address' : 'Save Address'}
             </button>
             <div className="h-64 w-full" ref={mapContainerRef}></div>
-            {error && <p className="text-red-600 mt-2">{error}</p>}
+            {error && <p className="text-red-600 dark:text-red-400 mt-2">{error}</p>}
           </section>
 
           <button
             type="submit"
-            className="w-full bg-purple-600 text-white px-6 py-3 rounded-md hover:bg-purple-700 font-semibold"
+            className="w-full bg-blue-600 dark:bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 font-semibold disabled:bg-gray-400 dark:disabled:bg-gray-600"
             disabled={!address || isPaying}
           >
             {isPaying ? 'Processing...' : 'Confirm & Pay'}
