@@ -39,12 +39,13 @@ const verifyPayment = async ({ reference, setError, setIsPaying, orderCallback, 
   }
 };
 
-// Global callback for Paystack
+// Set up global callback only in browser
 const PAYSTACK_CALLBACK_ID = `paystack_callback_${Date.now()}`;
-window[PAYSTACK_CALLBACK_ID] = (response) => {
-  // Post message to the main window
-  window.postMessage({ type: 'PAYSTACK_PAYMENT', reference: response.reference }, '*');
-};
+if (typeof window !== 'undefined') {
+  window[PAYSTACK_CALLBACK_ID] = (response) => {
+    window.postMessage({ type: 'PAYSTACK_PAYMENT', reference: response.reference }, '*');
+  };
+}
 
 export const initiatePayment = ({
   email,
@@ -55,6 +56,13 @@ export const initiatePayment = ({
   useApiFallback = false,
 }) => {
   return new Promise((resolve, reject) => {
+    if (typeof window === 'undefined') {
+      setError('Payment cannot be initiated on the server.');
+      setIsPaying(false);
+      reject(new Error('Server-side execution'));
+      return;
+    }
+
     if (!window.PaystackPop) {
       setError('Paystack SDK not loaded. Please try again.');
       setIsPaying(false);
@@ -90,7 +98,6 @@ export const initiatePayment = ({
       return;
     }
 
-    // Set up a message listener for the payment result
     const handleMessage = (event) => {
       if (event.data.type === 'PAYSTACK_PAYMENT') {
         verifyPayment({ reference: event.data.reference, setError, setIsPaying, orderCallback, useApiFallback })
@@ -119,7 +126,7 @@ export const initiatePayment = ({
       handler.open({
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
         email,
-        amount: totalPrice * 100, // Convert to kobo
+        amount: totalPrice * 100,
         currency: 'NGN',
         reference,
         callback: window[PAYSTACK_CALLBACK_ID],

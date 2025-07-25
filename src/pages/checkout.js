@@ -1,3 +1,6 @@
+"use client";
+
+
 import { useCart } from '@/context/CartContext';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
