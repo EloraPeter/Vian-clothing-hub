@@ -31,6 +31,7 @@ export default function CheckoutPage() {
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [editAddressId, setEditAddressId] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
+  const [isPaying, setIsPaying] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -409,60 +410,93 @@ export default function CheckoutPage() {
   const initiatePayment = async (orderCallback) => {
     if (!window.PaystackPop) {
       setError('Paystack SDK not loaded. Please try again.');
+      setIsPaying(false);
+      return;
+    }
+
+    if (!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY) {
+      setError('Paystack public key is missing.');
+      setIsPaying(false);
       return;
     }
 
     if (!profile?.email && !user?.email) {
       setError('No valid email found for payment.');
+      setIsPaying(false);
       return;
     }
 
     if (totalPrice <= 0) {
       setError('Invalid order amount.');
+      setIsPaying(false);
+      return;
+    }
+
+    if (typeof orderCallback !== 'function') {
+      setError('Invalid callback function provided.');
+      setIsPaying(false);
       return;
     }
 
     try {
+      console.log('Initiating Paystack payment with:', {
+        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
+        email: profile?.email || user.email,
+        amount: totalPrice * 100,
+        ref: `VIAN_ORDER_${Date.now()}`,
+      });
+
       const handler = window.PaystackPop.setup({
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
         email: profile?.email || user.email,
         amount: totalPrice * 100, // Convert to kobo
         currency: 'NGN',
         ref: `VIAN_ORDER_${Date.now()}`,
-        callback: async function (response) {
+        callback: function (response) {
+          console.log('Paystack callback response:', response);
           try {
-            const { error, data } = await supabase.functions.invoke('verify-paystack-payment', {
+            supabase.functions.invoke('verify-paystack-payment', {
               body: { reference: response.reference },
+            }).then(({ error, data }) => {
+              if (error || !data.success) {
+                setError('Payment verification failed.');
+                setIsPaying(false);
+                return;
+              }
+              orderCallback(response.reference).catch((err) => {
+                setError('Order processing failed: ' + err.message);
+                setIsPaying(false);
+              });
             });
-            if (error || !data.success) {
-              setError('Payment verification failed.');
-              return;
-            }
-            if (typeof orderCallback === 'function') {
-              await orderCallback(response.reference);
-            } else {
-              setError('Invalid callback function.');
-            }
           } catch (err) {
             setError('Payment processing failed: ' + err.message);
+            setIsPaying(false);
           }
         },
-        onClose: () => {
+        onClose: function () {
           setError('Payment cancelled.');
+          setIsPaying(false);
         },
       });
       handler.openIframe();
     } catch (err) {
+      console.error('Paystack initialization error:', err);
       setError('Failed to initialize payment: ' + err.message);
+      setIsPaying(false);
     }
   };
 
   const handleOrder = async (e) => {
-    e.preventDefault(); // Prevent default form submission
+    e.preventDefault();
+    setIsPaying(true);
+    setError(null);
+
     if (!address) {
       setError('Please enter or select a delivery address.');
+      setIsPaying(false);
       return;
     }
+
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
@@ -473,6 +507,7 @@ export default function CheckoutPage() {
       const data = await response.json();
       if (!data[0]) {
         setError('Invalid delivery address. Please select a valid address.');
+        setIsPaying(false);
         return;
       }
       const { lat, lon } = data[0];
@@ -507,11 +542,12 @@ export default function CheckoutPage() {
       await initiatePayment(placeOrder);
     } catch (err) {
       setError('Order failed: ' + err.message);
+      setIsPaying(false);
     }
   };
 
   if (loading) return <DressLoader />;
-  if (error) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
+  if (error && !isPaying) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
   if (cart.length === 0) return (
     <main className="p-6 max-w-5xl mx-auto">
       <h1 className="text-3xl font-bold mb-6 text-purple-700 text-center">Checkout</h1>
@@ -526,7 +562,7 @@ export default function CheckoutPage() {
 
   return (
     <>
-      <Script src="https://js.paystack.co/v1/inline.js" strategy="afterInteractive" />
+      <Script src="https://js.paystack.co/v2/inline.js" strategy="lazyOnload" />
       <main className="min-h-screen bg-gray-100">
         <Navbar
           profile={profile}
@@ -633,9 +669,9 @@ export default function CheckoutPage() {
           <button
             type="submit"
             className="w-full bg-purple-600 text-white px-6 py-3 rounded-md hover:bg-purple-700 font-semibold"
-            disabled={!address}
+            disabled={!address || isPaying}
           >
-            Confirm & Pay
+            {isPaying ? 'Processing...' : 'Confirm & Pay'}
           </button>
         </form>
         <Footer />
