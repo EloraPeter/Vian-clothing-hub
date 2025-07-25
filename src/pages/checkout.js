@@ -6,12 +6,12 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/footer';
 import CartPanel from '@/components/CartPanel';
 import Link from 'next/link';
-import Image from 'next/image';
+import Script from 'next/script';
+import { initiatePayment } from '@/lib/payment'; // Import the new payment function
 import DressLoader from '@/components/DressLoader';
 import 'leaflet/dist/leaflet.css';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-import Script from 'next/script';
 
 export default function CheckoutPage() {
   const { cart, totalPrice, clearCart } = useCart();
@@ -261,7 +261,7 @@ export default function CheckoutPage() {
       marker.setLatLng(mapCenter);
     } catch (err) {
       console.error('Leaflet update error:', err);
-      setMarker(null); // Reset marker if error occurs
+      setMarker(null);
     }
   }, [mapCenter, marker]);
 
@@ -436,85 +436,6 @@ export default function CheckoutPage() {
     }
   };
 
-  const initiatePayment = async (orderCallback) => {
-    if (!window.PaystackPop) {
-      setError('Paystack SDK not loaded. Please try again.');
-      setIsPaying(false);
-      return;
-    }
-
-    if (!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY) {
-      setError('Paystack public key is missing.');
-      setIsPaying(false);
-      return;
-    }
-
-    if (!profile?.email && !user?.email) {
-      setError('No valid email found for payment.');
-      setIsPaying(false);
-      return;
-    }
-
-    if (totalPrice <= 0) {
-      setError('Invalid order amount.');
-      setIsPaying(false);
-      return;
-    }
-
-    if (typeof orderCallback !== 'function') {
-      setError('Invalid callback function provided.');
-      setIsPaying(false);
-      return;
-    }
-
-    try {
-      const reference = `VIAN_ORDER_${Date.now()}`;
-      console.log('Initiating Paystack payment with:', {
-        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-        email: profile?.email || user.email,
-        amount: totalPrice * 100,
-        reference,
-      });
-
-      const handler = window.PaystackPop.setup({
-        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-        email: profile?.email || user.email,
-        amount: totalPrice * 100, // Convert to kobo
-        currency: 'NGN',
-        reference,
-        callback: async (response) => {
-          console.log('Paystack callback response:', response);
-          try {
-            const { data, error } = await supabase.functions.invoke('verify-paystack-payment', {
-              body: { reference: response.reference },
-              headers: { 'Content-Type': 'application/json' },
-            });
-            if (error || !data.success) {
-              console.error('Payment verification error:', error || data.error);
-              setError('Payment verification failed. Please contact support.');
-              setIsPaying(false);
-              return;
-            }
-            await orderCallback(response.reference);
-          } catch (err) {
-            console.error('Supabase function error:', err);
-            setError('Payment verification failed: ' + err.message);
-            setIsPaying(false);
-          }
-        },
-        onClose: () => {
-          setError('Payment cancelled.');
-          setIsPaying(false);
-        },
-      });
-      handler.openIframe(); // Explicitly open the Paystack iframe
-    } catch (err) {
-      console.error('Paystack initialization error:', err);
-      setError('Failed to initialize payment: ' + err.message);
-      setIsPaying(false);
-    }
-  };
-
   const handleOrder = async (e) => {
     e.preventDefault();
     setIsPaying(true);
@@ -568,9 +489,21 @@ export default function CheckoutPage() {
         alert('Payment successful! Order placed.');
       };
 
-      await initiatePayment(placeOrder);
+      // Try Supabase first, fallback to API route if it fails
+      const success = await initiatePayment({
+        email: profile?.email || user.email,
+        totalPrice,
+        setError,
+        setIsPaying,
+        orderCallback: placeOrder,
+        useApiFallback: true, // Set to false to try Supabase first
+      });
+
+      if (!success) {
+        throw new Error('Payment initiation failed');
+      }
     } catch (err) {
-      console.error('Order error:', err);
+      console.error('Order error:', err.message);
       setError('Order failed: ' + err.message);
       setIsPaying(false);
     }
@@ -602,9 +535,6 @@ export default function CheckoutPage() {
         <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
         <form onSubmit={handleOrder} className="max-w-5xl mx-auto p-6">
-          {/* <form onSubmit={handleOrder} className="max-w-5xl mx-auto p-6">
-            <Script src="https://js.paystack.co/v2/inline.js" strategy="afterInteractive" />
-          </form> */}
           <h1 className="text-3xl font-bold mb-6 text-blue-600 dark:text-blue-400 text-center">Checkout</h1>
 
           <section className="mb-8 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
