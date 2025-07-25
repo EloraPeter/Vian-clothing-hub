@@ -1,0 +1,73 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{playfair}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+
+% Define colors for Vian Clothing Hub theme
+\definecolor{vianpurple}{RGB}{128, 0, 128}
+\definecolor{viangold}{RGB}{218, 165, 32}
+
+% Header and footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\includegraphics[width=3cm]{logo.png}}
+\fancyhead[C]{\textbf{\LARGE Vian Clothing Hub\\Invoice}}
+\fancyhead[R]{\small \textbf{Invoice ID:} \textbf{INVOICEID}}
+\fancyfoot[C]{\small Page \thepage\ of \pageref{LastPage}}
+\fancyfoot[R]{\small Vian Clothing Hub, Lagos, Nigeria}
+
+\begin{document}
+
+\begin{center}
+    \color{vianpurple}
+    \textbf{\Large Invoice} \\
+    \vspace{0.5cm}
+    \color{black}
+    \small Issued on: \textbf{DATE}
+\end{center}
+
+\vspace{1cm}
+
+\begin{tabular}{ll}
+    \textbf{Order ID:} & \textbf{ORDERID} \\
+    \textbf{Customer:} & \textbf{FULLNAME} \\
+    \textbf{Delivery Address:} & \textbf{ADDRESS} \\
+\end{tabular}
+
+\vspace{1cm}
+
+\section*{Order Details}
+\begin{tabular}{p{6cm} p{4cm} r}
+    \toprule
+    \textbf{Product} & \textbf{Category} & \textbf{Price (₦)} \\
+    \midrule
+    \textbf{product_table}
+    \bottomrule
+\end{tabular}
+
+\vspace{0.5cm}
+
+\begin{tabular}{lr}
+    \textbf{Fabric:} & \textbf{FABRIC} \\
+    \textbf{Style:} & \textbf{STYLE} \\
+    \textbf{Deposit:} & ₦\textbf{DEPOSIT} \\
+    \textbf{Balance:} & ₦\textbf{BALANCE} \\
+    \midrule
+    \textbf{Total Amount:} & ₦\textbf{AMOUNT} \\
+\end{tabular}
+
+\vspace{1cm}
+
+\begin{center}
+    \color{vianpurple}
+    \small Thank you for choosing Vian Clothing Hub! \\
+    \small Contact us at: info@vianclothinghub.com | +234 808 752 2801
+\end{center}
+
+\end{document}
