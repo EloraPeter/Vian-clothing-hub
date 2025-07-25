@@ -38,12 +38,10 @@ export const initiatePayment = async ({
     return false;
   }
 
-  // Separate async logic into a function
   const verifyPayment = async (reference) => {
     try {
       let verificationResponse;
       if (useApiFallback) {
-        // Use Next.js API route
         const apiResponse = await fetch('/api/verify-payment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -52,7 +50,6 @@ export const initiatePayment = async ({
         verificationResponse = await apiResponse.json();
         console.log('API verification response:', verificationResponse);
       } else {
-        // Use Supabase Edge Function
         const { data, error } = await supabase.functions.invoke('verify-paystack-payment', {
           body: { reference },
           headers: { 'Content-Type': 'application/json' },
@@ -91,22 +88,19 @@ export const initiatePayment = async ({
     handler.open({
       key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
       email,
-      amount: totalPrice * 100, // Convert to kobo
+      amount: totalPrice * 100,
       currency: 'NGN',
       reference,
       callback: (response) => {
-        // Non-async callback
-        console.log('Paystack callback response:', response);
-        // Call async verification function
+        // Minimal callback to avoid serialization issues
         verifyPayment(response.reference);
       },
       onClose: () => {
         setError('Payment cancelled.');
         setIsPaying(false);
-        return false;
       },
     });
-    return true; // Indicate that payment initiation was successful
+    return true;
   } catch (err) {
     console.error('Paystack error:', err.message);
     setError('Failed to initialize payment: ' + err.message);
