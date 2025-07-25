@@ -139,6 +139,19 @@ const supabase = createClient(
 );
 
 serve(async (req) => {
+
+   🛡️ Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
+    });
+  }
+
   try {
     const { type, data } = await req.json();
     console.log('Received payload:', JSON.stringify(data, null, 2));
