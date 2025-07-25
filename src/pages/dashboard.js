@@ -9,6 +9,8 @@ import CartPanel from "@/components/CartPanel";
 import zxcvbn from "zxcvbn";
 import Script from "next/script";
 import DressLoader from "@/components/DressLoader";
+import Link from 'next/link'
+
 
 export default function Dashboard() {
   const router = useRouter();
