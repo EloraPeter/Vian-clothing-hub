@@ -1,4 +1,6 @@
-```javascript
+import { precacheAndRoute } from 'workbox-precaching';
+precacheAndRoute(self.__WB_MANIFEST);
+
 const CACHE_NAME = 'vian-clothing-hub-v1';
 const OFFLINE_URL = '/offline';
 
@@ -17,4 +19,3 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
-```
