@@ -248,6 +248,7 @@ export default function CheckoutPage() {
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
+        setMarker(null);
       }
     };
   }, [mapCenter, savedAddresses]);
@@ -257,7 +258,7 @@ export default function CheckoutPage() {
 
     mapRef.current.setView(mapCenter, 14);
     marker.setLatLng(mapCenter);
-  }, [mapCenter]);
+  }, [mapCenter, marker]);
 
   const handleSavedAddressChange = (e) => {
     const addressId = e.target.value;
@@ -446,39 +447,40 @@ export default function CheckoutPage() {
         ref: `VIAN_ORDER_${Date.now()}`,
       });
 
-      const handler = window.PaystackPop.setup({
+      const handler = new window.PaystackPop();
+      handler.newTransaction({
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
         email: profile?.email || user.email,
         amount: totalPrice * 100, // Convert to kobo
         currency: 'NGN',
-        ref: `VIAN_ORDER_${Date.now()}`,
+        reference: `VIAN_ORDER_${Date.now()}`,
         callback: function (response) {
           console.log('Paystack callback response:', response);
-          try {
-            supabase.functions.invoke('verify-paystack-payment', {
-              body: { reference: response.reference },
-            }).then(({ error, data }) => {
-              if (error || !data.success) {
-                setError('Payment verification failed.');
-                setIsPaying(false);
-                return;
-              }
-              orderCallback(response.reference).catch((err) => {
-                setError('Order processing failed: ' + err.message);
-                setIsPaying(false);
-              });
+          supabase.functions.invoke('verify-paystack-payment', {
+            body: { reference: response.reference },
+          }).then(({ error, data }) => {
+            if (error || !data.success) {
+              console.error('Payment verification error:', error);
+              setError('Payment verification failed.');
+              setIsPaying(false);
+              return;
+            }
+            orderCallback(response.reference).catch((err) => {
+              console.error('Order processing error:', err);
+              setError('Order processing failed: ' + err.message);
+              setIsPaying(false);
             });
-          } catch (err) {
-            setError('Payment processing failed: ' + err.message);
+          }).catch((err) => {
+            console.error('Supabase function error:', err);
+            setError('Payment verification failed: ' + err.message);
             setIsPaying(false);
-          }
+          });
         },
         onClose: function () {
           setError('Payment cancelled.');
           setIsPaying(false);
         },
       });
-      handler.openIframe();
     } catch (err) {
       console.error('Paystack initialization error:', err);
       setError('Failed to initialize payment: ' + err.message);
@@ -541,6 +543,7 @@ export default function CheckoutPage() {
 
       await initiatePayment(placeOrder);
     } catch (err) {
+      console.error('Order error:', err);
       setError('Order failed: ' + err.message);
       setIsPaying(false);
     }
@@ -562,7 +565,7 @@ export default function CheckoutPage() {
 
   return (
     <>
-      <Script src="https://js.paystack.co/v2/inline.js" strategy="lazyOnload" />
+      <Script src="https://js.paystack.co/v2/inline.js" strategy="afterInteractive" />
       <main className="min-h-screen bg-gray-100">
         <Navbar
           profile={profile}
