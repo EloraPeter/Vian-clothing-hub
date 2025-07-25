@@ -17,6 +17,7 @@ import '@maptiler/sdk/dist/maptiler-sdk.css';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
+
 export default function CheckoutPage() {
   const { cart, totalPrice, clearCart } = useCart();
   const [address, setAddress] = useState('');
@@ -29,6 +30,7 @@ export default function CheckoutPage() {
   const [marker, setMarker] = useState(null);
   const mapRef = useRef(null);
   const mapContainerRef = useRef(null);
+  
   const router = useRouter();
   const [profile, setProfile] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -43,7 +45,8 @@ export default function CheckoutPage() {
     if (!mapContainerRef.current || !MAPTILER_API_KEY || typeof window === 'undefined') return;
 
     const L = require('leaflet');
-    const { MaptilerLayer, MaptilerGeocoder } = require('@maptiler/leaflet-maptilersdk');
+const { MaptilerLayer } = require('@maptiler/leaflet-maptilersdk/layer');
+const { MaptilerGeocoder } = require('@maptiler/leaflet-maptilersdk/geocoding');
 
     // Set default Leaflet icon
     const DefaultIcon = L.icon({
