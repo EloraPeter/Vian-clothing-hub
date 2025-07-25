@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 
-// Utility function to verify payment, defined outside initiatePayment to avoid closure issues
+// Utility function to verify payment
 const verifyPayment = async ({ reference, setError, setIsPaying, orderCallback, useApiFallback }) => {
   try {
     let verificationResponse;
@@ -37,6 +37,13 @@ const verifyPayment = async ({ reference, setError, setIsPaying, orderCallback, 
     setIsPaying(false);
     return false;
   }
+};
+
+// Global callback for Paystack
+const PAYSTACK_CALLBACK_ID = `paystack_callback_${Date.now()}`;
+window[PAYSTACK_CALLBACK_ID] = (response) => {
+  // Post message to the main window
+  window.postMessage({ type: 'PAYSTACK_PAYMENT', reference: response.reference }, '*');
 };
 
 export const initiatePayment = ({
@@ -83,6 +90,22 @@ export const initiatePayment = ({
       return;
     }
 
+    // Set up a message listener for the payment result
+    const handleMessage = (event) => {
+      if (event.data.type === 'PAYSTACK_PAYMENT') {
+        verifyPayment({ reference: event.data.reference, setError, setIsPaying, orderCallback, useApiFallback })
+          .then((success) => {
+            window.removeEventListener('message', handleMessage);
+            resolve(success);
+          })
+          .catch((err) => {
+            window.removeEventListener('message', handleMessage);
+            reject(err);
+          });
+      }
+    };
+    window.addEventListener('message', handleMessage);
+
     try {
       const reference = `VIAN_ORDER_${Date.now()}`;
       console.log('Initiating Paystack payment with:', {
@@ -99,15 +122,11 @@ export const initiatePayment = ({
         amount: totalPrice * 100, // Convert to kobo
         currency: 'NGN',
         reference,
-        callback: (response) => {
-          // Minimal callback to avoid serialization issues
-          verifyPayment({ reference: response.reference, setError, setIsPaying, orderCallback, useApiFallback })
-            .then((success) => resolve(success))
-            .catch((err) => reject(err));
-        },
+        callback: window[PAYSTACK_CALLBACK_ID],
         onClose: () => {
           setError('Payment cancelled.');
           setIsPaying(false);
+          window.removeEventListener('message', handleMessage);
           reject(new Error('Payment cancelled'));
         },
       });
@@ -115,6 +134,7 @@ export const initiatePayment = ({
       console.error('Paystack error:', err.message);
       setError('Failed to initialize payment: ' + err.message);
       setIsPaying(false);
+      window.removeEventListener('message', handleMessage);
       reject(err);
     }
   });
