@@ -36,8 +36,9 @@ export default function CheckoutPage() {
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        console.error('Session error:', sessionError);
         router.push('/auth');
       } else {
         setUser(session.user);
@@ -47,6 +48,7 @@ export default function CheckoutPage() {
           .eq('id', session.user.id)
           .maybeSingle();
         if (profileError) {
+          console.error('Profile error:', profileError);
           setError(profileError.message);
         } else {
           setProfile(profileData || { email: session.user.email, avatar_url: null });
@@ -56,6 +58,7 @@ export default function CheckoutPage() {
           .select('id, address, lat, lng')
           .eq('user_id', session.user.id);
         if (addressError) {
+          console.error('Address error:', addressError);
           setError(addressError.message);
         } else {
           setSavedAddresses(addresses || []);
@@ -94,15 +97,20 @@ export default function CheckoutPage() {
     L.Marker.prototype.options.icon = DefaultIcon;
 
     if (!mapRef.current) {
-      mapRef.current = L.map(mapContainerRef.current).setView(mapCenter, 10);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, © <a href="https://carto.com/attributions">CARTO</a>',
-      }).addTo(mapRef.current);
+      try {
+        mapRef.current = L.map(mapContainerRef.current, { zoomControl: true }).setView(mapCenter, 10);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, © <a href="https://carto.com/attributions">CARTO</a>',
+        }).addTo(mapRef.current);
 
-      if (savedAddresses.length > 0 && savedAddresses[0].lat && savedAddresses[0].lng) {
-        const initialMarker = L.marker([savedAddresses[0].lat, savedAddresses[0].lng]).addTo(mapRef.current);
-        setMarker(initialMarker);
-        mapRef.current.setView([savedAddresses[0].lat, savedAddresses[0].lng], 14);
+        if (savedAddresses.length > 0 && savedAddresses[0].lat && savedAddresses[0].lng) {
+          const initialMarker = L.marker([savedAddresses[0].lat, savedAddresses[0].lng]).addTo(mapRef.current);
+          setMarker(initialMarker);
+          mapRef.current.setView([savedAddresses[0].lat, savedAddresses[0].lng], 14);
+        }
+      } catch (err) {
+        console.error('Map initialization error:', err);
+        setError('Failed to initialize map. Please try again.');
       }
     }
 
@@ -177,17 +185,22 @@ export default function CheckoutPage() {
         const resultElements = searchResultsDiv.querySelectorAll('.search-result');
         resultElements.forEach((el) => {
           el.addEventListener('click', () => {
-            const index = el.getAttribute('index');
+            const index = el.getAttribute('data-index');
             const result = data[index];
             setAddress(result.display_name);
             setMapCenter([parseFloat(result.lat), parseFloat(result.lon)]);
             if (mapRef.current) {
               mapRef.current.setView([parseFloat(result.lat), parseFloat(result.lon)], 14);
-              if (marker) {
-                marker.setLatLng([parseFloat(result.lat), parseFloat(result.lon)]);
-              } else {
-                const newMarker = L.marker([parseFloat(result.lat), parseFloat(result.lon)]).addTo(mapRef.current);
-                setMarker(newMarker);
+              try {
+                if (marker) {
+                  marker.setLatLng([parseFloat(result.lat), parseFloat(result.lon)]);
+                } else {
+                  const newMarker = L.marker([parseFloat(result.lat), parseFloat(result.lon)]).addTo(mapRef.current);
+                  setMarker(newMarker);
+                }
+              } catch (err) {
+                console.error('Marker update error:', err);
+                setMarker(null);
               }
             }
             setSelectedAddressId('');
@@ -211,44 +224,55 @@ export default function CheckoutPage() {
       searchResultsDiv.style.display = 'none';
     });
 
-    mapRef.current.on('click', async (e) => {
-      const { lat, lng } = e.latlng;
-      setMapCenter([lat, lng]);
-      if (mapRef.current) {
-        mapRef.current.setView([lat, lng], 14);
-        if (marker) {
-          marker.setLatLng([lat, lng]);
-        } else {
-          const newMarker = L.marker([lat, lng]).addTo(mapRef.current);
-          setMarker(newMarker);
-        }
-      }
-      try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-          {
-            headers: { 'User-Agent': 'VianClothingHub/1.0 (https://vianclothinghub.com)' },
+    if (mapRef.current) {
+      mapRef.current.on('click', async (e) => {
+        const { lat, lng } = e.latlng;
+        setMapCenter([lat, lng]);
+        if (mapRef.current) {
+          mapRef.current.setView([lat, lng], 14);
+          try {
+            if (marker) {
+              marker.setLatLng([lat, lng]);
+            } else {
+              const newMarker = L.marker([lat, lng]).addTo(mapRef.current);
+              setMarker(newMarker);
+            }
+          } catch (err) {
+            console.error('Marker click error:', err);
+            setMarker(null);
           }
-        );
-        if (!response.ok) throw new Error('Reverse geocoding failed');
-        const data = await response.json();
-        if (data.display_name) {
-          setAddress(data.display_name);
-          setSelectedAddressId('');
-          setIsEditingAddress(false);
-          setEditAddressId(null);
         }
-      } catch (err) {
-        setError('Failed to fetch address. Please try again.');
-        console.error('Reverse geocode error:', err);
-      }
-    });
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+            {
+              headers: { 'User-Agent': 'VianClothingHub/1.0 (https://vianclothinghub.com)' },
+            }
+          );
+          if (!response.ok) throw new Error('Reverse geocoding failed');
+          const data = await response.json();
+          if (data.display_name) {
+            setAddress(data.display_name);
+            setSelectedAddressId('');
+            setIsEditingAddress(false);
+            setEditAddressId(null);
+          }
+        } catch (err) {
+          setError('Failed to fetch address. Please try again.');
+          console.error('Reverse geocode error:', err);
+        }
+      });
+    }
 
     return () => {
       if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-        setMarker(null);
+        try {
+          mapRef.current.remove();
+          mapRef.current = null;
+          setMarker(null);
+        } catch (err) {
+          console.error('Map cleanup error:', err);
+        }
       }
     };
   }, [mapCenter, savedAddresses]);
@@ -489,17 +513,18 @@ export default function CheckoutPage() {
           console.log('Paystack callback response:', response);
           try {
             console.log('Invoking verify-paystack-payment with reference:', response.reference);
+            const { data: { session } } = await supabase.auth.getSession();
             const { data, error } = await supabase.functions.invoke('verify-paystack-payment', {
               body: { reference: response.reference },
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${supabase.auth.getSession().then(({ data: { session } }) => session?.access_token || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)}`,
+                'Authorization': `Bearer ${session?.access_token || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
               },
             });
             console.log('Supabase function response:', { data, error });
             if (error || !data.success) {
               console.error('Payment verification error:', error || data.error);
-              setError(`Payment verification failed: ${error?.message || data.error}`);
+              setError(`Payment verification failed: ${error?.message || data.error || 'Unknown error'}`);
               setIsPaying(false);
               return;
             }
@@ -586,13 +611,13 @@ export default function CheckoutPage() {
   };
 
   if (loading) return <DressLoader />;
-  if (error && !isPaying) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
+  if (error && !isPaying) return <p className="p-6 text-center text-red-600 dark:text-red-400">Error: {error}</p>;
   if (cart.length === 0) return (
     <main className="p-6 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-blue-600 text-center">Checkout</h1>
-      <p className="text-gray-600">
+      <h1 className="text-3xl font-bold mb-6 text-blue-600 dark:text-blue-400 text-center">Checkout</h1>
+      <p className="text-gray-600 dark:text-gray-400">
         Your cart is empty.{' '}
-        <Link href="/" className="text-blue-600 hover:underline">
+        <Link href="/" className="text-blue-600 dark:text-blue-400 hover:underline">
           Continue shopping
         </Link>.
       </p>
@@ -618,7 +643,7 @@ export default function CheckoutPage() {
             <ul className="space-y-4">
               {cart.map((item) => (
                 <li key={item.id} className="flex items-center space-x-4 border-b border-gray-300 dark:border-gray-600 pb-4">
-                  <img src={item.image_url} alt={item.name} className="w-16 h-16 object-cover rounded-lg border border-gray-300 dark:border-gray-600" />
+                  <Image src={item.image_url} alt={item.name} width={64} height={64} className="object-cover rounded-lg border border-gray-300 dark:border-gray-600" />
                   <div className="flex-1">
                     <p className="text-gray-700 dark:text-gray-200 font-medium">{item.name}</p>
                     <p className="text-gray-600 dark:text-gray-400">
