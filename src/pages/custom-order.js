@@ -46,7 +46,7 @@ export default function CustomOrderPage() {
     fetchProfile();
   }, [router]);
 
-  // if (loading) return <DressLoader />;
+  if (loading) return <DressLoader />;
 
   return (
     <>
