@@ -14,8 +14,8 @@ import zxcvbn from 'zxcvbn';
 // Leaflet CSS
 import 'leaflet/dist/leaflet.css';
 import '@maptiler/sdk/dist/maptiler-sdk.css';
-import L from 'leaflet';
-import { MaptilerLayer, MaptilerGeocoder } from '@maptiler/leaflet-maptilersdk';
+// import L from 'leaflet';
+// import { MaptilerLayer, MaptilerGeocoder } from '@maptiler/leaflet-maptilersdk';
 
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -68,13 +68,13 @@ export default function CheckoutPage() {
 
     // Add MapTiler layer
     const maptilerLayer = new MaptilerLayer({
-      apiKey: MAPTILER_API_KEY,
+      apiKey: NEXT_PUBLIC_MAPTILER_API_KEY,
       style: 'streets-v2',
     }).addTo(mapRef.current);
 
     // Add geocoding control
     const geocoder = new MaptilerGeocoder({
-      apiKey: MAPTILER_API_KEY,
+      apiKey: NEXT_PUBLIC_MAPTILER_API_KEY,
       placeholder: 'Search for an address',
       language: 'en',
       limit: 5,
