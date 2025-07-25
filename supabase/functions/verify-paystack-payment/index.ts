@@ -13,6 +13,12 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Log request details
+  console.log(`Received ${req.method} request to /verify-paystack-payment`, {
+    headers: Object.fromEntries(req.headers),
+    url: req.url,
+  });
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, {
@@ -31,11 +37,14 @@ serve(async (req) => {
 
     const { reference } = await req.json();
     if (!reference) {
+      console.error('Missing reference in request body');
       return new Response(JSON.stringify({ success: false, error: 'Reference is required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    console.log(`Verifying Paystack transaction with reference: ${reference}`);
 
     // Verify payment with Paystack
     const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
@@ -47,7 +56,10 @@ serve(async (req) => {
     });
 
     const result = await response.json();
+    console.log('Paystack verification response:', result);
+
     if (!result.status || result.data.status !== 'success') {
+      console.error('Paystack verification failed:', result.message || 'Unknown error');
       return new Response(JSON.stringify({ success: false, error: 'Payment verification failed' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -59,7 +71,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error verifying payment:', error);
+    console.error('Error in verify-paystack-payment:', error);
     return new Response(JSON.stringify({ success: false, error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
