@@ -62,13 +62,6 @@ export default function CheckoutPage() {
             setSelectedAddressId(addresses[0].id);
             setAddress(addresses[0].address);
             setMapCenter([addresses[0].lat || 9.0820, addresses[0].lng || 8.6753]);
-            if (mapRef.current && addresses[0].lat && addresses[0].lng) {
-              mapRef.current.setView([addresses[0].lat, addresses[0].lng], 14);
-              if (marker) marker.remove();
-              const L = require('leaflet');
-              const newMarker = L.marker([addresses[0].lat, addresses[0].lng]).addTo(mapRef.current);
-              setMarker(newMarker);
-            }
           }
         }
       }
@@ -99,11 +92,20 @@ export default function CheckoutPage() {
     });
     L.Marker.prototype.options.icon = DefaultIcon;
 
-    mapRef.current = L.map(mapContainerRef.current).setView(mapCenter, 10);
+    // Initialize map only if it hasn't been initialized
+    if (!mapRef.current) {
+      mapRef.current = L.map(mapContainerRef.current).setView(mapCenter, 10);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, © <a href="https://carto.com/attributions">CARTO</a>',
+      }).addTo(mapRef.current);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, © <a href="https://carto.com/attributions">CARTO</a>',
-    }).addTo(mapRef.current);
+      // Add initial marker if saved address exists
+      if (savedAddresses.length > 0 && savedAddresses[0].lat && savedAddresses[0].lng) {
+        const initialMarker = L.marker([savedAddresses[0].lat, savedAddresses[0].lng]).addTo(mapRef.current);
+        setMarker(initialMarker);
+        mapRef.current.setView([savedAddresses[0].lat, savedAddresses[0].lng], 14);
+      }
+    }
 
     const searchControl = L.control({ position: 'topleft' });
     searchControl.onAdd = () => {
@@ -180,10 +182,15 @@ export default function CheckoutPage() {
             const result = data[index];
             setAddress(result.display_name);
             setMapCenter([parseFloat(result.lat), parseFloat(result.lon)]);
-            mapRef.current.setView([parseFloat(result.lat), parseFloat(result.lon)], 14);
-            if (marker) marker.remove();
-            const newMarker = L.marker([parseFloat(result.lat), parseFloat(result.lon)]).addTo(mapRef.current);
-            setMarker(newMarker);
+            if (mapRef.current) {
+              mapRef.current.setView([parseFloat(result.lat), parseFloat(result.lon)], 14);
+              if (marker) {
+                marker.setLatLng([parseFloat(result.lat), parseFloat(result.lon)]);
+              } else {
+                const newMarker = L.marker([parseFloat(result.lat), parseFloat(result.lon)]).addTo(mapRef.current);
+                setMarker(newMarker);
+              }
+            }
             setSelectedAddressId('');
             setIsEditingAddress(false);
             setEditAddressId(null);
@@ -208,10 +215,15 @@ export default function CheckoutPage() {
     mapRef.current.on('click', async (e) => {
       const { lat, lng } = e.latlng;
       setMapCenter([lat, lng]);
-      mapRef.current.setView([lat, lng], 14);
-      if (marker) marker.remove();
-      const newMarker = L.marker([lat, lng]).addTo(mapRef.current);
-      setMarker(newMarker);
+      if (mapRef.current) {
+        mapRef.current.setView([lat, lng], 14);
+        if (marker) {
+          marker.setLatLng([lat, lng]);
+        } else {
+          const newMarker = L.marker([lat, lng]).addTo(mapRef.current);
+          setMarker(newMarker);
+        }
+      }
       try {
         const response = await fetch(
           `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
@@ -239,17 +251,13 @@ export default function CheckoutPage() {
         mapRef.current = null;
       }
     };
-  }, [mapCenter]);
+  }, [mapCenter, savedAddresses]);
 
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !marker) return;
 
     mapRef.current.setView(mapCenter, 14);
-
-    if (marker) marker.remove();
-    const L = require('leaflet');
-    const newMarker = L.marker(mapCenter).addTo(mapRef.current);
-    setMarker(newMarker);
+    marker.setLatLng(mapCenter);
   }, [mapCenter]);
 
   const handleSavedAddressChange = (e) => {
@@ -261,16 +269,22 @@ export default function CheckoutPage() {
       setMapCenter([selected.lat || 9.0820, selected.lng || 8.6753]);
       if (mapRef.current) {
         mapRef.current.setView([selected.lat || 9.0820, selected.lng || 8.6753], 14);
-        if (marker) marker.remove();
-        const newMarker = L.marker([selected.lat, selected.lng]).addTo(mapRef.current);
-        setMarker(newMarker);
+        if (marker) {
+          marker.setLatLng([selected.lat, selected.lng]);
+        } else {
+          const L = require('leaflet');
+          const newMarker = L.marker([selected.lat, selected.lng]).addTo(mapRef.current);
+          setMarker(newMarker);
+        }
       }
       setIsEditingAddress(false);
       setEditAddressId(null);
     } else {
       setAddress('');
-      if (marker) marker.remove();
-      setMarker(null);
+      if (marker) {
+        marker.remove();
+        setMarker(null);
+      }
       setIsEditingAddress(false);
       setEditAddressId(null);
     }
@@ -341,9 +355,13 @@ export default function CheckoutPage() {
     setMapCenter([addr.lat || 9.0820, addr.lng || 8.6753]);
     if (mapRef.current) {
       mapRef.current.setView([addr.lat || 9.0820, addr.lng || 8.6753], 14);
-      if (marker) marker.remove();
-      const newMarker = L.marker([addr.lat, addr.lng]).addTo(mapRef.current);
-      setMarker(newMarker);
+      if (marker) {
+        marker.setLatLng([addr.lat, addr.lng]);
+      } else {
+        const L = require('leaflet');
+        const newMarker = L.marker([addr.lat, addr.lng]).addTo(mapRef.current);
+        setMarker(newMarker);
+      }
     }
   };
 
@@ -367,13 +385,19 @@ export default function CheckoutPage() {
       setEditAddressId(null);
       if (newAddresses.length > 0 && mapRef.current) {
         mapRef.current.setView([newAddresses[0].lat || 9.0820, newAddresses[0].lng || 8.6753], 14);
-        if (marker) marker.remove();
-        const newMarker = L.marker([newAddresses[0].lat, newAddresses[0].lng]).addTo(mapRef.current);
-        setMarker(newMarker);
+        if (marker) {
+          marker.setLatLng([newAddresses[0].lat, newAddresses[0].lng]);
+        } else {
+          const L = require('leaflet');
+          const newMarker = L.marker([newAddresses[0].lat, newAddresses[0].lng]).addTo(mapRef.current);
+          setMarker(newMarker);
+        }
       } else {
         setMapCenter([9.0820, 8.6753]);
-        if (marker) marker.remove();
-        setMarker(null);
+        if (marker) {
+          marker.remove();
+          setMarker(null);
+        }
       }
       alert('Address deleted successfully!');
     } catch (err) {
