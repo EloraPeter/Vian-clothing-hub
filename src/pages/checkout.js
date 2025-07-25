@@ -14,6 +14,9 @@ import zxcvbn from 'zxcvbn';
 // Leaflet CSS
 import 'leaflet/dist/leaflet.css';
 import '@maptiler/sdk/dist/maptiler-sdk.css';
+import L from 'leaflet';
+import { MaptilerLayer, MaptilerGeocoder } from '@maptiler/leaflet-maptilersdk';
+
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
@@ -45,8 +48,6 @@ export default function CheckoutPage() {
     if (!mapContainerRef.current || !MAPTILER_API_KEY || typeof window === 'undefined') return;
 
     const L = require('leaflet');
-const { MaptilerLayer } = require('@maptiler/leaflet-maptilersdk/layer');
-const { MaptilerGeocoder } = require('@maptiler/leaflet-maptilersdk/geocoding');
 
     // Set default Leaflet icon
     const DefaultIcon = L.icon({
