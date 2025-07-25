@@ -127,72 +127,82 @@ export default function AdminPage() {
   };
 
   const generateInvoicePDF = async (order, amount) => {
-    const invoiceData = {
-      INVOICEID: self.crypto?.randomUUID?.() || generateFallbackUUID(),
-      ORDERID: order.id,
-      FULLNAME: order.full_name,
-      FABRIC: order.fabric,
-      STYLE: order.style,
-      ADDRESS: order.address,
-      DEPOSIT: Number(order.deposit || 5000).toLocaleString(),
-      BALANCE: Number(amount - (order.deposit || 5000)).toLocaleString(),
-      AMOUNT: Number(amount).toLocaleString(),
-      DATE: new Date().toLocaleDateString().split('T')[0],
-    };
+  const invoiceData = {
+    INVOICEID: self.crypto?.randomUUID?.() || generateFallbackUUID(),
+    ORDERID: order.id,
+    FULLNAME: order.full_name || 'N/A',
+    FABRIC: order.fabric || 'N/A',
+    STYLE: order.style || 'N/A',
+    ADDRESS: order.address || 'N/A',
+    DEPOSIT: Number(order.deposit || 0).toLocaleString('en-NG', { minimumFractionDigits: 0 }),
+    BALANCE: Number(amount - (order.deposit || 0)).toLocaleString('en-NG', { minimumFractionDigits: 0 }),
+    AMOUNT: Number(amount).toLocaleString('en-NG', { minimumFractionDigits: 0 }),
+    DATE: new Date().toLocaleDateString('en-GB'), // e.g., 25/07/2025
+    products: [
+      {
+        product_id: 'custom',
+        name: `${order.fabric || 'Custom'} ${order.style || 'Item'}`,
+        price: Number(amount),
+        category: 'Custom Order',
+      },
+    ],
+  };
 
+  console.log('Sending payload to generate-pdf:', JSON.stringify(invoiceData, null, 2));
+
+  try {
     const { data, error } = await supabase.functions.invoke('generate-pdf', {
       body: { type: 'invoice', data: invoiceData },
+      headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}` },
     });
 
-    function generateFallbackUUID() {
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-      });
-    }
-
-
     if (error) {
+      console.error('Edge Function error:', error);
       throw new Error(`PDF generation failed: ${error.message}`);
     }
 
-    return data.pdfUrl;
-  };
+    console.log('Edge Function response:', data);
+    return { pdfUrl: data.url, invoiceId: invoiceData.INVOICEID }; // Return both URL and ID
+  } catch (error) {
+    console.error('Error in generateInvoicePDF:', error);
+    throw new Error(`PDF generation failed: ${error.message}`);
+  }
+};
 
-  async function updateStatus(id, newStatus) {
-    const price = orderPrices[id] || 0;
-    if (newStatus === 'in progress' && !price) {
-      alert('Please set a price before marking as in progress.');
-      return;
-    }
+async function updateStatus(id, newStatus) {
+  const price = orderPrices[id] || 0;
+  if (newStatus === 'in progress' && !price) {
+    alert('Please set a price before marking as in progress.');
+    return;
+  }
 
-    const updates = { status: newStatus };
+  const updates = { status: newStatus };
+  if (newStatus === 'in progress') {
+    updates.price = parseFloat(price);
+  }
+
+  const { error, data } = await supabase
+    .from('custom_orders')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    alert('Error updating status: ' + error.message);
+  } else {
+    setOrders((prev) =>
+      prev.map((order) =>
+        order.id === id ? { ...order, ...updates } : order
+      )
+    );
     if (newStatus === 'in progress') {
-      updates.price = parseFloat(price);
-    }
-
-    const { error, data } = await supabase
-      .from('custom_orders')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      alert('Error updating status: ' + error.message);
-    } else {
-      setOrders((prev) =>
-        prev.map((order) =>
-          order.id === id ? { ...order, ...updates } : order
-        )
-      );
-      if (newStatus === 'in progress') {
-        const order = data;
-        const pdfUrl = await generateInvoicePDF(order, price);
+      const order = data;
+      try {
+        const { pdfUrl, invoiceId } = await generateInvoicePDF(order, price);
         const { error: invoiceError } = await supabase.from('invoices').insert([
           {
-            id: invoiceData.INVOICEID,
+            id: invoiceId,
             order_id: order.id,
             user_id: order.user_id,
             amount: parseFloat(price),
@@ -201,33 +211,38 @@ export default function AdminPage() {
         ]);
         if (invoiceError) {
           console.error('Error creating invoice:', invoiceError.message);
+          alert('Error creating invoice: ' + invoiceError.message);
+        } else {
+          const notificationText = `Your custom order (ID: ${order.id}) is now in progress! View your invoice: ${pdfUrl}`;
+          await sendWhatsAppNotification(order.phone, notificationText);
+          const emailBody = `
+            <h2>Order Update</h2>
+            <p>Your custom order (ID: ${order.id}) is now in progress.</p>
+            <p><strong>Invoice</strong></p>
+            <p>Order ID: ${order.id}</p>
+            <p>Customer: ${order.full_name}</p>
+            <p>Fabric: ${order.fabric || 'N/A'}</p>
+            <p>Style: ${order.style || 'N/A'}</p>
+            <p>Delivery Address: ${order.address || 'N/A'}</p>
+            <p>Deposit: ₦${Number(order.deposit || 0).toLocaleString('en-NG')}</p>
+            <p>Balance: ₦${Number(price - (order.deposit || 0)).toLocaleString('en-NG')}</p>
+            <p>Total Amount: ₦${Number(price).toLocaleString('en-NG')}</p>
+            <p>Date: ${new Date().toLocaleDateString('en-GB')}</p>
+            <p><a href="${pdfUrl}">View/Download Invoice</a></p>
+            <p>Please check the app for more details: [Your App URL]</p>
+          `;
+          await sendEmailNotification(order.email, 'Order In Progress - Invoice', emailBody);
+          await createInAppNotification(
+            order.user_id,
+            `Your order (ID: ${order.id}) is now in progress. Check your dashboard for the invoice.`
+          );
         }
-        const notificationText = `Your custom order (ID: ${order.id}) is now in progress! Please check the app to view your invoice and make payment: [Your App URL]`;
-        await sendWhatsAppNotification(order.phone, notificationText);
-        const emailBody = `
-          <h2>Order Update</h2>
-          <p>Your custom order (ID: ${order.id}) is now in progress.</p>
-          <p><strong>Invoice</strong></p>
-          <p>Order ID: ${order.id}</p>
-          <p>Customer: ${order.full_name}</p>
-          <p>Fabric: ${order.fabric}</p>
-          <p>Style: ${order.style}</p>
-          <p>Delivery Address: ${order.address}</p>
-          <p>Deposit: ₦${Number(order.deposit || 5000).toLocaleString()}</p>
-          <p>Balance: ₦${Number(price - (order.deposit || 5000)).toLocaleString()}</p>
-          <p>Total Amount: ₦${Number(price).toLocaleString()}</p>
-          <p>Date: ${new Date().toLocaleDateString()}</p>
-          <p><a href="${pdfUrl}">View/Download Invoice</a></p>
-          <p>Please check the app for more details: [Your App URL]</p>
-        `;
-        await sendEmailNotification(order.email, 'Order In Progress - Invoice', emailBody);
-        await createInAppNotification(
-          order.user_id,
-          `Your order (ID: ${order.id}) is now in progress. Check your dashboard for the invoice.`
-        );
+      } catch (error) {
+        alert('Error generating PDF: ' + error.message);
       }
     }
   }
+}
 
   const handleAvatarChange = async () => {
     if (!avatarFile) return;
