@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@maptiler/geocoding-control": "^2.1.7",
     "@maptiler/leaflet-maptilersdk": "^4.1.0",
     "@maptiler/sdk": "^3.6.0",
     "@react-google-maps/api": "^2.20.7",
