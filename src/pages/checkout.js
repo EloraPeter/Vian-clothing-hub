@@ -53,10 +53,13 @@ export default function CheckoutPage() {
   });
   L.Marker.prototype.options.icon = DefaultIcon;
 
-  mapRef.current = L.map(mapContainerRef.current, {
-    center: mapCenter,
-    zoom: 10,
-  });
+  // mapRef.current = L.map(mapContainerRef.current, {
+  //   center: mapCenter,
+  //   zoom: 10,
+  // });
+
+    mapRef.current = L.map(mapContainerRef.current).setView(mapCenter, 10);
+
 
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, © <a href="https://carto.com/attributions">CARTO</a>',
@@ -198,6 +201,18 @@ export default function CheckoutPage() {
     }
   };
 }, [mapCenter]);
+
+useEffect(() => {
+  if (!mapRef.current) return;
+
+  mapRef.current.setView(mapCenter, 14);
+
+  if (marker) marker.remove();
+  const L = require('leaflet');
+  const newMarker = L.marker(mapCenter).addTo(mapRef.current);
+  setMarker(newMarker);
+}, [mapCenter]);
+
 
   useEffect(() => {
     async function fetchData() {
