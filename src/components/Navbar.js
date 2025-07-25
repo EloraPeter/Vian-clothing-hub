@@ -82,16 +82,7 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
       
 
       <div className={`w-full sm:w-auto flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 ${isMobileMenuOpen ? 'flex' : 'hidden sm:flex'} mt-4 sm:mt-0`}>
-        <div className="relative group">
-          <button className="text-purple-700 hover:text-purple-800 font-medium">Categories</button>
-          <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-48 bg-white text-gray-800 shadow-lg rounded-lg group-hover:block hidden sm:group-hover:block z-50">
-            {categories.map((category) => (
-              <Link key={category.slug} href={`/category/${category.slug}`} className="block px-4 py-2 hover:bg-purple-100 text-sm">
-                {category.name}
-              </Link>
-            ))}
-          </div>
-        </div>
+        
         <Link href="/shop" className="text-purple-700 hover:text-purple-800 font-medium text-sm sm:text-base">Shop</Link>
         <Link href="/custom-order" className="text-purple-700 hover:text-purple-800 font-medium text-sm sm:text-base">Custom Order</Link>
 
