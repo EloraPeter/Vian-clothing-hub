@@ -92,14 +92,12 @@ export default function CheckoutPage() {
     });
     L.Marker.prototype.options.icon = DefaultIcon;
 
-    // Initialize map only if it hasn't been initialized
     if (!mapRef.current) {
       mapRef.current = L.map(mapContainerRef.current).setView(mapCenter, 10);
       L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, © <a href="https://carto.com/attributions">CARTO</a>',
       }).addTo(mapRef.current);
 
-      // Add initial marker if saved address exists
       if (savedAddresses.length > 0 && savedAddresses[0].lat && savedAddresses[0].lng) {
         const initialMarker = L.marker([savedAddresses[0].lat, savedAddresses[0].lng]).addTo(mapRef.current);
         setMarker(initialMarker);
@@ -383,14 +381,17 @@ export default function CheckoutPage() {
       setAddress(newAddresses.length > 0 ? newAddresses[0].address : '');
       setIsEditingAddress(false);
       setEditAddressId(null);
-      if (newAddresses.length > 0 && mapRef.current) {
-        mapRef.current.setView([newAddresses[0].lat || 9.0820, newAddresses[0].lng || 8.6753], 14);
-        if (marker) {
-          marker.setLatLng([newAddresses[0].lat, newAddresses[0].lng]);
-        } else {
-          const L = require('leaflet');
-          const newMarker = L.marker([newAddresses[0].lat, newAddresses[0].lng]).addTo(mapRef.current);
-          setMarker(newMarker);
+      if (newAddresses.length > 0 && newAddresses[0]) {
+        setMapCenter([newAddresses[0].lat || 9.0820, newAddresses[0].lng || 8.6753]);
+        if (mapRef.current) {
+          mapRef.current.setView([newAddresses[0].lat || 9.0820, newAddresses[0].lng || 8.6753], 14);
+          if (marker) {
+            marker.setLatLng([newAddresses[0].lat, newAddresses[0].lng]);
+          } else {
+            const L = require('leaflet');
+            const newMarker = L.marker([newAddresses[0].lat, newAddresses[0].lng]).addTo(mapRef.current);
+            setMarker(newMarker);
+          }
         }
       } else {
         setMapCenter([9.0820, 8.6753]);
@@ -405,40 +406,59 @@ export default function CheckoutPage() {
     }
   };
 
-  const initiatePayment = async (callback) => {
+  const initiatePayment = async (orderCallback) => {
     if (!window.PaystackPop) {
-      setError('Paystack SDK not loaded.');
+      setError('Paystack SDK not loaded. Please try again.');
       return;
     }
 
-    const handler = window.PaystackPop.setup({
-      key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-      email: profile?.email || user.email,
-      amount: totalPrice * 100, // Convert to kobo
-      currency: 'NGN',
-      ref: `VIAN_ORDER_${Date.now()}`,
-      callback: async (response) => {
-        try {
-          const { error, data } = await supabase.functions.invoke('verify-paystack-payment', {
-            body: { reference: response.reference },
-          });
-          if (error || !data.success) {
-            setError('Payment verification failed.');
-            return;
+    if (!profile?.email && !user?.email) {
+      setError('No valid email found for payment.');
+      return;
+    }
+
+    if (totalPrice <= 0) {
+      setError('Invalid order amount.');
+      return;
+    }
+
+    try {
+      const handler = window.PaystackPop.setup({
+        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
+        email: profile?.email || user.email,
+        amount: totalPrice * 100, // Convert to kobo
+        currency: 'NGN',
+        ref: `VIAN_ORDER_${Date.now()}`,
+        callback: async function (response) {
+          try {
+            const { error, data } = await supabase.functions.invoke('verify-paystack-payment', {
+              body: { reference: response.reference },
+            });
+            if (error || !data.success) {
+              setError('Payment verification failed.');
+              return;
+            }
+            if (typeof orderCallback === 'function') {
+              await orderCallback(response.reference);
+            } else {
+              setError('Invalid callback function.');
+            }
+          } catch (err) {
+            setError('Payment processing failed: ' + err.message);
           }
-          await callback(response.reference);
-        } catch (err) {
-          setError('Payment processing failed: ' + err.message);
-        }
-      },
-      onClose: () => {
-        setError('Payment cancelled.');
-      },
-    });
-    handler.openIframe();
+        },
+        onClose: () => {
+          setError('Payment cancelled.');
+        },
+      });
+      handler.openIframe();
+    } catch (err) {
+      setError('Failed to initialize payment: ' + err.message);
+    }
   };
 
-  const handleOrder = async () => {
+  const handleOrder = async (e) => {
+    e.preventDefault(); // Prevent default form submission
     if (!address) {
       setError('Please enter or select a delivery address.');
       return;
@@ -472,7 +492,7 @@ export default function CheckoutPage() {
             address,
             lat: parseFloat(lat),
             lng: parseFloat(lon),
-            status: 'processing', // Set to processing since payment is confirmed
+            status: 'processing',
             total: totalPrice,
             created_at: new Date().toISOString(),
             payment_reference: paymentReference,
@@ -515,7 +535,7 @@ export default function CheckoutPage() {
         />
         <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
-        <div className="max-w-5xl mx-auto p-6">
+        <form onSubmit={handleOrder} className="max-w-5xl mx-auto p-6">
           <h1 className="text-3xl font-bold mb-6 text-purple-700 text-center">Checkout</h1>
 
           <section className="mb-8 bg-white p-6 rounded-xl shadow-md">
@@ -611,13 +631,13 @@ export default function CheckoutPage() {
           </section>
 
           <button
-            onClick={handleOrder}
+            type="submit"
             className="w-full bg-purple-600 text-white px-6 py-3 rounded-md hover:bg-purple-700 font-semibold"
             disabled={!address}
           >
             Confirm & Pay
           </button>
-        </div>
+        </form>
         <Footer />
       </main>
     </>
