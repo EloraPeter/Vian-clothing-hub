@@ -32,8 +32,8 @@ export default function CheckoutPage() {
   const router = useRouter();
   const [profile, setProfile] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
-
-
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [editAddressId, setEditAddressId] = useState(null);
 
   // MapTiler API key
   const MAPTILER_API_KEY = process.env.NEXT_PUBLIC_MAPTILER_API_KEY;
@@ -41,6 +41,9 @@ export default function CheckoutPage() {
   // Initialize Leaflet map (client-side only)
   useEffect(() => {
     if (!mapContainerRef.current || !MAPTILER_API_KEY || typeof window === 'undefined') return;
+
+    const L = require('leaflet');
+    const { MaptilerLayer, MaptilerGeocoder } = require('@maptiler/leaflet-maptilersdk');
 
     // Set default Leaflet icon
     const DefaultIcon = L.icon({
@@ -84,6 +87,8 @@ export default function CheckoutPage() {
       const newMarker = L.marker([center[1], center[0]]).addTo(mapRef.current);
       setMarker(newMarker);
       setSelectedAddressId('');
+      setIsEditingAddress(false);
+      setEditAddressId(null);
     });
 
     // Handle map click for reverse geocoding
@@ -107,9 +112,12 @@ export default function CheckoutPage() {
         if (data.features[0]) {
           setAddress(data.features[0].place_name);
           setSelectedAddressId('');
+          setIsEditingAddress(false);
+          setEditAddressId(null);
         }
       } catch (err) {
         console.error('Reverse geocode error:', err);
+        setError('Failed to fetch address. Please try again.');
       }
     });
 
@@ -170,17 +178,21 @@ export default function CheckoutPage() {
         const newMarker = L.marker([selected.lat, selected.lng]).addTo(mapRef.current);
         setMarker(newMarker);
       }
+      setIsEditingAddress(false);
+      setEditAddressId(null);
     } else {
       setAddress('');
       if (marker) marker.remove();
       setMarker(null);
+      setIsEditingAddress(false);
+      setEditAddressId(null);
     }
   };
 
-  // Save new address
+  // Save or update address
   const handleSaveAddress = async () => {
     if (!address) {
-      alert('Please enter an address.');
+      setError('Please enter a valid address.');
       return;
     }
     try {
@@ -188,36 +200,119 @@ export default function CheckoutPage() {
         `https://api.maptiler.com/geocoding/${encodeURIComponent(address)}.json?key=${MAPTILER_API_KEY}`
       );
       const data = await response.json();
-      if (!data.features[0]) throw new Error('Invalid address');
+      if (!data.features[0]) {
+        setError('Invalid address. Please enter a valid address.');
+        return;
+      }
       const { center } = data.features[0];
-      const { error } = await supabase.from('addresses').insert([
-        {
-          user_id: user.id,
-          address,
-          lat: center[1],
-          lng: center[0],
-        },
-      ]);
+      
+      if (isEditingAddress && editAddressId) {
+        // Update existing address
+        const { error } = await supabase
+          .from('addresses')
+          .update({
+            address,
+            lat: center[1],
+            lng: center[0],
+          })
+          .eq('id', editAddressId)
+          .eq('user_id', user.id);
+        if (error) throw error;
+        alert('Address updated successfully!');
+      } else {
+        // Save new address
+        const { error } = await supabase.from('addresses').insert([
+          {
+            user_id: user.id,
+            address,
+            lat: center[1],
+            lng: center[0],
+          },
+        ]);
+        if (error) throw error;
+        alert('Address saved successfully!');
+      }
+      
+      const { data: newAddresses } = await supabase
+        .from('addresses')
+        .select('id, address, lat, lng')
+        .eq('user_id', user.id);
+      setSavedAddresses(newAddresses || []);
+      setSelectedAddressId(isEditingAddress ? editAddressId : newAddresses[newAddresses.length - 1].id);
+      setIsEditingAddress(false);
+      setEditAddressId(null);
+      setError(null);
+    } catch (err) {
+      setError('Failed to save address: ' + err.message);
+    }
+  };
+
+  // Edit address
+  const handleEditAddress = (addr) => {
+    setIsEditingAddress(true);
+    setEditAddressId(addr.id);
+    setAddress(addr.address);
+    setMapCenter([addr.lat || 9.0820, addr.lng || 8.6753]);
+    if (mapRef.current) {
+      mapRef.current.setView([addr.lat || 9.0820, addr.lng || 8.6753], 14);
+      if (marker) marker.remove();
+      const newMarker = L.marker([addr.lat, addr.lng]).addTo(mapRef.current);
+      setMarker(newMarker);
+    }
+  };
+
+  // Delete address
+  const handleDeleteAddress = async (addressId) => {
+    if (!confirm('Are you sure you want to delete this address?')) return;
+    try {
+      const { error } = await supabase
+        .from('addresses')
+        .delete()
+        .eq('id', addressId)
+        .eq('user_id', user.id);
       if (error) throw error;
       const { data: newAddresses } = await supabase
         .from('addresses')
         .select('id, address, lat, lng')
         .eq('user_id', user.id);
       setSavedAddresses(newAddresses || []);
-      setSelectedAddressId(newAddresses[newAddresses.length - 1].id);
-      alert('Address saved successfully!');
+      setSelectedAddressId(newAddresses.length > 0 ? newAddresses[0].id : '');
+      setAddress(newAddresses.length > 0 ? newAddresses[0].address : '');
+      setIsEditingAddress(false);
+      setEditAddressId(null);
+      if (newAddresses.length > 0 && mapRef.current) {
+        mapRef.current.setView([newAddresses[0].lat || 9.0820, newAddresses[0].lng || 8.6753], 14);
+        if (marker) marker.remove();
+        const newMarker = L.marker([newAddresses[0].lat, newAddresses[0].lng]).addTo(mapRef.current);
+        setMarker(newMarker);
+      } else {
+        setMapCenter([9.0820, 8.6753]);
+        if (marker) marker.remove();
+        setMarker(null);
+      }
+      alert('Address deleted successfully!');
     } catch (err) {
-      alert('Failed to save address: ' + err.message);
+      setError('Failed to delete address: ' + err.message);
     }
   };
 
   // Place order
   const handleOrder = async () => {
     if (!address) {
-      alert('Please enter or select a delivery address.');
+      setError('Please enter or select a delivery address.');
       return;
     }
     try {
+      const response = await fetch(
+        `https://api.maptiler.com/geocoding/${encodeURIComponent(address)}.json?key=${MAPTILER_API_KEY}`
+      );
+      const data = await response.json();
+      if (!data.features[0]) {
+        setError('Invalid delivery address. Please select a valid address.');
+        return;
+      }
+      const { center } = data.features[0];
+      
       const { error } = await supabase.from('orders').insert([
         {
           user_id: user.id,
@@ -230,19 +325,22 @@ export default function CheckoutPage() {
             image_url: item.image_url,
           })),
           address,
-          status: 'awaiting payment',
+          lat: center[1],
+          lng: center[0],
+          status: 'awaiting_payment',
           total: totalPrice,
+          created_at: new Date().toISOString(),
         },
       ]);
       if (error) throw error;
       clearCart();
-      router.push('/dashboard');
+      router.push('/orders');
     } catch (err) {
-      alert('Order failed: ' + err.message);
+      setError('Order failed: ' + err.message);
     }
   };
 
-if (loading) return <DressLoader />;
+  if (loading) return <DressLoader />;
   if (error) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
   if (cart.length === 0) return (
     <main className="p-6 max-w-5xl mx-auto">
@@ -317,10 +415,33 @@ if (loading) return <DressLoader />;
                   <option key={addr.id} value={addr.id}>{addr.address}</option>
                 ))}
               </select>
+              <div className="mt-4 grid grid-cols-1 gap-4">
+                {savedAddresses.map((addr) => (
+                  <div key={addr.id} className="flex justify-between items-center border-b border-gray-200 pb-2">
+                    <span className="text-gray-700">{addr.address}</span>
+                    <div>
+                      <button
+                        onClick={() => handleEditAddress(addr)}
+                        className="text-blue-600 hover:underline mr-4"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteAddress(addr.id)}
+                        className="text-red-600 hover:underline"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Enter or Search Address</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {isEditingAddress ? 'Edit Address' : 'Enter or Search Address'}
+            </label>
             <input
               type="text"
               value={address}
@@ -333,7 +454,7 @@ if (loading) return <DressLoader />;
             onClick={handleSaveAddress}
             className="mb-4 bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors"
           >
-            Save Address
+            {isEditingAddress ? 'Update Address' : 'Save Address'}
           </button>
           <div className="h-64 w-full" ref={mapContainerRef}></div>
         </section>
@@ -348,7 +469,6 @@ if (loading) return <DressLoader />;
         </button>
       </div>
       <Footer />
-
     </main>
   );
 }
