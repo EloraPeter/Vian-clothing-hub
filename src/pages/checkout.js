@@ -31,147 +31,173 @@ export default function CheckoutPage() {
   const [editAddressId, setEditAddressId] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
 
-  useEffect(() => {
-    if (!mapContainerRef.current || typeof window === 'undefined') return;
+ useEffect(() => {
+  if (!mapContainerRef.current || typeof window === 'undefined') return;
 
-    let L;
-    try {
-      L = require('leaflet');
-    } catch (err) {
-      setError('Failed to load map library. Please try again later.');
-      console.error('Map library error:', err);
+  let L;
+  try {
+    L = require('leaflet');
+  } catch (err) {
+    setError('Failed to load map library. Please try again later.');
+    console.error('Map library error:', err);
+    return;
+  }
+
+  const DefaultIcon = L.icon({
+    iconUrl: markerIcon.src,
+    shadowUrl: markerShadow.src,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41],
+  });
+  L.Marker.prototype.options.icon = DefaultIcon;
+
+  mapRef.current = L.map(mapContainerRef.current, {
+    center: mapCenter,
+    zoom: 10,
+  });
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, © <a href="https://carto.com/attributions">CARTO</a>',
+  }).addTo(mapRef.current);
+
+  const searchControl = L.control({ position: 'topleft' });
+  searchControl.onAdd = () => {
+    const div = L.DomUtil.create('div', 'leaflet-control-search flex space-x-2');
+    div.innerHTML = `
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Search for an address"
+        class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white hover:border-purple-400 transition-colors"
+      />
+      <button
+        id="clearSearch"
+        class="bg-gray-200 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-300 transition-colors"
+      >
+        Clear
+      </button>
+      <div
+        id="searchResults"
+        class="hidden bg-white border border-gray-300 rounded-md shadow-lg mt-1 max-h-48 overflow-y-auto z-[1000]"
+      ></div>
+    `;
+    // Prevent clicks on the search control from reaching the map
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+    return div;
+  };
+  searchControl.addTo(mapRef.current);
+
+  const searchInput = document.getElementById('searchInput');
+  const searchResultsDiv = document.getElementById('searchResults');
+  const clearButton = document.getElementById('clearSearch');
+
+  const debounce = (func, delay) => {
+    let timeout;
+    return (...args) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), delay);
+    };
+  };
+
+  const performSearch = debounce(async (query) => {
+    if (!query) {
+      setSearchResults([]);
+      searchResultsDiv.style.display = 'none';
       return;
     }
-
-    const DefaultIcon = L.icon({
-      iconUrl: markerIcon.src,
-      shadowUrl: markerShadow.src,
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41],
-    });
-    L.Marker.prototype.options.icon = DefaultIcon;
-
-    mapRef.current = L.map(mapContainerRef.current, {
-      center: mapCenter,
-      zoom: 10,
-    });
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(mapRef.current);
-
-    const searchControl = L.control({ position: 'topleft' });
-    searchControl.onAdd = () => {
-      const div = L.DomUtil.create('div', 'leaflet-control-search');
-      div.innerHTML = `
-        <input type="text" id="searchInput" placeholder="Search for an address" style="width: 200px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;" />
-        <div id="searchResults" style="background: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; display: none;"></div>
-      `;
-      return div;
-    };
-    searchControl.addTo(mapRef.current);
-
-    const searchInput = document.getElementById('searchInput');
-    const searchResultsDiv = document.getElementById('searchResults');
-
-    const debounce = (func, delay) => {
-      let timeout;
-      return (...args) => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func(...args), delay);
-      };
-    };
-
-    const performSearch = debounce(async (query) => {
-      if (!query) {
-        setSearchResults([]);
-        searchResultsDiv.style.display = 'none';
-        return;
-      }
-      try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5`,
-          {
-            headers: { 'User-Agent': 'VianClothingHub/1.0 (https://vianclothinghub.com)' },
-          }
-        );
-        if (!response.ok) throw new Error('Search failed');
-        const data = await response.json();
-        setSearchResults(data);
-        searchResultsDiv.style.display = data.length ? 'block' : 'none';
-        searchResultsDiv.innerHTML = data
-          .map(
-            (result, index) => `
-              <div class="search-result" data-index="${index}" style="padding: 5px; cursor: pointer; border-bottom: 1px solid #eee;">
-                ${result.display_name}
-              </div>
-            `
-          )
-          .join('');
-        const resultElements = searchResultsDiv.querySelectorAll('.search-result');
-        resultElements.forEach((el) => {
-          el.addEventListener('click', () => {
-            const index = el.getAttribute('data-index');
-            const result = data[index];
-            setAddress(result.display_name);
-            setMapCenter([parseFloat(result.lat), parseFloat(result.lon)]);
-            mapRef.current.setView([parseFloat(result.lat), parseFloat(result.lon)], 14);
-            if (marker) marker.remove();
-            const newMarker = L.marker([parseFloat(result.lat), parseFloat(result.lon)]).addTo(mapRef.current);
-            setMarker(newMarker);
-            setSelectedAddressId('');
-            setIsEditingAddress(false);
-            setEditAddressId(null);
-            searchResultsDiv.style.display = 'none';
-            searchInput.value = result.display_name;
-          });
-        });
-      } catch (err) {
-        console.error('Search error:', err);
-        setSearchResults([]);
-        searchResultsDiv.style.display = 'none';
-      }
-    }, 500);
-
-    searchInput.addEventListener('input', (e) => performSearch(e.target.value));
-
-    mapRef.current.on('click', async (e) => {
-      const { lat, lng } = e.latlng;
-      setMapCenter([lat, lng]);
-      mapRef.current.setView([lat, lng], 14);
-      if (marker) marker.remove();
-      const newMarker = L.marker([lat, lng]).addTo(mapRef.current);
-      setMarker(newMarker);
-      try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-          {
-            headers: { 'User-Agent': 'VianClothingHub/1.0 (https://vianclothinghub.com)' },
-          }
-        );
-        if (!response.ok) throw new Error('Reverse geocoding failed');
-        const data = await response.json();
-        if (data.display_name) {
-          setAddress(data.display_name);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5`,
+        {
+          headers: { 'User-Agent': 'VianClothingHub/1.0[](https://vianclothinghub.com)' },
+        }
+      );
+      if (!response.ok) throw new Error('Search failed');
+      const data = await response.json();
+      setSearchResults(data);
+      searchResultsDiv.style.display = data.length ? 'block' : 'none';
+      searchResultsDiv.innerHTML = data
+        .map(
+          (result, index) => `
+            <div
+              class="search-result px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-700 cursor-pointer border-b border-gray-200 last:border-b-0"
+              data-index="${index}"
+            >
+              ${result.display_name}
+            </div>
+          `
+        )
+        .join('');
+      const resultElements = searchResultsDiv.querySelectorAll('.search-result');
+      resultElements.forEach((el) => {
+        el.addEventListener('click', () => {
+          const index = el.getAttribute('data-index');
+          const result = data[index];
+          setAddress(result.display_name);
+          setMapCenter([parseFloat(result.lat), parseFloat(result.lon)]);
+          mapRef.current.setView([parseFloat(result.lat), parseFloat(result.lon)], 14);
+          if (marker) marker.remove();
+          const newMarker = L.marker([parseFloat(result.lat), parseFloat(result.lon)]).addTo(mapRef.current);
+          setMarker(newMarker);
           setSelectedAddressId('');
           setIsEditingAddress(false);
           setEditAddressId(null);
-        }
-      } catch (err) {
-        setError('Failed to fetch address. Please try again.');
-        console.error('Reverse geocode error:', err);
-      }
-    });
+          searchResultsDiv.style.display = 'none';
+          searchInput.value = result.display_name;
+        });
+      });
+    } catch (err) {
+      console.error('Search error:', err);
+      setSearchResults([]);
+      searchResultsDiv.style.display = 'none';
+    }
+  }, 500);
 
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
+  searchInput.addEventListener('input', (e) => performSearch(e.target.value));
+  clearButton.addEventListener('click', () => {
+    searchInput.value = '';
+    setSearchResults([]);
+    searchResultsDiv.style.display = 'none';
+  });
+
+  mapRef.current.on('click', async (e) => {
+    const { lat, lng } = e.latlng;
+    setMapCenter([lat, lng]);
+    mapRef.current.setView([lat, lng], 14);
+    if (marker) marker.remove();
+    const newMarker = L.marker([lat, lng]).addTo(mapRef.current);
+    setMarker(newMarker);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+        {
+          headers: { 'User-Agent': 'VianClothingHub/1.0[](https://vianclothinghub.com)' },
+        }
+      );
+      if (!response.ok) throw new Error('Reverse geocoding failed');
+      const data = await response.json();
+      if (data.display_name) {
+        setAddress(data.display_name);
+        setSelectedAddressId('');
+        setIsEditingAddress(false);
+        setEditAddressId(null);
       }
-    };
-  }, [mapCenter]);
+    } catch (err) {
+      setError('Failed to fetch address. Please try again.');
+      console.error('Reverse geocode error:', err);
+    }
+  });
+
+  return () => {
+    if (mapRef.current) {
+      mapRef.current.remove();
+      mapRef.current = null;
+    }
+  };
+}, [mapCenter]);
 
   useEffect(() => {
     async function fetchData() {
