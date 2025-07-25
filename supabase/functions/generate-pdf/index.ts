@@ -18,7 +18,7 @@ serve(async (req) => {
       status: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
     });
@@ -120,4 +120,6 @@ serve(async (req) => {
       },
     });
   }
+    return new Response("Method not allowed", { status: 405, headers });
+
 });
