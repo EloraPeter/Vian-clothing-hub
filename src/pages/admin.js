@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import Navbar from '@/components/Navbar';
 import ProfileUploader from '@/components/ProfileUploader';
 import DressLoader from '@/components/DressLoader';
-import crypto from 'crypto';
+// import crypto from 'crypto';
 
 
 
@@ -128,7 +128,7 @@ export default function AdminPage() {
 
   const generateInvoicePDF = async (order, amount) => {
     const invoiceData = {
-      INVOICEID: crypto.randomUUID(),
+      INVOICEID: self.crypto?.randomUUID?.() || generateFallbackUUID(),
       ORDERID: order.id,
       FULLNAME: order.full_name,
       FABRIC: order.fabric,
@@ -143,6 +143,15 @@ export default function AdminPage() {
     const { data, error } = await supabase.functions.invoke('generate-pdf', {
       body: { type: 'invoice', data: invoiceData },
     });
+
+    function generateFallbackUUID() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
+
 
     if (error) {
       throw new Error(`PDF generation failed: ${error.message}`);
@@ -295,7 +304,7 @@ export default function AdminPage() {
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/(^-|-$)/g, '');
-          
+
           // Insert new category into categories table
           const { data: newCategory, error: categoryError } = await supabase
             .from('categories')
@@ -465,9 +474,8 @@ export default function AdminPage() {
                 <button
                   onClick={handleAvatarChange}
                   disabled={uploading || !avatarFile}
-                  className={`w-full py-2 rounded-md font-semibold text-white transition-colors ${
-                    uploading || !avatarFile ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'
-                  }`}
+                  className={`w-full py-2 rounded-md font-semibold text-white transition-colors ${uploading || !avatarFile ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'
+                    }`}
                 >
                   {uploading ? 'Uploading...' : 'Update Picture'}
                 </button>
@@ -564,9 +572,8 @@ export default function AdminPage() {
                 <button
                   type="submit"
                   disabled={productUploading}
-                  className={`w-full py-2 rounded-md font-semibold text-white transition-colors ${
-                    productUploading ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'
-                  }`}
+                  className={`w-full py-2 rounded-md font-semibold text-white transition-colors ${productUploading ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'
+                    }`}
                 >
                   {productUploading ? 'Uploading...' : 'Add Product'}
                 </button>
@@ -620,11 +627,10 @@ export default function AdminPage() {
                                     is_on_sale: !product.is_on_sale,
                                   })
                                 }
-                                className={`px-3 py-1 rounded-md text-sm font-medium ${
-                                  product.is_on_sale
+                                className={`px-3 py-1 rounded-md text-sm font-medium ${product.is_on_sale
                                     ? 'bg-red-600 text-white'
                                     : 'bg-purple-600 text-white hover:bg-purple-700'
-                                }`}
+                                  }`}
                               >
                                 {product.is_on_sale ? 'Remove Sale' : 'Mark as On Sale'}
                               </button>
@@ -634,11 +640,10 @@ export default function AdminPage() {
                                     is_out_of_stock: !product.is_out_of_stock,
                                   })
                                 }
-                                className={`px-3 py-1 rounded-md text-sm font-medium ${
-                                  product.is_out_of_stock
+                                className={`px-3 py-1 rounded-md text-sm font-medium ${product.is_out_of_stock
                                     ? 'bg-red-600 text-white'
                                     : 'bg-purple-600 text-white hover:bg-purple-700'
-                                }`}
+                                  }`}
                               >
                                 {product.is_out_of_stock
                                   ? 'Mark as In Stock'
@@ -650,11 +655,10 @@ export default function AdminPage() {
                                     is_new: !product.is_new,
                                   })
                                 }
-                                className={`px-3 py-1 rounded-md text-sm font-medium ${
-                                  product.is_new
+                                className={`px-3 py-1 rounded-md text-sm font-medium ${product.is_new
                                     ? 'bg-red-600 text-white'
                                     : 'bg-purple-600 text-white hover:bg-purple-700'
-                                }`}
+                                  }`}
                               >
                                 {product.is_new ? 'Remove New' : 'Mark as New'}
                               </button>
