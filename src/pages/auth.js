@@ -98,7 +98,7 @@ export default function Auth() {
   />
 </Head>
     <main className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-rose-50 bg-[url('/african-fabric.jpg')] bg-cover bg-center relative">
-      <div class="absolute inset-0 bg-gradient-to-b from-black/30 to-black/40 z-0"></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-black/40 z-0"></div>
 
       {loading && <DressLoader />}
       <Link
