@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabaseClient';
 export default function Navbar({ profile, onCartClick, cartItemCount, notifications = [] }) {
   const router = useRouter();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
@@ -41,56 +42,69 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
   }, [searchQuery]);
 
   return (
-    <nav className="bg-white shadow-md px-4 py-3 flex justify-between items-center sticky top-0 z-50">
-      <Link href="/" className="flex items-center space-x-2">
-        <img src="/logo.svg" alt="Vian Clothing Hub Logo" className="h-15 w-auto" />
-      </Link>
+    <nav className="bg-white shadow-md px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row justify-between items-center sticky top-0 z-50">
+      <div className="flex justify-between items-center w-full sm:w-auto">
+        <Link href="/" className="flex items-center space-x-2">
+          <img src="/logo.svg" alt="Vian Clothing Hub Logo" className="h-10 sm:h-12 w-auto" />
+        </Link>
 
-      <div className="flex items-center space-x-6">
-        <div className="relative group">
-          <button className="text-white hover:text-gold-500">Categories</button>
-          <div className="absolute hidden group-hover:block bg-white text-gray-800 shadow-lg rounded-lg mt-2">
-            {categories.map((category) => (
-              <Link key={category.slug} href={`/category/${category.slug}`} className="block px-4 py-2 hover:bg-purple-100">
-                {category.name}
-              </Link>
-            ))}
-          </div>
-        </div>
-        <Link href="/shop" className="text-black hover:text-purple-500">Shop</Link>
-        <Link href="/custom-order" className="text-black hover:text-purple-500">Custom Order</Link>
-
-        <div className="relative">
+        <div className="relative w-full sm:w-64">
           <input
             type="text"
             placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="px-3 py-2 rounded-lg text-black border border-gray-300 focus:border-purple-700 hover:border-purple-700 focus:outline-none"
+            className="w-full px-3 py-2 rounded-lg text-black border border-gray-300 focus:border-purple-700 hover:border-purple-700 focus:outline-none text-sm sm:text-base"
           />
-
           {suggestions.length > 0 && (
-            <div className="absolute bg-white text-black shadow-lg rounded-lg mt-2 w-64">
+            <div className="absolute left-0 right-0 mt-2 bg-white text-black shadow-lg rounded-lg w-full sm:w-64 max-h-64 overflow-y-auto z-50">
               {suggestions.map((product) => (
                 <Link key={product.id} href={`/product/${product.id}`} className="flex items-center px-4 py-2 hover:bg-purple-100">
-                  <img src={product.image_url} alt={product.name} className="w-10 h-10 object-cover rounded mr-2" />
-                  <span>{product.name}</span>
+                  <img src={product.image_url} alt={product.name} className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded mr-2" />
+                  <span className="text-sm truncate">{product.name}</span>
                 </Link>
               ))}
             </div>
           )}
         </div>
 
+        <button
+          className="sm:hidden text-purple-700 hover:text-purple-800"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Toggle mobile menu"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16m-7 6h7"} />
+          </svg>
+        </button>
+      </div>
 
+      
 
-        <div className="flex items-center gap-4">
+      <div className={`w-full sm:w-auto flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 ${isMobileMenuOpen ? 'flex' : 'hidden sm:flex'} mt-4 sm:mt-0`}>
+        <div className="relative group">
+          <button className="text-purple-700 hover:text-purple-800 font-medium">Categories</button>
+          <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-48 bg-white text-gray-800 shadow-lg rounded-lg group-hover:block hidden sm:group-hover:block z-50">
+            {categories.map((category) => (
+              <Link key={category.slug} href={`/category/${category.slug}`} className="block px-4 py-2 hover:bg-purple-100 text-sm">
+                {category.name}
+              </Link>
+            ))}
+          </div>
+        </div>
+        <Link href="/shop" className="text-purple-700 hover:text-purple-800 font-medium text-sm sm:text-base">Shop</Link>
+        <Link href="/custom-order" className="text-purple-700 hover:text-purple-800 font-medium text-sm sm:text-base">Custom Order</Link>
+
+        
+
+        <div className="flex items-center gap-4 sm:gap-6">
           <div className="relative">
             <button
               onClick={() => setIsNotificationOpen(!isNotificationOpen)}
               className="relative text-purple-700 hover:text-purple-800 transition-colors"
               aria-label="View notifications"
             >
-              <FaBell className="text-xl" />
+              <FaBell className="text-lg sm:text-xl" />
               {unreadCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
                   {unreadCount}
@@ -98,7 +112,7 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
               )}
             </button>
             {isNotificationOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 max-h-96 overflow-y-auto z-50">
+              <div className="absolute right-0 mt-2 w-64 sm:w-72 bg-white rounded-lg shadow-xl border border-gray-200 max-h-96 overflow-y-auto z-50">
                 <div className="p-4">
                   <h3 className="text-sm font-semibold text-purple-700 mb-2">Notifications</h3>
                   {notifications.length === 0 ? (
@@ -124,7 +138,7 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
             className="relative text-purple-700 hover:text-purple-800 transition-colors"
             aria-label="Open cart"
           >
-            <FaShoppingCart className="text-xl" />
+            <FaShoppingCart className="text-lg sm:text-xl" />
             {cartItemCount > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
                 {cartItemCount}
@@ -138,7 +152,7 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
           >
             <img
               src={profile?.avatar_url || '/default-avatar.png'}
-              className="w-8 h-8 rounded-full object-cover"
+              className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover"
               alt="User Avatar"
             />
           </button>
