@@ -375,6 +375,8 @@ export default function CheckoutPage() {
 
       const { data: newAddresses } = await supabase
         .from('addresses')
+        .select('*') // or the fields you need
+
         .eq('user_id', user.id);
       setSavedAddresses(newAddresses || []);
       setSelectedAddressId(isEditingAddress ? editAddressId : newAddresses[newAddresses.length - 1].id);
