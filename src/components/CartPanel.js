@@ -2,8 +2,6 @@ import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import Image from 'next/image'
-
 
 export default function CartPanel({ isOpen, onClose }) {
     const { cart, removeFromCart, clearCart, updateQuantity } = useCart();
@@ -42,14 +40,12 @@ export default function CartPanel({ isOpen, onClose }) {
 
     return (
         <>
-            {/* Backdrop */}
             {isOpen && (
                 <div
                     className="fixed inset-0 bg-gray-900 bg-opacity-50 opacity-25 z-40 transition-opacity duration-300"
                     onClick={onClose}
                 />
             )}
-            {/* Slide-in Panel */}
             <div
                 className={`fixed top-0 right-0 lg:w-96 w-full h-full lg:h-full md:bottom-0 md:top-auto md:h-3/4 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${
                     isOpen
@@ -123,7 +119,7 @@ export default function CartPanel({ isOpen, onClose }) {
                                 <ul className="space-y-6">
                                     {cart.map((item) => (
                                         <li
-                                            key={item.id}
+                                            key={`${item.id}-${item.size || ''}-${item.color || ''}`}
                                             className="border border-gray-200 rounded-lg p-6 bg-gray-50 hover:bg-gray-100 transition-colors duration-200"
                                         >
                                             <div className="flex items-center justify-between">
@@ -132,10 +128,12 @@ export default function CartPanel({ isOpen, onClose }) {
                                                         src={item.image_url}
                                                         alt={item.name}
                                                         className="w-16 h-16 object-cover rounded-lg border border-gray-300"
+                                                        loading="lazy"
                                                     />
                                                     <div>
                                                         <p className="text-lg font-semibold text-gray-900">
                                                             {item.name}
+                                                            {item.size && ` (${item.size}${item.color ? `, ${item.color}` : ''})`}
                                                         </p>
                                                         <p className="text-gray-600">
                                                             {item.discount_percentage > 0 ? (
@@ -166,6 +164,8 @@ export default function CartPanel({ isOpen, onClose }) {
                                                             onClick={() =>
                                                                 updateQuantity(
                                                                     item.id,
+                                                                    item.size,
+                                                                    item.color,
                                                                     item.quantity - 1
                                                                 )
                                                             }
@@ -181,6 +181,8 @@ export default function CartPanel({ isOpen, onClose }) {
                                                             onClick={() =>
                                                                 updateQuantity(
                                                                     item.id,
+                                                                    item.size,
+                                                                    item.color,
                                                                     item.quantity + 1
                                                                 )
                                                             }
@@ -191,7 +193,7 @@ export default function CartPanel({ isOpen, onClose }) {
                                                         </button>
                                                     </div>
                                                     <button
-                                                        onClick={() => removeFromCart(item.id)}
+                                                        onClick={() => removeFromCart(item.id, item.size, item.color)}
                                                         className="text-red-600 text-sm font-medium hover:text-red-700 transition-colors duration-200"
                                                     >
                                                         Remove
@@ -202,8 +204,7 @@ export default function CartPanel({ isOpen, onClose }) {
                                                 Total: ₦
                                                 {(
                                                     (item.discount_percentage > 0
-                                                        ? item.price *
-                                                        (1 - item.discount_percentage / 100)
+                                                        ? item.price * (1 - item.discount_percentage / 100)
                                                         : item.price) * item.quantity
                                                 ).toLocaleString()}
                                             </p>
