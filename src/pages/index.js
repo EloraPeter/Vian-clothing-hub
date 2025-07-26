@@ -25,6 +25,9 @@ export default function Home() {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const [categories, setCategories] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
 
   // Skeleton components
   const SkeletonCategory = () => (
@@ -41,7 +44,7 @@ export default function Home() {
     </div>
   );
 
-  // Fetch user profile
+  // Fetch user profile and initial data
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
@@ -65,19 +68,55 @@ export default function Home() {
         .order("parent_id, name");
       setCategories(categoriesData || []);
 
-      // Fetch new arrivals
+      // Fetch initial new arrivals
       const { data: productsData } = await supabase
         .from("products")
         .select(
           "id, name, image_url, price, is_on_sale, discount_percentage, is_out_of_stock"
         )
         .eq("is_new", true)
-        .limit(8);
+        .range(0, 7); // Fetch first 8 products
       setNewArrivals(productsData || []);
+      setHasMore(productsData && productsData.length === 8);
       setLoading(false);
     }
     fetchData();
   }, []);
+
+  // Fetch more products for infinite scroll
+  useEffect(() => {
+    if (page === 1) return; // Skip initial fetch
+    async function fetchMoreProducts() {
+      setIsFetchingMore(true);
+      const { data: productsData } = await supabase
+        .from("products")
+        .select(
+          "id, name, image_url, price, is_on_sale, discount_percentage, is_out_of_stock"
+        )
+        .eq("is_new", true)
+        .range((page - 1) * 8, page * 8 - 1);
+      setNewArrivals((prev) => [...prev, ...(productsData || [])]);
+      setHasMore(productsData && productsData.length === 8);
+      setIsFetchingMore(false);
+    }
+    fetchMoreProducts();
+  }, [page]);
+
+  // Infinite scroll handler
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 &&
+        hasMore &&
+        !isFetchingMore &&
+        !loading
+      ) {
+        setPage((prev) => prev + 1);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [hasMore, isFetchingMore, loading]);
 
   if (loading) return <DressLoader />;
 
@@ -164,48 +203,77 @@ export default function Home() {
               {loading
                 ? Array(8).fill().map((_, index) => <SkeletonProduct key={index} />)
                 : newArrivals.map((product) => (
-                    <Link
-                      key={product.id}
-                      href={`/product/${product.id}`}
-                      className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100"
-                      role="button"
-                      aria-label={`View ${product.name} product details`}
-                    >
-                      <img
-                        src={product.image_url}
-                        alt={`Image of ${product.name}`}
-                        loading="lazy"
-                        className="w-full h-40 sm:h-48 object-cover rounded-lg mb-4"
-                      />
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
-                        {product.name}
-                      </h3>
-                      <p className="text-purple-700 font-semibold text-sm sm:text-base">
-                        {product.is_on_sale ? (
-                          <>
-                            <span className="line-through text-red-600">
-                              ₦{Number(product.price).toLocaleString()}
-                            </span>
-                            <span className="ml-2 text-green-600">
-                              ₦
-                              {(
-                                product.price *
-                                (1 - product.discount_percentage / 100)
-                              ).toLocaleString()}
-                            </span>
-                          </>
-                        ) : (
-                          `₦${Number(product.price).toLocaleString()}`
+                    <div key={product.id} className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100">
+                      <Link
+                        href={`/product/${product.id}`}
+                        className="block"
+                        role="button"
+                        aria-label={`View ${product.name} product details`}
+                      >
+                        <img
+                          src={product.image_url}
+                          alt={`Image of ${product.name}`}
+                          loading="lazy"
+                          className="w-full h-40 sm:h-48 object-cover rounded-lg mb-4"
+                        />
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
+                          {product.name}
+                        </h3>
+                        <p className="text-purple-700 font-semibold text-sm sm:text-base">
+                          {product.is_on_sale ? (
+                            <>
+                              <span className="line-through text-red-600">
+                                ₦{Number(product.price).toLocaleString()}
+                              </span>
+                              <span className="ml-2 text-green-600">
+                                ₦
+                                {(
+                                  product.price *
+                                  (1 - product.discount_percentage / 100)
+                                ).toLocaleString()}
+                              </span>
+                            </>
+                          ) : (
+                            `₦${Number(product.price).toLocaleString()}`
+                          )}
+                        </p>
+                        {product.is_out_of_stock && (
+                          <span className="text-red-600 text-xs sm:text-sm">
+                            Out of Stock
+                          </span>
                         )}
-                      </p>
-                      {product.is_out_of_stock && (
-                        <span className="text-red-600 text-xs sm:text-sm">
-                          Out of Stock
-                        </span>
-                      )}
-                    </Link>
+                      </Link>
+                      <div className="flex justify-between mt-2">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            addToCart(product);
+                          }}
+                          disabled={product.is_out_of_stock}
+                          className={`text-sm ${product.is_out_of_stock ? "opacity-50 cursor-not-allowed" : "hover:text-purple-600"}`}
+                          aria-label={`Add ${product.name} to cart`}
+                        >
+                          <FaShoppingCart />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            toggleWishlist(product.id);
+                          }}
+                          className="text-sm hover:text-purple-600"
+                          aria-label={`Toggle ${product.name} in wishlist`}
+                        >
+                          {isInWishlist(product.id) ? <FaHeart /> : <FaRegHeart />}
+                        </button>
+                      </div>
+                    </div>
                   ))}
             </div>
+            {isFetchingMore && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mt-6">
+                {Array(4).fill().map((_, index) => <SkeletonProduct key={index} />)}
+              </div>
+            )}
           </section>
 
           {/* About Section */}
