@@ -11,6 +11,7 @@ import Navbar from "@/components/Navbar";
 import CartPanel from "@/components/CartPanel";
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DressLoader from '@/components/DressLoader';
+import { colorMap } from '@/lib/colorMap';
 
 export default function Category() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function Category() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { toggleWishlist, isInWishlist } = useWishlist();
   const [products, setProducts] = useState([]);
+  const [variantsData, setVariantsData] = useState([]); // Store variants for filtering
   const [filters, setFilters] = useState({ size: '', color: '', price: '' });
   const [filterOptions, setFilterOptions] = useState({ sizes: [], colors: [], priceRanges: [] });
   const [category, setCategory] = useState(null);
@@ -102,6 +104,7 @@ export default function Category() {
         ] : [];
 
         setProducts(productsData || []);
+        setVariantsData(variantsData || []);
         setFilterOptions({ sizes, colors, priceRanges });
 
         // Cache filter options
@@ -135,7 +138,7 @@ export default function Category() {
       result = result.filter(p => max ? p.price >= min && p.price <= max : p.price >= min);
     }
     return result;
-  }, [products, filters]);
+  }, [products, filters, variantsData]);
 
   if (loading) return <DressLoader />;
   if (error) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
@@ -184,19 +187,33 @@ export default function Category() {
               {filterOptions.colors.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
-                  <select
-                    value={filters.color}
-                    onChange={(e) => handleFilterChange('color', e.target.value)}
-                    className="px-3 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    aria-label="Filter by color"
-                  >
-                    <option value="">All Colors</option>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleFilterChange('color', '')}
+                      className={`px-3 py-1 rounded-lg text-sm ${
+                        filters.color === '' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                      aria-label="Clear color filter"
+                    >
+                      All Colors
+                    </button>
                     {filterOptions.colors.map(color => (
-                      <option key={color} value={color}>
-                        {color} ({variantsData.filter(v => v.color === color).length})
-                      </option>
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => handleFilterChange('color', color)}
+                        className={`w-8 h-8 rounded-full border-2 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                          filters.color === color ? 'border-purple-500' : 'border-gray-300'
+                        }`}
+                        style={{ backgroundColor: colorMap[color] || '#000000' }}
+                        aria-label={`Filter by color ${color}`}
+                        title={`${color} (${variantsData.filter(v => v.color === color).length})`}
+                      >
+                        <span className="sr-only">{color}</span>
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 </div>
               )}
               {filterOptions.priceRanges.length > 0 && (

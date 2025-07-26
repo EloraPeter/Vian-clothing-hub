@@ -1,13 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import {
-    FaHeart,
-    FaRegHeart,
-    FaShoppingCart,
-    FaStar,
-    FaStarHalfAlt,
-    FaRegStar,
-} from "react-icons/fa";
+import { colorMap } from '@/lib/colorMap';
+import { FaShoppingCart } from 'react-icons/fa';
 
 export default function VariantSelector({ productId, onSelectVariant, disabled }) {
   const [variants, setVariants] = useState([]);
@@ -115,20 +109,23 @@ export default function VariantSelector({ productId, onSelectVariant, disabled }
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Color
           </label>
-          <select
-            value={selectedColor}
-            onChange={(e) => setSelectedColor(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-            aria-label="Select color"
-            disabled={!selectedSize}
-          >
-            <option value="">Select a color</option>
+          <div className="flex flex-wrap gap-2">
             {availableColors.map((color) => (
-              <option key={color} value={color}>
-                {color}
-              </option>
+              <button
+                key={color}
+                type="button"
+                onClick={() => setSelectedColor(color)}
+                className={`w-8 h-8 rounded-full border-2 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                  selectedColor === color ? 'border-purple-500' : 'border-gray-300'
+                }`}
+                style={{ backgroundColor: colorMap[color] || '#000000' }}
+                aria-label={`Select color ${color}`}
+                title={color}
+              >
+                <span className="sr-only">{color}</span>
+              </button>
             ))}
-          </select>
+          </div>
           {selectedSize && selectedColor && (
             <p className="text-sm text-gray-500 mt-1">
               {variants.find(v => v.size === selectedSize && v.color === selectedColor)?.stock_quantity || 0} in stock
