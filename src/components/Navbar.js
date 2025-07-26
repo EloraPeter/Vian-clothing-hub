@@ -83,8 +83,8 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
 
       <div className={`w-full sm:w-auto flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 ${isMobileMenuOpen ? 'flex' : 'hidden sm:flex'} mt-4 sm:mt-0`}>
 
-        <Link href="/shop" className="text-purple-700 hover:text-purple-800 font-medium text-sm sm:text-base hover:underline">Shop</Link>
-        <Link href="/custom-order" className="text-purple-700 hover:text-purple-800 font-medium text-sm sm:text-base hover:underline">Custom Order</Link>
+        <Link href="/shop" className="text-purple-700 hover:text-purple-800 font-medium text-sm sm:text-base ">Shop</Link>
+        <Link href="/custom-order" className="text-purple-700 hover:text-purple-800 font-medium text-sm sm:text-base">Custom Order</Link>
 
 
 
