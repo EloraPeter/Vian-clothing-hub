@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
-export default function VariantSelector({ productId, onSelectVariant }) {
+export default function VariantSelector({ productId, onSelectVariant, disabled }) {
   const [variants, setVariants] = useState([]);
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
@@ -66,9 +66,15 @@ export default function VariantSelector({ productId, onSelectVariant }) {
     return (
       <button
         onClick={() => onSelectVariant(null)}
-        className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-semibold"
+        disabled={disabled}
+        className={`w-full py-3 rounded-lg flex items-center justify-center gap-2 font-medium ${
+          disabled
+            ? 'bg-gray-400 cursor-not-allowed text-white'
+            : 'bg-purple-600 hover:bg-purple-700 text-white'
+        }`}
       >
-        Add to Cart
+        <FaShoppingCart />
+        {disabled ? 'Out of Stock' : 'Add to Cart'}
       </button>
     );
   }
@@ -124,13 +130,14 @@ export default function VariantSelector({ productId, onSelectVariant }) {
       )}
       <button
         onClick={handleAddToCart}
-        disabled={!selectedSize || !selectedColor}
-        className={`w-full py-3 rounded-lg font-semibold text-white transition-colors ${
-          !selectedSize || !selectedColor
-            ? 'bg-gray-400 cursor-not-allowed'
-            : 'bg-purple-600 hover:bg-purple-700'
+        disabled={disabled || !selectedSize || !selectedColor}
+        className={`w-full py-3 rounded-lg flex items-center justify-center gap-2 font-medium ${
+          disabled || !selectedSize || !selectedColor
+            ? 'bg-gray-400 cursor-not-allowed text-white'
+            : 'bg-purple-600 hover:bg-purple-700 text-white'
         }`}
       >
+        <FaShoppingCart />
         Add to Cart
       </button>
     </div>

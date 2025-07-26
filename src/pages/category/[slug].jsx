@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Head from 'next/head';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import Footer from '@/components/footer';
 import { useCart } from "@/context/CartContext";
@@ -14,19 +14,19 @@ import DressLoader from '@/components/DressLoader';
 
 export default function Category() {
   const router = useRouter();
+  const { slug } = router.query;
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
   const { addToCart, cart } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { toggleWishlist, isInWishlist } = useWishlist();
-  const { slug } = router.query;
   const [products, setProducts] = useState([]);
   const [filters, setFilters] = useState({ size: '', color: '', price: '' });
+  const [filterOptions, setFilterOptions] = useState({ sizes: [], colors: [], priceRanges: [] });
   const [category, setCategory] = useState(null);
-  const [categories, setCategories] = useState([]); // New state for all categories
+  const [categories, setCategories] = useState([]);
+  const [error, setError] = useState(null);
 
-
-  // Function to recursively collect all descendant category IDs
   const getDescendantCategoryIds = (categoryId, allCategories) => {
     const descendants = [categoryId];
     const children = allCategories.filter((cat) => cat.parent_id === categoryId);
@@ -41,60 +41,104 @@ export default function Category() {
 
     async function fetchData() {
       setLoading(true);
-      // Fetch user profile
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('email, avatar_url')
-          .eq('id', user.id)
-          .maybeSingle();
-        setProfile(profileData);
-      }
-
-      // Fetch all categories
-      const { data: categoriesData } = await supabase
-        .from('categories')
-        .select('id, name, slug, parent_id');
-      setCategories(categoriesData || []);
-
-      // Fetch category
-      const { data: categoryData } = await supabase
-        .from('categories')
-        .select('id, name, slug, parent_id')
-        .eq('slug', slug)
-        .single();
-      setCategory(categoryData);
-
-      // Fetch products (including descendants)
-      if (categoryData) {
-        const descendantIds = getDescendantCategoryIds(categoryData.id, categoriesData || []);
-        let query = supabase
-          .from('products')
-          .select('id, name, image_url, price, is_on_sale, discount_percentage, is_out_of_stock')
-          .in('category_id', descendantIds);
-
-        if (filters.size) query = query.eq('size', filters.size);
-        if (filters.color) query = query.eq('color', filters.color);
-        if (filters.price) {
-          const [min, max] = filters.price.split('-').map(Number);
-          query = query.gte('price', min).lte('price', max);
+      try {
+        // Fetch user profile
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('email, avatar_url')
+            .eq('id', user.id)
+            .maybeSingle();
+          setProfile(profileData);
         }
 
-        const { data: productsData } = await query;
-        setProducts(productsData || []);
-      } else {
-        setProducts([]);
-      }
+        // Check cache for filter options
+        const cached = localStorage.getItem(`filters_${slug}`);
+        if (cached) {
+          const { sizes, colors, priceRanges, timestamp } = JSON.parse(cached);
+          if (Date.now() - timestamp < 3600000) { // 1 hour TTL
+            setFilterOptions({ sizes, colors, priceRanges });
+          }
+        }
 
-      setLoading(false);
+        // Fetch categories
+        const { data: categoriesData } = await supabase
+          .from('categories')
+          .select('id, name, slug, parent_id');
+        setCategories(categoriesData || []);
+
+        // Fetch category
+        const { data: categoryData } = await supabase
+          .from('categories')
+          .select('id, name, slug, parent_id')
+          .eq('slug', slug)
+          .single();
+        if (!categoryData) throw new Error('Category not found');
+        setCategory(categoryData);
+
+        // Fetch products
+        const descendantIds = getDescendantCategoryIds(categoryData.id, categoriesData || []);
+        const { data: productsData } = await supabase
+          .from('products')
+          .select('id, name, image_url, price, is_on_sale, discount_percentage, is_out_of_stock, category_id')
+          .in('category_id', descendantIds);
+        
+        // Fetch filter options from product_variants
+        const { data: variantsData } = await supabase
+          .from('product_variants')
+          .select('size, color')
+          .in('product_id', productsData.map(p => p.id));
+        
+        const sizes = [...new Set(variantsData.map(v => v.size))].filter(Boolean);
+        const colors = [...new Set(variantsData.map(v => v.color))].filter(Boolean);
+        const prices = productsData.map(p => p.price);
+        const priceRanges = prices.length > 0 ? [
+          { label: 'All Prices', value: '' },
+          { label: '₦0 - ₦5,000', value: '0-5000' },
+          { label: '₦5,001 - ₦10,000', value: '5001-10000' },
+          { label: '₦10,001 - ₦20,000', value: '10001-20000' },
+          { label: '₦20,001+', value: '20001-' },
+        ] : [];
+
+        setProducts(productsData || []);
+        setFilterOptions({ sizes, colors, priceRanges });
+
+        // Cache filter options
+        localStorage.setItem(`filters_${slug}`, JSON.stringify({
+          sizes, colors, priceRanges, timestamp: Date.now()
+        }));
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
     }
     fetchData();
-  }, [slug, filters]);
+  }, [slug]);
 
+  const handleFilterChange = (name, value) => {
+    setFilters(prev => ({ ...prev, [name]: value }));
+  };
 
+  const filteredProducts = useMemo(() => {
+    let result = [...products];
+    if (filters.size || filters.color) {
+      result = result.filter(p => {
+        const variants = variantsData.filter(v => v.product_id === p.id);
+        return (!filters.size || variants.some(v => v.size === filters.size)) &&
+               (!filters.color || variants.some(v => v.color === filters.color));
+      });
+    }
+    if (filters.price) {
+      const [min, max] = filters.price.split('-').map(Number);
+      result = result.filter(p => max ? p.price >= min && p.price <= max : p.price >= min);
+    }
+    return result;
+  }, [products, filters]);
 
   if (loading) return <DressLoader />;
+  if (error) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
 
   return (
     <>
@@ -102,7 +146,7 @@ export default function Category() {
         <title>{category?.name} - Vian Clothing Hub</title>
         <meta name="description" content={`Shop ${category?.name} at Vian Clothing Hub. Discover trendy African and contemporary fashion.`} />
       </Head>
-      <main className="min-h-screen bg-gray-100">
+      <main className="min-h-screen bg-gray-100" style={{ backgroundImage: "url('/african-fabric.jpg')", backgroundSize: 'cover' }}>
         <Navbar
           profile={profile}
           onCartClick={() => setIsCartOpen(true)}
@@ -111,69 +155,107 @@ export default function Category() {
         <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
         <div className="max-w-7xl mx-auto px-4 py-12">
-          <Breadcrumbs category={category} categories={categories} /> {/* Pass categories */}          <h1 className="text-3xl font-bold text-purple-800 font-playfair-display mb-6">
+          <Breadcrumbs category={category} categories={categories} />
+          <h1 className="text-3xl font-bold text-purple-800 font-playfair-display mb-6">
             {category?.name}
           </h1>
           {/* Filters */}
-          <div className="mb-6 flex flex-wrap gap-4">
-            <select
-              value={filters.size}
-              onChange={(e) => setFilters({ ...filters, size: e.target.value })}
-              className="px-3 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
-              <option value="">All Sizes</option>
-              <option value="S">Small</option>
-              <option value="M">Medium</option>
-              <option value="L">Large</option>
-            </select>
-            <select
-              value={filters.color}
-              onChange={(e) => setFilters({ ...filters, color: e.target.value })}
-              className="px-3 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
-              <option value="">All Colors</option>
-              <option value="Red">Red</option>
-              <option value="Blue">Blue</option>
-              <option value="Gold">Gold</option>
-            </select>
-            <select
-              value={filters.price}
-              onChange={(e) => setFilters({ ...filters, price: e.target.value })}
-              className="px-3 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
-              <option value="">All Prices</option>
-              <option value="0-5000">₦0 - ₦5,000</option>
-              <option value="5000-10000">₦5,000 - ₦10,000</option>
-              <option value="10000-20000">₦10,000 - ₦20,000</option>
-            </select>
+          <div className="mb-6 bg-white rounded-xl shadow-md p-6">
+            <h2 className="text-xl font-semibold text-purple-800 mb-4">Filter Products</h2>
+            <div className="flex flex-wrap gap-4">
+              {filterOptions.sizes.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Size</label>
+                  <select
+                    value={filters.size}
+                    onChange={(e) => handleFilterChange('size', e.target.value)}
+                    className="px-3 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    aria-label="Filter by size"
+                  >
+                    <option value="">All Sizes</option>
+                    {filterOptions.sizes.map(size => (
+                      <option key={size} value={size}>
+                        {size} ({variantsData.filter(v => v.size === size).length})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {filterOptions.colors.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                  <select
+                    value={filters.color}
+                    onChange={(e) => handleFilterChange('color', e.target.value)}
+                    className="px-3 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    aria-label="Filter by color"
+                  >
+                    <option value="">All Colors</option>
+                    {filterOptions.colors.map(color => (
+                      <option key={color} value={color}>
+                        {color} ({variantsData.filter(v => v.color === color).length})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {filterOptions.priceRanges.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price Range</label>
+                  <select
+                    value={filters.price}
+                    onChange={(e) => handleFilterChange('price', e.target.value)}
+                    className="px-3 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    aria-label="Filter by price range"
+                  >
+                    {filterOptions.priceRanges.map(range => (
+                      <option key={range.value} value={range.value}>
+                        {range.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <button
+                onClick={() => setFilters({ size: '', color: '', price: '' })}
+                className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+              >
+                Reset Filters
+              </button>
+            </div>
           </div>
           {/* Product Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product) => (
-              <Link key={product.id} href={`/product/${product.id}`} className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100">
-                <img
-                  src={product.image_url}
-                  alt={product.name}
-                  className="w-full h-48 object-cover rounded-lg mb-4"
-                />
-                <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
-                <p className="text-purple-700 font-semibold">
-                  {product.is_on_sale ? (
-                    <>
-                      <span className="line-through text-red-600">₦{Number(product.price).toLocaleString()}</span>
-                      <span className="ml-2 text-green-600">
-                        ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
-                      </span>
-                    </>
-                  ) : (
-                    `₦${Number(product.price).toLocaleString()}`
+            {filteredProducts.length === 0 ? (
+              <p className="text-gray-600 col-span-full text-center">No products found.</p>
+            ) : (
+              filteredProducts.map((product) => (
+                <Link key={product.id} href={`/product/${product.id}`} className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100">
+                  <img
+                    src={product.image_url}
+                    alt={product.name}
+                    className="w-full h-48 object-cover rounded-lg mb-4"
+                    loading="lazy"
+                  />
+                  <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
+                  <p className="text-purple-700 font-semibold">
+                    {product.is_on_sale ? (
+                      <>
+                        <span className="line-through text-red-600">₦{Number(product.price).toLocaleString()}</span>
+                        <span className="ml-2 text-green-600">
+                          ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
+                        </span>
+                      </>
+                    ) : (
+                      `₦${Number(product.price).toLocaleString()}`
+                    )}
+                  </p>
+                  {product.is_out_of_stock && (
+                    <span className="text-red-600 text-sm">Out of Stock</span>
                   )}
-                </p>
-                {product.is_out_of_stock && (
-                  <span className="text-red-600 text-sm">Out of Stock</span>
-                )}
-              </Link>
-            ))}
+                </Link>
+              ))
+            )}
           </div>
         </div>
         <Footer />
