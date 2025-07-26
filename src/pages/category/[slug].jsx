@@ -149,7 +149,7 @@ export default function Category() {
         <title>{category?.name} - Vian Clothing Hub</title>
         <meta name="description" content={`Shop ${category?.name} at Vian Clothing Hub. Discover trendy African and contemporary fashion.`} />
       </Head>
-      <main className="min-h-screen bg-gray-100" style={{ backgroundImage: "url('/african-fabric.jpg')", backgroundSize: 'cover' }}>
+      <main className="min-h-screen bg-gray-100">
         <Navbar
           profile={profile}
           onCartClick={() => setIsCartOpen(true)}

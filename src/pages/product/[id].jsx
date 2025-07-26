@@ -177,7 +177,7 @@ export default function Product() {
         <title>{product?.name} - Vian Clothing Hub</title>
         <meta name="description" content={product?.description} />
       </Head>
-      <main className="min-h-screen relative mb-0 bg-gray-100 pb-0" style={{ backgroundImage: "url('/african-fabric.jpg')", backgroundSize: 'cover' }}>
+      <main className="min-h-screen relative mb-0 bg-gray-100 pb-0">
         <Navbar
           profile={profile}
           onCartClick={() => setIsCartOpen(true)}
