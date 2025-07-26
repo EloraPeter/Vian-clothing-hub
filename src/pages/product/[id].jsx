@@ -49,7 +49,7 @@ const { addToCart, cart } = useCart();
             // Fetch product
             const { data: productData } = await supabase
                 .from('products')
-                .select('*, categories(name, slug)')
+                .select('*, categories(id, name, slug, parent_id)')
                 .eq('id', id)
                 .single();
             setProduct(productData);
