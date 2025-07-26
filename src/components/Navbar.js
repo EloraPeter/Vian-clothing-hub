@@ -79,7 +79,7 @@ export default function Navbar({
           {/* search icon */}
           <div
             ref={containerRef}
-            className="relative flex items-center"
+            className="relative flex items-center block lg:hidden"
             onClick={() => setExpanded(true)}
           >
             {/* Search Icon */}
@@ -165,7 +165,7 @@ export default function Navbar({
           {/* search icon */}
           <div
             ref={containerRef}
-            className="relative flex items-center lg:hidden"
+            className="relative flex items-center "
             onClick={() => setExpanded(true)}
           >
             {/* Search Icon */}
