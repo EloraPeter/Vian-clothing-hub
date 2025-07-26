@@ -34,6 +34,7 @@ export default function AdminPage() {
   const [itemsPerPage] = useState(5);
   const [orderPrices, setOrderPrices] = useState({});
   const [categories, setCategories] = useState([]);
+  const [discountInputs, setDiscountInputs] = useState({});
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((_, session) => {
