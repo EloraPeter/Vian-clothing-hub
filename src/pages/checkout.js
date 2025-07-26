@@ -1,6 +1,5 @@
 "use client";
 
-
 import { useCart } from '@/context/CartContext';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
@@ -10,7 +9,7 @@ import Footer from '@/components/footer';
 import CartPanel from '@/components/CartPanel';
 import Link from 'next/link';
 import Script from 'next/script';
-import { initiatePayment } from '@/lib/payment'; // Import the new payment function
+import { initiatePayment } from '@/lib/payment';
 import DressLoader from '@/components/DressLoader';
 import 'leaflet/dist/leaflet.css';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -24,10 +23,10 @@ export default function CheckoutPage() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [mapCenter, setMapCenter] = useState([9.0820, 8.6753]); // Default to Nigeria center
-  const [marker, setMarker] = useState(null);
-  const mapRef = useRef(null);
-  const mapContainerRef = useRef(null);
+  const [mapCenter, setMapCenter] = useState([9.0820, 8.6753]);
+  const [marker, setEdit] = useState(null);
+  const mapRef = useRef();
+  const mapContainerRef = useRef();
   const router = useRouter();
   const [profile, setProfile] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -439,77 +438,79 @@ export default function CheckoutPage() {
     }
   };
 
- const handleOrder = async (e) => {
-  e.preventDefault();
-  setIsPaying(true);
-  setError(null);
+  const handleOrder = async (e) => {
+    e.preventDefault();
+    setIsPaying(true);
+    setError(null);
 
-  if (!address) {
-    setError('Please enter or select a delivery address.');
-    setIsPaying(false);
-    return;
-  }
-
-  try {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
-      {
-        headers: { 'User-Agent': 'VianClothingHub/1.0[](https://vianclothinghub.com)' },
-      }
-    );
-    const data = await response.json();
-    if (!data[0]) {
-      setError('Invalid delivery address. Please select a valid address.');
+    if (!address) {
+      setError('Please enter or select a delivery address.');
       setIsPaying(false);
       return;
     }
-    const { lat, lon } = data[0];
 
-    const placeOrder = async (paymentReference) => {
-      const { error } = await supabase.from('orders').insert([
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
         {
-          user_id: user.id,
-          items: cart.map((item) => ({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity,
-            discount_percentage: item.discount_percentage || 0,
-            image_url: item.image_url,
-          })),
-          address,
-          lat: parseFloat(lat),
-          lng: parseFloat(lon),
-          status: 'processing',
-          total: totalPrice,
-          created_at: new Date().toISOString(),
-          payment_reference: paymentReference,
-        },
-      ]);
-      if (error) throw error;
-      clearCart();
-      router.push('/orders');
-      alert('Payment successful! Order placed.');
-    };
+          headers: { 'User-Agent': 'VianClothingHub/1.0 (https://vianclothinghub.com)' },
+        }
+      );
+      const data = await response.json();
+      if (!data[0]) {
+        setError('Invalid delivery address. Please select a valid address.');
+        setIsPaying(false);
+        return;
+      }
+      const { lat, lon } = data[0];
 
-    const success = await initiatePayment({
-      email: profile?.email || user.email,
-      totalPrice,
-      setError,
-      setIsPaying,
-      orderCallback: placeOrder,
-      useApiFallback: true,
-    });
+      const placeOrder = async (paymentReference) => {
+        const { error } = await supabase.from('orders').insert([
+          {
+            user_id: user.id,
+            items: cart.map((item) => ({
+              id: item.product_id || item.id.split('-')[0],
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity,
+              size: item.size,
+              color: item.color,
+              image_url: item.image_url,
+              discount_percentage: item.discount_percentage || 0,
+            })),
+            address,
+            lat: parseFloat(lat),
+            lng: parseFloat(lon),
+            status: 'processing',
+            total: totalPrice,
+            created_at: new Date().toISOString(),
+            payment_reference: paymentReference,
+          },
+        ]);
+        if (error) throw error;
+        clearCart();
+        router.push('/orders');
+        alert('Payment successful! Order placed.');
+      };
 
-    if (!success) {
-      throw new Error('Payment initiation failed');
+      const success = await initiatePayment({
+        email: profile?.email || user.email,
+        totalPrice,
+        setError,
+        setIsPaying,
+        orderCallback: placeOrder,
+        useApiFallback: true,
+      });
+
+      if (!success) {
+        throw new Error('Payment initiation failed');
+      }
+    } catch (err) {
+      console.error('Order error:', err.message);
+      setError('Order failed: ' + err.message);
+      setIsPaying(false);
     }
-  } catch (err) {
-    console.error('Order error:', err.message);
-    setError('Order failed: ' + err.message);
-    setIsPaying(false);
-  }
-};
+  };
 
   if (loading) return <DressLoader />;
   if (error && !isPaying) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
@@ -543,39 +544,62 @@ export default function CheckoutPage() {
             <h2 className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-4">Cart Summary</h2>
             <ul className="space-y-4">
               {cart.map((item) => (
-                <li key={item.id} className="flex items-center space-x-4 border-b border-gray-300 dark:border-gray-600 pb-4">
-                  <img src={item.image_url} alt={item.name} className="w-16 h-16 object-cover rounded-lg border border-gray-300 dark:border-gray-600" />
+                <li
+                  key={`${item.id}-${item.size || ''}-${item.color || ''}`}
+                  className="flex items-center space-x-4 border-b border-gray-300 dark:border-gray-600 pb-4"
+                >
+                  <img
+                    src={item.image_url}
+                    alt={item.name}
+                    className="w-16 h-16 object-cover rounded-lg border border-gray-300 dark:border-gray-600"
+                    loading="lazy"
+                  />
                   <div className="flex-1">
-                    <p className="text-gray-700 dark:text-gray-200 font-medium">{item.name}</p>
+                    <p className="text-gray-700 dark:text-gray-200 font-medium">
+                      {item.name}
+                      {item.size && ` (${item.size}${item.color ? `, ${item.color}` : ''})`}
+                    </p>
                     <p className="text-gray-600 dark:text-gray-400">
                       {item.discount_percentage > 0 ? (
                         <span>
-                          <span className="text-red-600 dark:text-red-400 line-through">₦{Number(item.price).toLocaleString()}</span>{' '}
+                          <span className="text-red-600 dark:text-red-400 line-through">
+                            ₦{Number(item.price).toLocaleString()}
+                          </span>{' '}
                           <span className="text-green-600 dark:text-green-400">
                             ₦{(item.price * (1 - item.discount_percentage / 100)).toLocaleString()}
                           </span>
                         </span>
                       ) : (
-                        <span className="text-blue-600 dark:text-blue-400">₦{Number(item.price).toLocaleString()}</span>
+                        <span className="text-blue-600 dark:text-blue-400">
+                          ₦{Number(item.price).toLocaleString()}
+                        </span>
                       )}
                     </p>
                     <p className="text-gray-600 dark:text-gray-400">Quantity: {item.quantity}</p>
                     {item.is_out_of_stock && <p className="text-red-600 dark:text-red-400 text-sm">Out of Stock</p>}
                   </div>
                   <p className="text-gray-700 dark:text-gray-200 font-medium">
-                    Total: ₦{((item.discount_percentage > 0 ? item.price * (1 - item.discount_percentage / 100) : item.price) * item.quantity).toLocaleString()}
+                    Total: ₦{(
+                      (item.discount_percentage > 0
+                        ? item.price * (1 - item.discount_percentage / 100)
+                        : item.price) * item.quantity
+                    ).toLocaleString()}
                   </p>
                 </li>
               ))}
             </ul>
-            <p className="text-xl font-bold text-blue-600 dark:text-blue-400 mt-4">Subtotal: ₦{totalPrice.toLocaleString()}</p>
+            <p className="text-xl font-bold text-blue-600 dark:text-blue-400 mt-4">
+              Subtotal: ₦{totalPrice.toLocaleString()}
+            </p>
           </section>
 
           <section className="mb-8 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
             <h2 className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-4">Delivery Address</h2>
             {savedAddresses.length > 0 && (
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Select Saved Address</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                  Select Saved Address
+                </label>
                 <select
                   value={selectedAddressId}
                   onChange={handleSavedAddressChange}
