@@ -13,83 +13,89 @@ import Breadcrumbs from '@/components/Breadcrumbs';
 import DressLoader from '@/components/DressLoader';
 
 export default function Category() {
-    const router = useRouter();
-    const [loading, setLoading] = useState(true);
-    const [profile, setProfile] = useState(null);
-const { addToCart, cart } = useCart();
-    const [isCartOpen, setIsCartOpen] = useState(false);
-    const { toggleWishlist, isInWishlist } = useWishlist();
-    const { slug } = router.query;
-    const [products, setProducts] = useState([]);
-    const [filters, setFilters] = useState({ size: '', color: '', price: '' });
-    const [category, setCategory] = useState(null);
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState(null);
+  const { addToCart, cart } = useCart();
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const { toggleWishlist, isInWishlist } = useWishlist();
+  const { slug } = router.query;
+  const [products, setProducts] = useState([]);
+  const [filters, setFilters] = useState({ size: '', color: '', price: '' });
+  const [category, setCategory] = useState(null);
+  const [categories, setCategories] = useState([]); // New state for all categories
 
 
-    useEffect(() => {
-        if (!slug) return;
+  useEffect(() => {
+    if (!slug) return;
 
-        async function fetchData() {
-            setLoading(true);
-            // Fetch user profile
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                const { data: profileData } = await supabase
-                    .from('profiles')
-                    .select('email, avatar_url')
-                    .eq('id', user.id)
-                    .maybeSingle();
-                setProfile(profileData);
-            }
+    async function fetchData() {
+      setLoading(true);
+      // Fetch user profile
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('email, avatar_url')
+          .eq('id', user.id)
+          .maybeSingle();
+        setProfile(profileData);
+      }
 
-            // Fetch category
-            const { data: categoryData } = await supabase
-                .from('categories')
-                .select('id, name, slug, parent_id')
-                .eq('slug', slug)
-                .single();
-            setCategory(categoryData);
+      // Fetch all categories
+      const { data: categoriesData } = await supabase
+        .from('categories')
+        .select('id, name, slug, parent_id');
+      setCategories(categoriesData || []);
 
-            // Fetch products
-            let query = supabase
-                .from('products')
-                .select('id, name, image_url, price, is_on_sale, discount_percentage, is_out_of_stock')
-                .eq('category_id', categoryData?.id);
+      // Fetch category
+      const { data: categoryData } = await supabase
+        .from('categories')
+        .select('id, name, slug, parent_id')
+        .eq('slug', slug)
+        .single();
+      setCategory(categoryData);
 
-            if (filters.size) query = query.eq('size', filters.size);
-            if (filters.color) query = query.eq('color', filters.color);
-            if (filters.price) {
-                const [min, max] = filters.price.split('-').map(Number);
-                query = query.gte('price', min).lte('price', max);
-            }
+      // Fetch products
+      let query = supabase
+        .from('products')
+        .select('id, name, image_url, price, is_on_sale, discount_percentage, is_out_of_stock')
+        .eq('category_id', categoryData?.id);
 
-            const { data: productsData } = await query;
-            setProducts(productsData || []);
-            setLoading(false);
-        }
-        fetchData();
-    }, [slug, filters]);
+      if (filters.size) query = query.eq('size', filters.size);
+      if (filters.color) query = query.eq('color', filters.color);
+      if (filters.price) {
+        const [min, max] = filters.price.split('-').map(Number);
+        query = query.gte('price', min).lte('price', max);
+      }
+
+      const { data: productsData } = await query;
+      setProducts(productsData || []);
+      setLoading(false);
+    }
+    fetchData();
+  }, [slug, filters]);
 
 
 
-    if (loading) return <DressLoader />;
+  if (loading) return <DressLoader />;
 
-    return (
-        <>
-        <Head>
+  return (
+    <>
+      <Head>
         <title>{category?.name} - Vian Clothing Hub</title>
         <meta name="description" content={`Shop ${category?.name} at Vian Clothing Hub. Discover trendy African and contemporary fashion.`} />
       </Head>
-<main className="min-h-screen bg-gray-100">            
-            <Navbar
-                profile={profile}
-                onCartClick={() => setIsCartOpen(true)}
-cartItemCount={cart.length}
-            />
-            <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <main className="min-h-screen bg-gray-100">
+        <Navbar
+          profile={profile}
+          onCartClick={() => setIsCartOpen(true)}
+          cartItemCount={cart.length}
+        />
+        <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
-            <div className="max-w-7xl mx-auto px-4 py-12">
-          <Breadcrumbs category={category} />
-          <h1 className="text-3xl font-bold text-purple-800 font-playfair-display mb-6">
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <Breadcrumbs category={category} categories={categories} /> {/* Pass categories */}          <h1 className="text-3xl font-bold text-purple-800 font-playfair-display mb-6">
             {category?.name}
           </h1>
           {/* Filters */}
@@ -129,33 +135,33 @@ cartItemCount={cart.length}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {products.map((product) => (
               <Link key={product.id} href={`/product/${product.id}`} className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100">
-                  <img
-                    src={product.image_url}
-                    alt={product.name}
-                    className="w-full h-48 object-cover rounded-lg mb-4"
-                  />
-                  <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
-                  <p className="text-purple-700 font-semibold">
-                    {product.is_on_sale ? (
-                      <>
-                        <span className="line-through text-red-600">₦{Number(product.price).toLocaleString()}</span>
-                        <span className="ml-2 text-green-600">
-                          ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
-                        </span>
-                      </>
-                    ) : (
-                      `₦${Number(product.price).toLocaleString()}`
-                    )}
-                  </p>
-                  {product.is_out_of_stock && (
-                    <span className="text-red-600 text-sm">Out of Stock</span>
+                <img
+                  src={product.image_url}
+                  alt={product.name}
+                  className="w-full h-48 object-cover rounded-lg mb-4"
+                />
+                <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
+                <p className="text-purple-700 font-semibold">
+                  {product.is_on_sale ? (
+                    <>
+                      <span className="line-through text-red-600">₦{Number(product.price).toLocaleString()}</span>
+                      <span className="ml-2 text-green-600">
+                        ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
+                      </span>
+                    </>
+                  ) : (
+                    `₦${Number(product.price).toLocaleString()}`
                   )}
+                </p>
+                {product.is_out_of_stock && (
+                  <span className="text-red-600 text-sm">Out of Stock</span>
+                )}
               </Link>
             ))}
           </div>
         </div>
-            <Footer />
-        </main>
-        </>
-    );
+        <Footer />
+      </main>
+    </>
+  );
 }

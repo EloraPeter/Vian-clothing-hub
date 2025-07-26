@@ -1,40 +1,21 @@
 // components/Breadcrumbs.jsx
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabaseClient';
 
-export default function Breadcrumbs({ category, product }) {
-  const [parentCategory, setParentCategory] = useState(null);
+export default function Breadcrumbs({ category, product, categories = [] }) {
   const crumbs = [
     { name: 'Home', href: '/' },
     { name: 'Shop', href: '/shop' },
   ];
 
-  // Fetch parent category if category has a parent_id
-  useEffect(() => {
-    async function fetchParentCategory() {
-      if (category && category.parent_id && category.parent_id !== category.id) {
-        const { data, error } = await supabase
-          .from('categories')
-          .select('id, name, slug')
-          .eq('id', category.parent_id)
-          .single();
-        if (!error) {
-          setParentCategory(data);
-        }
-      } else {
-        setParentCategory(null); // Reset if no valid parent_id
-      }
+  // Find parent category from categories array
+  if (category && category.parent_id && category.parent_id !== category.id) {
+    const parentCategory = categories.find((cat) => cat.id === category.parent_id);
+    if (parentCategory) {
+      crumbs.push({
+        name: parentCategory.name,
+        href: `/category/${parentCategory.slug}`,
+      });
     }
-    fetchParentCategory();
-  }, [category]);
-
-  // Add parent category to crumbs if it exists
-  if (parentCategory) {
-    crumbs.push({
-      name: parentCategory.name,
-      href: `/category/${parentCategory.slug}`,
-    });
   }
 
   // Add current category
