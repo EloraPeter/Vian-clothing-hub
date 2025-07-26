@@ -2,14 +2,15 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
 import Navbar from '@/components/Navbar';
-import ProfileUploader from '@/components/ProfileUploader';
 import DressLoader from '@/components/DressLoader';
+import { colorMap } from '@/lib/colorMap';
 
 export default function AdminPage() {
   const router = useRouter();
   const [orders, setOrders] = useState([]);
   const [productOrders, setProductOrders] = useState([]);
   const [products, setProducts] = useState([]);
+  const [variants, setVariants] = useState({}); // Store variants by product_id
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
@@ -28,6 +29,15 @@ export default function AdminPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [productPreviewUrl, setProductPreviewUrl] = useState(null);
   const [productUploading, setProductUploading] = useState(false);
+  const [variantData, setVariantData] = useState({
+    product_id: '',
+    size: '',
+    color: '',
+    stock_quantity: '',
+    additional_price: '',
+  });
+  const [editVariantData, setEditVariantData] = useState(null);
+  const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);
   const [currentProductPage, setCurrentProductPage] = useState(1);
   const [currentCustomOrderPage, setCurrentCustomOrderPage] = useState(1);
   const [currentProductOrderPage, setCurrentProductOrderPage] = useState(1);
@@ -66,31 +76,49 @@ export default function AdminPage() {
 
     async function fetchData() {
       setLoading(true);
-      const [
-        { data: customOrderData, error: customOrderError },
-        { data: productOrderData, error: productOrderError },
-        { data: productData, error: productError },
-        { data: categoryData, error: categoryError },
-      ] = await Promise.all([
-        supabase.from('custom_orders').select('*').order('created_at', { ascending: false }),
-        supabase.from('orders').select('*, items').order('created_at', { ascending: false }),
-        supabase.from('products').select('*, categories(name)').order('created_at', { ascending: false }),
-        supabase.from('categories').select('id, name, slug'),
-      ]);
+      try {
+        const [
+          { data: customOrderData, error: customOrderError },
+          { data: productOrderData, error: productOrderError },
+          { data: productData, error: productError },
+          { data: categoryData, error: categoryError },
+          { data: variantsData, error: variantsError },
+        ] = await Promise.all([
+          supabase.from('custom_orders').select('*').order('created_at', { ascending: false }),
+          supabase.from('orders').select('*, items').order('created_at', { ascending: false }),
+          supabase.from('products').select('*, categories(name)').order('created_at', { ascending: false }),
+          supabase.from('categories').select('id, name, slug'),
+          supabase.from('product_variants').select('id, product_id, size, color, stock_quantity, additional_price'),
+        ]);
 
-      if (customOrderError) setError(customOrderError.message);
-      else setOrders(customOrderData || []);
+        if (customOrderError) setError(customOrderError.message);
+        else setOrders(customOrderData || []);
 
-      if (productOrderError) setError(productOrderError.message);
-      else setProductOrders(productOrderData || []);
+        if (productOrderError) setError(productOrderError.message);
+        else setProductOrders(productOrderData || []);
 
-      if (productError) setError(productError.message);
-      else setProducts(productData || []);
+        if (productError) setError(productError.message);
+        else setProducts(productData || []);
 
-      if (categoryError) setError(categoryError.message);
-      else setCategories(categoryData || []);
+        if (categoryError) setError(categoryError.message);
+        else setCategories(categoryData || []);
 
-      setLoading(false);
+        if (variantsError) setError(variantsError.message);
+        else {
+          const variantsByProduct = {};
+          variantsData.forEach((variant) => {
+            if (!variantsByProduct[variant.product_id]) {
+              variantsByProduct[variant.product_id] = [];
+            }
+            variantsByProduct[variant.product_id].push(variant);
+          });
+          setVariants(variantsByProduct);
+        }
+
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+      }
     }
 
     fetchProfile();
@@ -350,6 +378,16 @@ export default function AdminPage() {
     }
   };
 
+  const handleVariantChange = (e) => {
+    const { name, value } = e.target;
+    setVariantData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditVariantChange = (e) => {
+    const { name, value } = e.target;
+    setEditVariantData((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleProductSubmit = async (e) => {
     e.preventDefault();
     if (!productData.name || !productData.price || !productData.description || productData.imageFiles.length === 0) {
@@ -517,13 +555,13 @@ export default function AdminPage() {
         prev.map((product) =>
           product.id === editProductData.id
             ? {
-              ...product,
-              name: editProductData.name,
-              price: parseFloat(editProductData.price),
-              description: editProductData.description,
-              category_id: categoryId,
-              categories: categories.find((c) => c.id === categoryId) || null,
-            }
+                ...product,
+                name: editProductData.name,
+                price: parseFloat(editProductData.price),
+                description: editProductData.description,
+                category_id: categoryId,
+                categories: categories.find((c) => c.id === categoryId) || null,
+              }
             : product
         )
       );
@@ -539,6 +577,132 @@ export default function AdminPage() {
     }
   };
 
+  const handleVariantSubmit = async (e) => {
+    e.preventDefault();
+    if (!variantData.product_id || !variantData.size || !variantData.color || !variantData.stock_quantity) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    try {
+      const { data: existingVariant, error: checkError } = await supabase
+        .from('product_variants')
+        .select('id')
+        .eq('product_id', variantData.product_id)
+        .eq('size', variantData.size)
+        .eq('color', variantData.color)
+        .single();
+
+      if (existingVariant) {
+        alert('A variant with this size and color already exists for this product.');
+        return;
+      }
+      if (checkError && !checkError.message.includes('No rows')) {
+        throw new Error('Error checking variant: ' + checkError.message);
+      }
+
+      const { data: variantInsert, error: insertError } = await supabase
+        .from('product_variants')
+        .insert({
+          product_id: variantData.product_id,
+          size: variantData.size,
+          color: variantData.color,
+          stock_quantity: parseInt(variantData.stock_quantity),
+          additional_price: parseFloat(variantData.additional_price) || 0,
+        })
+        .select()
+        .single();
+
+      if (insertError) throw new Error('Insert failed: ' + insertError.message);
+
+      setVariants((prev) => ({
+        ...prev,
+        [variantData.product_id]: [...(prev[variantData.product_id] || []), variantInsert],
+      }));
+      setVariantData({ product_id: '', size: '', color: '', stock_quantity: '', additional_price: '' });
+      setIsVariantModalOpen(false);
+      alert('Variant added successfully!');
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const handleEditVariantSubmit = async (e) => {
+    e.preventDefault();
+    if (!editVariantData.size || !editVariantData.color || !editVariantData.stock_quantity) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    try {
+      const { data: existingVariant, error: checkError } = await supabase
+        .from('product_variants')
+        .select('id')
+        .eq('product_id', editVariantData.product_id)
+        .eq('size', editVariantData.size)
+        .eq('color', editVariantData.color)
+        .neq('id', editVariantData.id)
+        .single();
+
+      if (existingVariant) {
+        alert('A variant with this size and color already exists for this product.');
+        return;
+      }
+      if (checkError && !checkError.message.includes('No rows')) {
+        throw new Error('Error checking variant: ' + checkError.message);
+      }
+
+      const { error } = await supabase
+        .from('product_variants')
+        .update({
+          size: editVariantData.size,
+          color: editVariantData.color,
+          stock_quantity: parseInt(editVariantData.stock_quantity),
+          additional_price: parseFloat(editVariantData.additional_price) || 0,
+        })
+        .eq('id', editVariantData.id);
+
+      if (error) throw new Error('Update failed: ' + error.message);
+
+      setVariants((prev) => ({
+        ...prev,
+        [editVariantData.product_id]: prev[editVariantData.product_id].map((variant) =>
+          variant.id === editVariantData.id
+            ? {
+                ...variant,
+                size: editVariantData.size,
+                color: editVariantData.color,
+                stock_quantity: parseInt(editVariantData.stock_quantity),
+                additional_price: parseFloat(editVariantData.additional_price) || 0,
+              }
+            : variant
+        ),
+      }));
+      setIsVariantModalOpen(false);
+      setEditVariantData(null);
+      alert('Variant updated successfully!');
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const handleDeleteVariant = async (productId, variantId) => {
+    if (!confirm(`Are you sure you want to delete variant ID ${variantId}?`)) return;
+
+    try {
+      const { error } = await supabase.from('product_variants').delete().eq('id', variantId);
+      if (error) throw new Error('Delete failed: ' + error.message);
+
+      setVariants((prev) => ({
+        ...prev,
+        [productId]: prev[productId].filter((variant) => variant.id !== variantId),
+      }));
+      alert('Variant deleted successfully!');
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
   const openEditModal = (product) => {
     setEditProductData({
       id: product.id,
@@ -551,18 +715,14 @@ export default function AdminPage() {
     setIsEditModalOpen(true);
   };
 
-  const handleDeleteProduct = async (id) => {
-    if (!confirm(`Are you sure you want to delete product ID ${id}?`)) return;
+  const openVariantModal = (productId) => {
+    setVariantData({ product_id: productId, size: '', color: '', stock_quantity: '', additional_price: '' });
+    setIsVariantModalOpen(true);
+  };
 
-    try {
-      const { error } = await supabase.from('products').delete().eq('id', id);
-      if (error) throw new Error('Delete failed: ' + error.message);
-
-      setProducts((prev) => prev.filter((product) => product.id !== id));
-      alert('Product deleted successfully!');
-    } catch (error) {
-      alert(error.message);
-    }
+  const openEditVariantModal = (variant) => {
+    setEditVariantData({ ...variant });
+    setIsVariantModalOpen(true);
   };
 
   const handleUpdateProductFlags = async (id, updates) => {
@@ -576,6 +736,25 @@ export default function AdminPage() {
         )
       );
       alert('Product updated successfully!');
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const handleDeleteProduct = async (id) => {
+    if (!confirm(`Are you sure you want to delete product ID ${id}?`)) return;
+
+    try {
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      if (error) throw new Error('Delete failed: ' + error.message);
+
+      setProducts((prev) => prev.filter((product) => product.id !== id));
+      setVariants((prev) => {
+        const newVariants = { ...prev };
+        delete newVariants[id];
+        return newVariants;
+      });
+      alert('Product deleted successfully!');
     } catch (error) {
       alert(error.message);
     }
@@ -744,7 +923,8 @@ export default function AdminPage() {
                     accept="image/*"
                     multiple
                     onChange={handleProductChange}
-                    className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 transition-colors"
+                    className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:roundedstu
+                    file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 transition-colors"
                     disabled={productUploading}
                   />
                   {productData.imageFiles.length > 0 && (
@@ -780,7 +960,7 @@ export default function AdminPage() {
                 <p className="text-gray-500">No products available.</p>
               ) : (
                 <>
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {currentProducts.map((product) => (
                       <div
                         key={product.id}
@@ -813,6 +993,12 @@ export default function AdminPage() {
                                 className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
                               >
                                 Edit
+                              </button>
+                              <button
+                                onClick={() => openVariantModal(product.id)}
+                                className="px-3 py-1 bg-purple-600 text-white rounded-md text-sm font-medium hover:bg-purple-700"
+                              >
+                                Add Variant
                               </button>
                               <button
                                 onClick={() =>
@@ -872,8 +1058,6 @@ export default function AdminPage() {
                                   Save
                                 </button>
                               </div>
-
-
                               <button
                                 onClick={() => handleDeleteProduct(product.id)}
                                 className="px-3 py-1 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700"
@@ -883,6 +1067,55 @@ export default function AdminPage() {
                             </div>
                           </div>
                         </div>
+                        {/* Variants Section */}
+                        {(variants[product.id] || []).length > 0 && (
+                          <div className="mt-4">
+                            <h4 className="text-sm font-semibold text-gray-700 mb-2">Variants</h4>
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-sm text-gray-700">
+                                <thead>
+                                  <tr className="border-b border-gray-200">
+                                    <th className="px-3 py-2 text-left">Size</th>
+                                    <th className="px-3 py-2 text-left">Color</th>
+                                    <th className="px-3 py-2 text-left">Stock</th>
+                                    <th className="px-3 py-2 text-left">Additional Price (₦)</th>
+                                    <th className="px-3 py-2 text-left">Actions</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {variants[product.id].map((variant) => (
+                                    <tr key={variant.id} className="border-b border-gray-200">
+                                      <td className="px-3 py-2">{variant.size}</td>
+                                      <td className="px-3 py-2 flex items-center gap-2">
+                                        <span
+                                          className="w-4 h-4 rounded-full inline-block"
+                                          style={{ backgroundColor: colorMap[variant.color] || '#000000' }}
+                                        ></span>
+                                        {variant.color}
+                                      </td>
+                                      <td className="px-3 py-2">{variant.stock_quantity}</td>
+                                      <td className="px-3 py-2">{Number(variant.additional_price).toLocaleString()}</td>
+                                      <td className="px-3 py-2 flex gap-2">
+                                        <button
+                                          onClick={() => openEditVariantModal(variant)}
+                                          className="px-2 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+                                        >
+                                          Edit
+                                        </button>
+                                        <button
+                                          onClick={() => handleDeleteVariant(product.id, variant.id)}
+                                          className="px-2 py-1 bg-red-600 text-white rounded-md text-sm hover:bg-red-700"
+                                        >
+                                          Delete
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -938,7 +1171,7 @@ export default function AdminPage() {
                               <ul className="list-disc pl-5 text-gray-600">
                                 {order.items.map((item) => (
                                   <li key={item.id}>
-                                    {item.name} - Quantity: {item.quantity} - ₦
+                                    {item.name} {item.size && item.color ? `(${item.size}, ${item.color})` : ''} - Quantity: {item.quantity} - ₦
                                     {((item.discount_percentage > 0
                                       ? item.price * (1 - item.discount_percentage / 100)
                                       : item.price) * item.quantity).toLocaleString()}
@@ -952,6 +1185,7 @@ export default function AdminPage() {
                               value={order.status}
                               onChange={(e) => updateProductOrderStatus(order.id, e.target.value)}
                               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                              aria-label={`Update status for order ${order.id}`}
                             >
                               <option value="awaiting_payment">Awaiting Payment</option>
                               <option value="processing">Processing</option>
@@ -1040,6 +1274,7 @@ export default function AdminPage() {
                               value={order.status}
                               onChange={(e) => updateCustomOrderStatus(order.id, e.target.value)}
                               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                              aria-label={`Update status for custom order ${order.id}`}
                             >
                               <option value="pending">Pending</option>
                               <option value="in progress">In Progress</option>
@@ -1089,6 +1324,7 @@ export default function AdminPage() {
                   setProductPreviewUrl(null);
                 }}
                 className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                aria-label="Close edit product modal"
               >
                 ✕
               </button>
@@ -1192,8 +1428,106 @@ export default function AdminPage() {
                     type="submit"
                     disabled={productUploading}
                     className={`w-full py-2 rounded-md font-semibold text-white transition-colors ${productUploading ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'}`}
+                    aria-label="Update product"
                   >
                     {productUploading ? 'Updating...' : 'Update Product'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Variant Modal */}
+        {isVariantModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-md relative">
+              <button
+                onClick={() => {
+                  setIsVariantModalOpen(false);
+                  setEditVariantData(null);
+                }}
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                aria-label="Close variant modal"
+              >
+                ✕
+              </button>
+              <h2 className="text-xl font-semibold text-purple-800 mb-4">
+                {editVariantData ? 'Edit Variant' : 'Add Variant'}
+              </h2>
+              <form onSubmit={editVariantData ? handleEditVariantSubmit : handleVariantSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Size</label>
+                  <input
+                    type="text"
+                    name="size"
+                    value={editVariantData ? editVariantData.size : variantData.size}
+                    onChange={editVariantData ? handleEditVariantChange : handleVariantChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                    placeholder="e.g., S, M, L"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                  <select
+                    name="color"
+                    value={editVariantData ? editVariantData.color : variantData.color}
+                    onChange={editVariantData ? handleEditVariantChange : handleVariantChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                    required
+                  >
+                    <option value="">Select a color</option>
+                    {Object.keys(colorMap).map((color) => (
+                      <option key={color} value={color}>
+                        {color}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
+                  <input
+                    type="number"
+                    name="stock_quantity"
+                    value={editVariantData ? editVariantData.stock_quantity : variantData.stock_quantity}
+                    onChange={editVariantData ? handleEditVariantChange : handleVariantChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                    placeholder="Enter stock quantity"
+                    min="0"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Additional Price (₦)</label>
+                  <input
+                    type="number"
+                    name="additional_price"
+                    value={editVariantData ? editVariantData.additional_price : variantData.additional_price}
+                    onChange={editVariantData ? handleEditVariantChange : handleVariantChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                    placeholder="0"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                <div className="flex justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsVariantModalOpen(false);
+                      setEditVariantData(null);
+                    }}
+                    className="w-full py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 font-semibold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="w-full py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 font-semibold"
+                    aria-label={editVariantData ? 'Update variant' : 'Add variant'}
+                  >
+                    {editVariantData ? 'Update Variant' : 'Add Variant'}
                   </button>
                 </div>
               </form>
@@ -1208,6 +1542,7 @@ export default function AdminPage() {
               await supabase.auth.signOut();
               router.push('/login');
             }}
+            aria-label="Log out"
           >
             Log Out
           </button>
