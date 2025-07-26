@@ -1,16 +1,21 @@
-import Link from 'next/link';
-import { FaUser, FaShoppingCart, FaBell, FaSearch } from 'react-icons/fa';
-import { useCart } from '@/context/CartContext';
-import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import { supabase } from '@/lib/supabaseClient';
+import Link from "next/link";
+import { FaUser, FaShoppingCart, FaBell, FaSearch } from "react-icons/fa";
+import { useCart } from "@/context/CartContext";
+import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/router";
+import { supabase } from "@/lib/supabaseClient";
 
-export default function Navbar({ profile, onCartClick, cartItemCount, notifications = [] }) {
+export default function Navbar({
+  profile,
+  onCartClick,
+  cartItemCount,
+  notifications = [],
+}) {
   const router = useRouter();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [categories, setCategories] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const unreadCount = notifications.filter((notif) => !notif.read).length;
   const [expanded, setExpanded] = useState(false);
@@ -19,22 +24,24 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
   // Close search if clicked outside
   useEffect(() => {
     function handleClickOutside(event) {
-      if (containerRef.current && !containerRef.current.contains(event.target)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target)
+      ) {
         setExpanded(false);
-        setSearchQuery('');
+        setSearchQuery("");
       }
     }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [setSearchQuery]);
-
 
   useEffect(() => {
     async function fetchCategories() {
       const { data } = await supabase
-        .from('categories')
-        .select('name, slug')
-        .is('parent_id', null);
+        .from("categories")
+        .select("name, slug")
+        .is("parent_id", null);
       setCategories(data || []);
     }
     fetchCategories();
@@ -44,9 +51,9 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
     async function fetchSuggestions() {
       if (searchQuery) {
         const { data } = await supabase
-          .from('products')
-          .select('id, name, image_url')
-          .ilike('name', `%${searchQuery}%`)
+          .from("products")
+          .select("id, name, image_url")
+          .ilike("name", `%${searchQuery}%`)
           .limit(5);
         setSuggestions(data || []);
       } else {
@@ -60,42 +67,30 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
     <nav className="bg-white shadow-md px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row justify-between items-center sticky top-0 z-50">
       <div className="flex justify-between items-center w-full sm:w-auto">
         <Link href="/" className="flex items-center space-x-2">
-          <img src="/logo.svg" alt="Vian Clothing Hub Logo" className="h-10 sm:h-12 w-auto" />
+          <img
+            src="/logo.svg"
+            alt="Vian Clothing Hub Logo"
+            className="h-10 sm:h-12 w-auto"
+          />
         </Link>
 
+        <div className="flex">
+          <div
+            ref={containerRef}
+            className="relative flex items-center"
+            onClick={() => setExpanded(true)}
+          >
+            {/* Search Icon */}
+            <FaSearch className="text-purple-700 cursor-pointer" />
 
-
-        <button
-          className="sm:hidden text-purple-700 hover:text-purple-800"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label="Toggle mobile menu"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16m-7 6h7"} />
-          </svg>
-        </button>
-      </div>
-
-
-
-      <div className={`w-full sm:w-auto flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 ${isMobileMenuOpen ? 'flex' : 'hidden sm:flex'} mt-4 sm:mt-0`}>
-
-        <div
-          ref={containerRef}
-          className="relative flex items-center"
-          onClick={() => setExpanded(true)}
-        >
-          {/* Search Icon */}
-          <FaSearch className="text-purple-700 cursor-pointer" />
-
-          {/* Animated Input */}
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => setExpanded(true)}
-            placeholder="Search products..."
-            className={`
+            {/* Animated Input */}
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setExpanded(true)}
+              placeholder="Search products..."
+              className={`
           transition-all duration-300 ease-in-out
           ml-2
           rounded-lg
@@ -104,34 +99,67 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
           focus:border-purple-700
           focus:outline-none
           text-sm sm:text-base
-          ${expanded
-                ? 'w-64 px-3 py-2 opacity-100 visible'
-                : 'w-0 px-0 py-0 opacity-0 invisible'
-              }
+          ${
+            expanded
+              ? "w-64 px-3 py-2 opacity-100 visible"
+              : "w-0 px-0 py-0 opacity-0 invisible"
+          }
         `}
-          />
+            />
 
-          {/* Suggestions Dropdown */}
-          {expanded && suggestions.length > 0 && (
-            <div className="absolute top-0 left-0 right-0 mt-12 bg-white text-black shadow-lg rounded-lg w-64 max-h-64 overflow-y-auto z-50">
-              {suggestions.map((product) => (
-                <Link
-                  key={product.id}
-                  href={`/product/${product.id}`}
-                  className="flex items-center px-4 py-2 hover:bg-purple-100"
-                >
-                  <img
-                    src={product.image_url}
-                    alt={product.name}
-                    className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded mr-2"
-                  />
-                  <span className="text-sm truncate">{product.name}</span>
-                </Link>
-              ))}
-            </div>
-          )}
+            {/* Suggestions Dropdown */}
+            {expanded && suggestions.length > 0 && (
+              <div className="absolute top-0 left-0 right-0 mt-12 bg-white text-black shadow-lg rounded-lg w-64 max-h-64 overflow-y-auto z-50">
+                {suggestions.map((product) => (
+                  <Link
+                    key={product.id}
+                    href={`/product/${product.id}`}
+                    className="flex items-center px-4 py-2 hover:bg-purple-100"
+                  >
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded mr-2"
+                    />
+                    <span className="text-sm truncate">{product.name}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <button
+            className="sm:hidden text-purple-700 hover:text-purple-800"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle mobile menu"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d={
+                  isMobileMenuOpen
+                    ? "M6 18L18 6M6 6l12 12"
+                    : "M4 6h16M4 12h16m-7 6h7"
+                }
+              />
+            </svg>
+          </button>
         </div>
+      </div>
 
+      <div
+        className={`w-full sm:w-auto flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 ${
+          isMobileMenuOpen ? "flex" : "hidden sm:flex"
+        } mt-4 sm:mt-0`}
+      >
         <Link
           href="/shop"
           className="relative group text-purple-700 hover:text-purple-800 font-medium text-sm sm:text-base"
@@ -167,17 +195,25 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
             {isNotificationOpen && (
               <div className="absolute right-0 mt-2 w-64 sm:w-72 bg-white rounded-lg shadow-xl border border-gray-200 max-h-96 overflow-y-auto z-50">
                 <div className="p-4">
-                  <h3 className="text-sm font-semibold text-purple-700 mb-2">Notifications</h3>
+                  <h3 className="text-sm font-semibold text-purple-700 mb-2">
+                    Notifications
+                  </h3>
                   {notifications.length === 0 ? (
-                    <p className="text-gray-600 text-sm">No notifications available.</p>
+                    <p className="text-gray-600 text-sm">
+                      No notifications available.
+                    </p>
                   ) : (
                     notifications.map((notif) => (
                       <div
                         key={notif.id}
-                        className={`p-2 rounded-md mb-2 ${notif.read ? 'bg-gray-100' : 'bg-purple-50'}`}
+                        className={`p-2 rounded-md mb-2 ${
+                          notif.read ? "bg-gray-100" : "bg-purple-50"
+                        }`}
                       >
                         <p className="text-sm text-gray-700">{notif.message}</p>
-                        <p className="text-xs text-gray-500">{new Date(notif.created_at).toLocaleString()}</p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(notif.created_at).toLocaleString()}
+                        </p>
                       </div>
                     ))
                   )}
@@ -200,7 +236,7 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
           </button>
 
           <button
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.push("/dashboard")}
             className="text-gray-600 hover:text-purple-700 transition-colors"
           >
             {profile?.avatar_url ? (
@@ -214,11 +250,8 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
                 <FaUser className="text-purple-800 text-base sm:text-lg hover:text-purple-400 transition-colors" />
               </div>
             )}
-
           </button>
         </div>
-
-
       </div>
     </nav>
   );
