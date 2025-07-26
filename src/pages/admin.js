@@ -10,7 +10,7 @@ export default function AdminPage() {
   const [orders, setOrders] = useState([]);
   const [productOrders, setProductOrders] = useState([]);
   const [products, setProducts] = useState([]);
-  const [variants, setVariants] = useState({}); // Store variants by product_id
+  const [variants, setVariants] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
@@ -579,34 +579,37 @@ export default function AdminPage() {
 
   const handleVariantSubmit = async (e) => {
     e.preventDefault();
-    if (!variantData.product_id || !variantData.size || !variantData.color || !variantData.stock_quantity) {
+    const size = variantData.size.trim() || null;
+    const color = variantData.color || null;
+    if (!size && !color) {
+      alert('Please provide at least one of size or color.');
+      return;
+    }
+    if (!variantData.product_id || !variantData.stock_quantity) {
       alert('Please fill in all required fields.');
       return;
     }
 
     try {
-      const { data: existingVariant, error: checkError } = await supabase
+      const { data: existingVariants, error: checkError } = await supabase
         .from('product_variants')
         .select('id')
         .eq('product_id', variantData.product_id)
-        .eq('size', variantData.size)
-        .eq('color', variantData.color)
-        .single();
+        .eq('size', size)
+        .eq('color', color);
 
-      if (existingVariant) {
-        alert('A variant with this size and color already exists for this product.');
+      if (checkError) throw new Error('Error checking variant: ' + checkError.message);
+      if (existingVariants.length > 0) {
+        alert('A variant with this size and color combination already exists.');
         return;
-      }
-      if (checkError && !checkError.message.includes('No rows')) {
-        throw new Error('Error checking variant: ' + checkError.message);
       }
 
       const { data: variantInsert, error: insertError } = await supabase
         .from('product_variants')
         .insert({
           product_id: variantData.product_id,
-          size: variantData.size,
-          color: variantData.color,
+          size: size,
+          color: color,
           stock_quantity: parseInt(variantData.stock_quantity),
           additional_price: parseFloat(variantData.additional_price) || 0,
         })
@@ -623,65 +626,102 @@ export default function AdminPage() {
       setIsVariantModalOpen(false);
       alert('Variant added successfully!');
     } catch (error) {
+      console.error('Error in handleVariantSubmit:', { product_id: variantData.product_id, size, color, error });
       alert(error.message);
     }
   };
 
   const handleEditVariantSubmit = async (e) => {
     e.preventDefault();
-    if (!editVariantData.size || !editVariantData.color || !editVariantData.stock_quantity) {
+    const size = editVariantData.size.trim() || null;
+    const color = editVariantData.color || null;
+    if (!size && !color) {
+      alert('Please provide at least one of size or color.');
+      return;
+    }
+    if (!editVariantData.stock_quantity) {
       alert('Please fill in all required fields.');
       return;
     }
 
     try {
-      const { data: existingVariant, error: checkError } = await supabase
+      const { data: originalVariant } = await supabase
         .from('product_variants')
-        .select('id')
-        .eq('product_id', editVariantData.product_id)
-        .eq('size', editVariantData.size)
-        .eq('color', editVariantData.color)
-        .neq('id', editVariantData.id)
+        .select('size, color')
+        .eq('id', editVariantData.id)
         .single();
 
-      if (existingVariant) {
-        alert('A variant with this size and color already exists for this product.');
-        return;
+      if (originalVariant.size === size && originalVariant.color === color) {
+        const { error } = await supabase
+          .from('product_variants')
+          .update({
+            stock_quantity: parseInt(editVariantData.stock_quantity),
+            additional_price: parseFloat(editVariantData.additional_price) || 0,
+          })
+          .eq('id', editVariantData.id);
+
+        if (error) throw new Error('Update failed: ' + error.message);
+
+        setVariants((prev) => ({
+          ...prev,
+          [editVariantData.product_id]: prev[editVariantData.product_id].map((variant) =>
+            variant.id === editVariantData.id
+              ? {
+                  ...variant,
+                  stock_quantity: parseInt(editVariantData.stock_quantity),
+                  additional_price: parseFloat(editVariantData.additional_price) || 0,
+                }
+              : variant
+          ),
+        }));
+      } else {
+        const { data: existingVariants, error: checkError } = await supabase
+          .from('product_variants')
+          .select('id')
+          .eq('product_id', editVariantData.product_id)
+          .eq('size', size)
+          .eq('color', color)
+          .neq('id', editVariantData.id);
+
+        if (checkError) throw new Error('Error checking variant: ' + checkError.message);
+        if (existingVariants.length > 0) {
+          alert('A variant with this size and color combination already exists.');
+          return;
+        }
+
+        const { error } = await supabase
+          .from('product_variants')
+          .update({
+            size: size,
+            color: color,
+            stock_quantity: parseInt(editVariantData.stock_quantity),
+            additional_price: parseFloat(editVariantData.additional_price) || 0,
+          })
+          .eq('id', editVariantData.id);
+
+        if (error) throw new Error('Update failed: ' + error.message);
+
+        setVariants((prev) => ({
+          ...prev,
+          [editVariantData.product_id]: prev[editVariantData.product_id].map((variant) =>
+            variant.id === editVariantData.id
+              ? {
+                  ...variant,
+                  size: size,
+                  color: color,
+                  stock_quantity: parseInt(editVariantData.stock_quantity),
+                  additional_price: parseFloat(editVariantData.additional_price) || 0,
+                }
+              : variant
+          ),
+        }));
       }
-      if (checkError && !checkError.message.includes('No rows')) {
-        throw new Error('Error checking variant: ' + checkError.message);
-      }
 
-      const { error } = await supabase
-        .from('product_variants')
-        .update({
-          size: editVariantData.size,
-          color: editVariantData.color,
-          stock_quantity: parseInt(editVariantData.stock_quantity),
-          additional_price: parseFloat(editVariantData.additional_price) || 0,
-        })
-        .eq('id', editVariantData.id);
-
-      if (error) throw new Error('Update failed: ' + error.message);
-
-      setVariants((prev) => ({
-        ...prev,
-        [editVariantData.product_id]: prev[editVariantData.product_id].map((variant) =>
-          variant.id === editVariantData.id
-            ? {
-                ...variant,
-                size: editVariantData.size,
-                color: editVariantData.color,
-                stock_quantity: parseInt(editVariantData.stock_quantity),
-                additional_price: parseFloat(editVariantData.additional_price) || 0,
-              }
-            : variant
-        ),
-      }));
       setIsVariantModalOpen(false);
       setEditVariantData(null);
       alert('Variant updated successfully!');
     } catch (error) {
+      console.error('Error in handleEditVariantSubmit:', { product_id: editVariantData.product_id, size, color, error });
       alert(error.message);
     }
   };
@@ -802,9 +842,7 @@ export default function AdminPage() {
         <p className="text-lg text-gray-700 text-center mb-8">Welcome, {profile?.email}</p>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column: Profile and Product Form */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Profile Picture Section */}
             <section className="bg-white rounded-2xl shadow-lg p-6">
               <h2 className="text-xl font-semibold text-purple-800 font-playfair-display mb-4">Update Profile Picture</h2>
               <div className="flex flex-col items-center space-y-4">
@@ -852,7 +890,6 @@ export default function AdminPage() {
               </div>
             </section>
 
-            {/* Add Product Section */}
             <section className="bg-white rounded-2xl shadow-lg p-6">
               <h2 className="text-xl font-semibold text-purple-800 font-playfair-display mb-4">Add New Product</h2>
               <form onSubmit={handleProductSubmit} className="space-y-4">
@@ -923,8 +960,7 @@ export default function AdminPage() {
                     accept="image/*"
                     multiple
                     onChange={handleProductChange}
-                    className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:roundedstu
-                    file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 transition-colors"
+                    className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 transition-colors"
                     disabled={productUploading}
                   />
                   {productData.imageFiles.length > 0 && (
@@ -951,9 +987,7 @@ export default function AdminPage() {
             </section>
           </div>
 
-          {/* Right Column: Products and Orders */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Manage Products Section */}
             <section className="bg-white rounded-2xl shadow-lg p-6">
               <h2 className="text-xl font-semibold text-purple-800 font-playfair-display mb-4">Manage Products</h2>
               {products.length === 0 ? (
@@ -1067,7 +1101,6 @@ export default function AdminPage() {
                             </div>
                           </div>
                         </div>
-                        {/* Variants Section */}
                         {(variants[product.id] || []).length > 0 && (
                           <div className="mt-4">
                             <h4 className="text-sm font-semibold text-gray-700 mb-2">Variants</h4>
@@ -1075,23 +1108,29 @@ export default function AdminPage() {
                               <table className="w-full text-sm text-gray-700">
                                 <thead>
                                   <tr className="border-b border-gray-200">
-                                    <th className="px-3 py-2 text-left">Size</th>
-                                    <th className="px-3 py-2 text-left">Color</th>
-                                    <th className="px-3 py-2 text-left">Stock</th>
-                                    <th className="px-3 py-2 text-left">Additional Price (₦)</th>
-                                    <th className="px-3 py-2 text-left">Actions</th>
+                                    <th className="px-3 py-2 text-left min-w-[100px]">Size</th>
+                                    <th className="px-3 py-2 text-left min-w-[100px]">Color</th>
+                                    <th className="px-3 py-2 text-left min-w-[100px]">Stock</th>
+                                    <th className="px-3 py-2 text-left min-w-[100px]">Additional Price (₦)</th>
+                                    <th className="px-3 py-2 text-left min-w-[100px]">Actions</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {variants[product.id].map((variant) => (
                                     <tr key={variant.id} className="border-b border-gray-200">
-                                      <td className="px-3 py-2">{variant.size}</td>
+                                      <td className="px-3 py-2">{variant.size || '—'}</td>
                                       <td className="px-3 py-2 flex items-center gap-2">
-                                        <span
-                                          className="w-4 h-4 rounded-full inline-block"
-                                          style={{ backgroundColor: colorMap[variant.color] || '#000000' }}
-                                        ></span>
-                                        {variant.color}
+                                        {variant.color ? (
+                                          <>
+                                            <span
+                                              className="w-4 h-4 rounded-full inline-block"
+                                              style={{ backgroundColor: colorMap[variant.color] || '#000000' }}
+                                            ></span>
+                                            {variant.color}
+                                          </>
+                                        ) : (
+                                          '—'
+                                        )}
                                       </td>
                                       <td className="px-3 py-2">{variant.stock_quantity}</td>
                                       <td className="px-3 py-2">{Number(variant.additional_price).toLocaleString()}</td>
@@ -1144,7 +1183,6 @@ export default function AdminPage() {
               )}
             </section>
 
-            {/* Manage Product Orders Section */}
             <section className="bg-white rounded-2xl shadow-lg p-6">
               <h2 className="text-xl font-semibold text-purple-800 font-playfair-display mb-4">Manage Product Orders</h2>
               {productOrders.length === 0 ? (
@@ -1171,7 +1209,7 @@ export default function AdminPage() {
                               <ul className="list-disc pl-5 text-gray-600">
                                 {order.items.map((item) => (
                                   <li key={item.id}>
-                                    {item.name} {item.size && item.color ? `(${item.size}, ${item.color})` : ''} - Quantity: {item.quantity} - ₦
+                                    {item.name} {item.size && item.color ? `(${item.size}, ${item.color})` : item.size ? `(${item.size})` : item.color ? `(${item.color})` : ''} - Quantity: {item.quantity} - ₦
                                     {((item.discount_percentage > 0
                                       ? item.price * (1 - item.discount_percentage / 100)
                                       : item.price) * item.quantity).toLocaleString()}
@@ -1224,7 +1262,6 @@ export default function AdminPage() {
               )}
             </section>
 
-            {/* Manage Custom Orders Section */}
             <section className="bg-white rounded-2xl shadow-lg p-6">
               <h2 className="text-xl font-semibold text-purple-800 font-playfair-display mb-4">Manage Custom Orders</h2>
               {orders.length === 0 ? (
@@ -1313,7 +1350,6 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Edit Product Modal */}
         {isEditModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-6 w-full max-w-md relative">
@@ -1438,7 +1474,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Variant Modal */}
         {isVariantModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-6 w-full max-w-md relative">
@@ -1457,27 +1492,25 @@ export default function AdminPage() {
               </h2>
               <form onSubmit={editVariantData ? handleEditVariantSubmit : handleVariantSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Size</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Size (Optional)</label>
                   <input
                     type="text"
                     name="size"
-                    value={editVariantData ? editVariantData.size : variantData.size}
+                    value={editVariantData ? editVariantData.size || '' : variantData.size}
                     onChange={editVariantData ? handleEditVariantChange : handleVariantChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
                     placeholder="e.g., S, M, L"
-                    required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Color (Optional)</label>
                   <select
                     name="color"
-                    value={editVariantData ? editVariantData.color : variantData.color}
+                    value={editVariantData ? editVariantData.color || '' : variantData.color}
                     onChange={editVariantData ? handleEditVariantChange : handleVariantChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
-                    required
                   >
-                    <option value="">Select a color</option>
+                    <option value="">None</option>
                     {Object.keys(colorMap).map((color) => (
                       <option key={color} value={color}>
                         {color}
@@ -1511,6 +1544,7 @@ export default function AdminPage() {
                     step="0.01"
                   />
                 </div>
+                <p className="text-sm text-gray-500">Provide at least one of size or color for variant uniqueness.</p>
                 <div className="flex justify-between gap-2">
                   <button
                     type="button"
