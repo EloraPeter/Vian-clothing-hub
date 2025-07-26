@@ -517,13 +517,13 @@ export default function AdminPage() {
         prev.map((product) =>
           product.id === editProductData.id
             ? {
-                ...product,
-                name: editProductData.name,
-                price: parseFloat(editProductData.price),
-                description: editProductData.description,
-                category_id: categoryId,
-                categories: categories.find((c) => c.id === categoryId) || null,
-              }
+              ...product,
+              name: editProductData.name,
+              price: parseFloat(editProductData.price),
+              description: editProductData.description,
+              category_id: categoryId,
+              categories: categories.find((c) => c.id === categoryId) || null,
+            }
             : product
         )
       );
@@ -846,19 +846,34 @@ export default function AdminPage() {
                               </button>
                             </div>
                             <div className="flex items-center gap-2">
-                              <input
-                                type="number"
-                                min="0"
-                                max="100"
-                                placeholder="Discount %"
-                                value={product.discount_percentage || 0}
-                                onChange={(e) =>
-                                  handleUpdateProductFlags(product.id, {
-                                    discount_percentage: parseFloat(e.target.value) || 0,
-                                  })
-                                }
-                                className="w-24 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
-                              />
+                              <div className="relative w-24">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  placeholder="Discount %"
+                                  value={discountInputs[product.id] ?? product.discount_percentage ?? 0}
+                                  onChange={(e) =>
+                                    setDiscountInputs((prev) => ({
+                                      ...prev,
+                                      [product.id]: e.target.value,
+                                    }))
+                                  }
+                                  className="w-full px-2 py-1 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                                />
+                                <button
+                                  onClick={() =>
+                                    handleUpdateProductFlags(product.id, {
+                                      discount_percentage: parseFloat(discountInputs[product.id]) || 0,
+                                    })
+                                  }
+                                  className="absolute right-1 top-1/2 -translate-y-1/2 bg-purple-600 text-white text-xs px-2 py-0.5 rounded hover:bg-purple-700"
+                                >
+                                  Save
+                                </button>
+                              </div>
+
+
                               <button
                                 onClick={() => handleDeleteProduct(product.id)}
                                 className="px-3 py-1 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700"
