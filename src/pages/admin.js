@@ -833,7 +833,7 @@ export default function AdminPage() {
   if (error) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
 
   return (
-    <main className="min-h-screen bg-gray-50" style={{ backgroundImage: "url('/african-fabric.jpg')", backgroundSize: 'cover' }}>
+    <main className="min-h-screen bg-gray-100">
       <Navbar profile={profile} />
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <h1 className="text-3xl md:text-4xl font-bold text-purple-800 font-playfair-display mb-8 text-center">
@@ -1351,7 +1351,7 @@ export default function AdminPage() {
         </div>
 
         {isEditModalOpen && (
-          <div className="fixed inset-0 bg-black/20  flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/30  flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-6 w-full max-w-md relative">
               <button
                 onClick={() => {
@@ -1475,7 +1475,7 @@ export default function AdminPage() {
         )}
 
         {isVariantModalOpen && (
-          <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-6 w-full max-w-md relative">
               <button
                 onClick={() => {
