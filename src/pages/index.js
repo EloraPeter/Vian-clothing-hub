@@ -12,7 +12,7 @@ import {
   FaRegStar,
 } from "react-icons/fa";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import Footer from "@/components/footer";
 import CartPanel from "@/components/CartPanel";
 import Head from "next/head";
 import DressLoader from "@/components/DressLoader";

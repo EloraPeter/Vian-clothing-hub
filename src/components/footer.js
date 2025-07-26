@@ -24,17 +24,12 @@ const Footer = () => {
                         <li><Link href="/custom-order" className="text-gray-300 hover:text-gold-300">Custom Orders</Link></li>
                         <li><Link href="/returns" className="text-gray-300 hover:text-gold-300">Returns & Refunds</Link></li>
                         <li><Link href="/faqs" className="text-gray-300 hover:text-gold-300">FAQs</Link></li>
-        
-                    </ul>
-                </div>
-
-                <div>
-                    <h3 className="text-lg font-semibold text-purple-400 mb-4">Legal</h3>
-                    <ul className="space-y-2">
                         <li><Link href="/policies" className="text-gray-300 hover:text-purple-400">Policies</Link></li>
+
                     </ul>
                 </div>
 
+                
                 <div>
                     <h4 className="font-bold text-lg mb-3 text-purple-100">Contact</h4>
                     <p className="text-gray-300">WhatsApp: <a href="https://wa.me/2348038879285" className="text-gold-300 hover:underline">+234 803 8879 285</a></p>
