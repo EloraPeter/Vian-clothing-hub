@@ -26,6 +26,16 @@ export default function Category() {
   const [categories, setCategories] = useState([]); // New state for all categories
 
 
+  // Function to recursively collect all descendant category IDs
+  const getDescendantCategoryIds = (categoryId, allCategories) => {
+    const descendants = [categoryId];
+    const children = allCategories.filter((cat) => cat.parent_id === categoryId);
+    children.forEach((child) => {
+      descendants.push(...getDescendantCategoryIds(child.id, allCategories));
+    });
+    return descendants;
+  };
+
   useEffect(() => {
     if (!slug) return;
 
@@ -56,21 +66,27 @@ export default function Category() {
         .single();
       setCategory(categoryData);
 
-      // Fetch products
-      let query = supabase
-        .from('products')
-        .select('id, name, image_url, price, is_on_sale, discount_percentage, is_out_of_stock')
-        .eq('category_id', categoryData?.id);
+      // Fetch products (including descendants)
+      if (categoryData) {
+        const descendantIds = getDescendantCategoryIds(categoryData.id, categoriesData || []);
+        let query = supabase
+          .from('products')
+          .select('id, name, image_url, price, is_on_sale, discount_percentage, is_out_of_stock')
+          .in('category_id', descendantIds);
 
-      if (filters.size) query = query.eq('size', filters.size);
-      if (filters.color) query = query.eq('color', filters.color);
-      if (filters.price) {
-        const [min, max] = filters.price.split('-').map(Number);
-        query = query.gte('price', min).lte('price', max);
+        if (filters.size) query = query.eq('size', filters.size);
+        if (filters.color) query = query.eq('color', filters.color);
+        if (filters.price) {
+          const [min, max] = filters.price.split('-').map(Number);
+          query = query.gte('price', min).lte('price', max);
+        }
+
+        const { data: productsData } = await query;
+        setProducts(productsData || []);
+      } else {
+        setProducts([]);
       }
 
-      const { data: productsData } = await query;
-      setProducts(productsData || []);
       setLoading(false);
     }
     fetchData();
