@@ -106,7 +106,8 @@ export default function Home() {
   useEffect(() => {
     const handleScroll = () => {
       if (
-        window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 &&
+        window.innerHeight + window.scrollY >=
+          document.body.offsetHeight - 500 &&
         hasMore &&
         !isFetchingMore &&
         !loading
@@ -177,7 +178,9 @@ export default function Home() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {loading
-                ? Array(4).fill().map((_, index) => <SkeletonCategory key={index} />)
+                ? Array(4)
+                    .fill()
+                    .map((_, index) => <SkeletonCategory key={index} />)
                 : categories.map((category) => (
                     <Link
                       key={category.slug}
@@ -201,79 +204,52 @@ export default function Home() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {loading
-                ? Array(8).fill().map((_, index) => <SkeletonProduct key={index} />)
+                ? Array(8)
+                    .fill()
+                    .map((_, index) => <SkeletonProduct key={index} />)
                 : newArrivals.map((product) => (
-                    <div key={product.id} className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100">
-                      <Link
-                        href={`/product/${product.id}`}
-                        className="block"
-                        role="button"
-                        aria-label={`View ${product.name} product details`}
-                      >
-                        <img
-                          src={product.image_url}
-                          alt={`Image of ${product.name}`}
-                          loading="lazy"
-                          className="w-full h-40 sm:h-48 object-cover rounded-lg mb-4"
-                        />
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
-                          {product.name}
-                        </h3>
-                        <p className="text-purple-700 font-semibold text-sm sm:text-base">
-                          {product.is_on_sale ? (
-                            <>
-                              <span className="line-through text-red-600">
-                                ₦{Number(product.price).toLocaleString()}
-                              </span>
-                              <span className="ml-2 text-green-600">
-                                ₦
-                                {(
-                                  product.price *
-                                  (1 - product.discount_percentage / 100)
-                                ).toLocaleString()}
-                              </span>
-                            </>
-                          ) : (
-                            `₦${Number(product.price).toLocaleString()}`
-                          )}
-                        </p>
-                        {product.is_out_of_stock && (
-                          <span className="text-red-600 text-xs sm:text-sm">
-                            Out of Stock
-                          </span>
+                    <Link
+                      key={product.id}
+                      href={`/product/${product.id}`}
+                      className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100"
+                      role="button"
+                      aria-label={`View ${product.name} product details`}
+                    >
+                      <img
+                        src={product.image_url}
+                        alt={`Image of ${product.name}`}
+                        loading="lazy"
+                        className="w-full h-40 sm:h-48 object-cover rounded-lg mb-4"
+                      />
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
+                        {product.name}
+                      </h3>
+                      <p className="text-purple-700 font-semibold text-sm sm:text-base">
+                        {product.is_on_sale ? (
+                          <>
+                            <span className="line-through text-red-600">
+                              ₦{Number(product.price).toLocaleString()}
+                            </span>
+                            <span className="ml-2 text-green-600">
+                              ₦
+                              {(
+                                product.price *
+                                (1 - product.discount_percentage / 100)
+                              ).toLocaleString()}
+                            </span>
+                          </>
+                        ) : (
+                          `₦${Number(product.price).toLocaleString()}`
                         )}
-                      </Link>
-                      <div className="flex justify-between mt-2">
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            addToCart(product);
-                          }}
-                          disabled={product.is_out_of_stock}
-                          className={`text-sm ${product.is_out_of_stock ? "opacity-50 cursor-not-allowed" : "hover:text-purple-600"}`}
-                          aria-label={`Add ${product.name} to cart`}
-                        >
-                          <FaShoppingCart />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            toggleWishlist(product.id);
-                          }}
-                          className="text-sm hover:text-purple-600"
-                          aria-label={`Toggle ${product.name} in wishlist`}
-                        >
-                          {isInWishlist(product.id) ? <FaHeart /> : <FaRegHeart />}
-                        </button>
-                      </div>
-                    </div>
+                      </p>
+                      {product.is_out_of_stock && (
+                        <span className="text-red-600 text-xs sm:text-sm">
+                          Out of Stock
+                        </span>
+                      )}
+                    </Link>
                   ))}
             </div>
-            {isFetchingMore && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mt-6">
-                {Array(4).fill().map((_, index) => <SkeletonProduct key={index} />)}
-              </div>
-            )}
           </section>
 
           {/* About Section */}
