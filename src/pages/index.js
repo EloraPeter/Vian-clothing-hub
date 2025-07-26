@@ -29,37 +29,44 @@ export default function Home() {
   // Fetch user profile
   useEffect(() => {
     async function fetchData() {
-      setLoading(true);
-      // Fetch user profile
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("email, avatar_url")
-          .eq("id", user.id)
-          .maybeSingle();
-        setProfile(profileData);
+      try {
+        setLoading(true);
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+        if (userError) throw new Error("Failed to fetch user");
+        if (user) {
+          const { data: profileData, error: profileError } = await supabase
+            .from("profiles")
+            .select("email, avatar_url")
+            .eq("id", user.id)
+            .maybeSingle();
+          if (profileError) throw new Error("Failed to fetch profile");
+          setProfile(profileData);
+        }
+        // fetch categories
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from("categories")
+          .select("id, name, slug, parent_id")
+          .order("parent_id, name");
+        if (categoriesError) throw new Error("Failed to fetch categories");
+        setCategories(categoriesData || []);
+        // fetch new arrivals
+        const { data: productsData, error: productsError } = await supabase
+          .from("products")
+          .select(
+            "id, name, image_url, price, is_on_sale, discount_percentage, is_out_of_stock"
+          )
+          .eq("is_new", true)
+          .limit(8);
+        if (productsError) throw new Error("Failed to fetch products");
+        setNewArrivals(productsData || []);
+      } catch (error) {
+        console.error(error.message);
+      } finally {
+        setLoading(false);
       }
-
-      // Fetch categories
-      const { data: categoriesData } = await supabase
-        .from("categories")
-        .select("id, name, slug, parent_id")
-        .order("parent_id, name");
-      setCategories(categoriesData || []);
-
-      // Fetch new arrivals
-      const { data: productsData } = await supabase
-        .from("products")
-        .select(
-          "id, name, image_url, price, is_on_sale, discount_percentage, is_out_of_stock"
-        )
-        .eq("is_new", true)
-        .limit(8);
-      setNewArrivals(productsData || []);
-      setLoading(false);
     }
     fetchData();
   }, []);
@@ -149,6 +156,7 @@ export default function Home() {
                   <img
                     src={product.image_url}
                     alt={product.name}
+                    loading="lazy"
                     className="w-full h-40 sm:h-48 object-cover rounded-lg mb-4"
                   />
                   <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
