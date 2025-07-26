@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { FaShoppingCart, FaBell } from 'react-icons/fa';
+import { FaUser, FaShoppingCart, FaBell } from 'react-icons/fa';
 import { useCart } from '@/context/CartContext';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
