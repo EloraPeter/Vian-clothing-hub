@@ -92,7 +92,7 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
           <div className="relative">
             <button
               onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-              className="relative text-purple-700 hover:text-purple-800 transition-colors"
+              className="relative text-purple-700 hover:text-purple-300 transition-colors"
               aria-label="View notifications"
             >
               <FaBell className="text-lg sm:text-xl" />
@@ -126,7 +126,7 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
 
           <button
             onClick={onCartClick}
-            className="relative text-purple-700 hover:text-purple-800 transition-colors"
+            className="relative text-purple-700 hover:text-purple-400 transition-colors active:scale-90 transition-transform duration-150"
             aria-label="Open cart"
           >
             <FaShoppingCart className="text-lg sm:text-xl" />
