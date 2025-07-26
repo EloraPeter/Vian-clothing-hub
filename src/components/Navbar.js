@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { FaUser, FaShoppingCart, FaBell, FaSearch } from "react-icons/fa";
-import { useCart } from "@/context/CartContext";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "@/lib/supabaseClient";
@@ -74,60 +73,7 @@ export default function Navbar({
           />
         </Link>
 
-        <div className="flex">
-          <div
-            ref={containerRef}
-            className="relative flex items-center"
-            onClick={() => setExpanded(true)}
-          >
-            {/* Search Icon */}
-            <FaSearch className="text-purple-700 cursor-pointer" />
-
-            {/* Animated Input */}
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setExpanded(true)}
-              placeholder="Search products..."
-              className={`
-          transition-all duration-300 ease-in-out
-          ml-2
-          rounded-lg
-          text-black
-          border border-gray-300
-          focus:border-purple-700
-          focus:outline-none
-          text-sm sm:text-base
-          ${
-            expanded
-              ? "w-64 px-3 py-2 opacity-100 visible"
-              : "w-0 px-0 py-0 opacity-0 invisible"
-          }
-        `}
-            />
-
-            {/* Suggestions Dropdown */}
-            {expanded && suggestions.length > 0 && (
-              <div className="absolute top-0 left-0 right-0 mt-12 bg-white text-black shadow-lg rounded-lg w-64 max-h-64 overflow-y-auto z-50">
-                {suggestions.map((product) => (
-                  <Link
-                    key={product.id}
-                    href={`/product/${product.id}`}
-                    className="flex items-center px-4 py-2 hover:bg-purple-100"
-                  >
-                    <img
-                      src={product.image_url}
-                      alt={product.name}
-                      className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded mr-2"
-                    />
-                    <span className="text-sm truncate">{product.name}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
+        <div className="flex items-center gap-4">
           <button
             className="sm:hidden text-purple-700 hover:text-purple-800"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -156,10 +102,63 @@ export default function Navbar({
       </div>
 
       <div
-        className={`w-full sm:w-auto flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 ${
+        className={`w-full sm:w-auto flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 ${
           isMobileMenuOpen ? "flex" : "hidden sm:flex"
         } mt-4 sm:mt-0`}
       >
+        <div
+          ref={containerRef}
+          className="relative flex items-center"
+          onClick={() => setExpanded(true)}
+        >
+          {/* Search Icon */}
+          <FaSearch className="text-purple-700 cursor-pointer" />
+
+          {/* Animated Input */}
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setExpanded(true)}
+            placeholder="Search products..."
+            className={`
+              transition-all duration-300 ease-in-out
+              ml-2
+              rounded-lg
+              text-black
+              border border-gray-300
+              focus:border-purple-700
+              focus:outline-none
+              text-sm sm:text-base
+              ${
+                expanded
+                  ? "w-64 px-3 py-2 opacity-100 visible"
+                  : "w-0 px-0 py-0 opacity-0 invisible"
+              }
+            `}
+          />
+
+          {/* Suggestions Dropdown */}
+          {expanded && suggestions.length > 0 && (
+            <div className="absolute top-0 left-0 right-0 mt-12 bg-white text-black shadow-lg rounded-lg w-64 max-h-64 overflow-y-auto z-50">
+              {suggestions.map((product) => (
+                <Link
+                  key={product.id}
+                  href={`/product/${product.id}`}
+                  className="flex items-center px-4 py-2 hover:bg-purple-100"
+                >
+                  <img
+                    src={product.image_url}
+                    alt={product.name}
+                    className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded mr-2"
+                  />
+                  <span className="text-sm truncate">{product.name}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
         <Link
           href="/shop"
           className="relative group text-purple-700 hover:text-purple-800 font-medium text-sm sm:text-base"
