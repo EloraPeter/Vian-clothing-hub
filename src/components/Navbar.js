@@ -63,6 +63,23 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
           <img src="/logo.svg" alt="Vian Clothing Hub Logo" className="h-10 sm:h-12 w-auto" />
         </Link>
 
+
+
+        <button
+          className="sm:hidden text-purple-700 hover:text-purple-800"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Toggle mobile menu"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16m-7 6h7"} />
+          </svg>
+        </button>
+      </div>
+
+
+
+      <div className={`w-full sm:w-auto flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 ${isMobileMenuOpen ? 'flex' : 'hidden sm:flex'} mt-4 sm:mt-0`}>
+
         <div
           ref={containerRef}
           className="relative flex items-center"
@@ -115,21 +132,6 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
           )}
         </div>
 
-        <button
-          className="sm:hidden text-purple-700 hover:text-purple-800"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label="Toggle mobile menu"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16m-7 6h7"} />
-          </svg>
-        </button>
-      </div>
-
-
-
-      <div className={`w-full sm:w-auto flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 ${isMobileMenuOpen ? 'flex' : 'hidden sm:flex'} mt-4 sm:mt-0`}>
-
         <Link
           href="/shop"
           className="relative group text-purple-700 hover:text-purple-800 font-medium text-sm sm:text-base"
@@ -138,6 +140,7 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
             Shop
           </span>
         </Link>
+
         <Link
           href="/custom-order"
           className="relative group text-purple-700 hover:text-purple-800 font-medium text-sm sm:text-base"
@@ -146,8 +149,6 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
             Custom Order
           </span>
         </Link>
-
-
 
         <div className="flex items-center gap-4 sm:gap-6">
           <div className="relative">
@@ -216,6 +217,8 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
 
           </button>
         </div>
+
+
       </div>
     </nav>
   );
