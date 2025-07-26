@@ -96,7 +96,7 @@ export default function Navbar({ profile, onCartClick, cartItemCount, notificati
 
           {/* Suggestions Dropdown */}
           {expanded && suggestions.length > 0 && (
-            <div className="absolute left-0 right-0 mt-12 bg-white text-black shadow-lg rounded-lg w-64 max-h-64 overflow-y-auto z-50">
+            <div className="absolute top-0 left-0 right-0 mt-12 bg-white text-black shadow-lg rounded-lg w-64 max-h-64 overflow-y-auto z-50">
               {suggestions.map((product) => (
                 <Link
                   key={product.id}
