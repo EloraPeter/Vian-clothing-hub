@@ -83,7 +83,7 @@ export default function Navbar({
             onClick={() => setExpanded(true)}
           >
             {/* Search Icon */}
-            <FaSearch className="text-purple-700 cursor-pointer" />
+            <FaSearch className="sm:hidden text-purple-700 cursor-pointer" />
 
             {/* Animated Input */}
             <input
@@ -165,7 +165,7 @@ export default function Navbar({
           {/* search icon */}
           <div
             ref={containerRef}
-            className="relative flex items-center "
+            className="sm:hidden relative flex items-center "
             onClick={() => setExpanded(true)}
           >
             {/* Search Icon */}
