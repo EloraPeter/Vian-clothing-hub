@@ -1,5 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import {
+    FaHeart,
+    FaRegHeart,
+    FaShoppingCart,
+    FaStar,
+    FaStarHalfAlt,
+    FaRegStar,
+} from "react-icons/fa";
 
 export default function VariantSelector({ productId, onSelectVariant, disabled }) {
   const [variants, setVariants] = useState([]);

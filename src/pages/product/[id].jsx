@@ -18,6 +18,7 @@ import CartPanel from "@/components/CartPanel";
 import DressLoader from "@/components/DressLoader";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import Head from "next/head";
+import VariantSelector from "@/components/VariantSelector";
 
 export default function Product() {
     const router = useRouter();
@@ -34,87 +35,76 @@ export default function Product() {
     const [frequentlyBought, setFrequentlyBought] = useState([]);
     const [mainImage, setMainImage] = useState("");
     const [newReview, setNewReview] = useState({ rating: "", comment: "" });
-    const [categories, setCategories] = useState([]); // New state for all categories
+    const [categories, setCategories] = useState([]);
 
     useEffect(() => {
         if (!id) return;
 
         async function fetchData() {
             setLoading(true);
-            // Fetch user profile
-            const {
-                data: { user },
-            } = await supabase.auth.getUser();
-            if (user) {
-                const { data: profileData } = await supabase
-                    .from("profiles")
-                    .select("email, avatar_url")
-                    .eq("id", user.id)
-                    .maybeSingle();
-                setProfile(profileData);
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    const { data: profileData } = await supabase
+                        .from("profiles")
+                        .select("email, avatar_url")
+                        .eq("id", user.id)
+                        .maybeSingle();
+                    setProfile(profileData);
+                }
+
+                const { data: categoriesData } = await supabase
+                    .from("categories")
+                    .select("id, name, slug, parent_id");
+                setCategories(categoriesData || []);
+
+                const { data: productData } = await supabase
+                    .from("products")
+                    .select("*, categories(id, name, slug, parent_id)")
+                    .eq("id", id)
+                    .single();
+                setProduct(productData);
+                setMainImage(productData?.image_url);
+
+                const { data: imagesData } = await supabase
+                    .from("product_images")
+                    .select("image_url")
+                    .eq("product_id", id);
+                setAdditionalImages(imagesData?.map((img) => img.image_url) || []);
+
+                const { data: reviewsData } = await supabase
+                    .from("reviews")
+                    .select("rating, comment, created_at")
+                    .eq("product_id", id);
+                setReviews(reviewsData || []);
+
+                const { data: relatedData } = await supabase
+                    .from("products")
+                    .select("id, name, image_url, price, is_on_sale, discount_percentage")
+                    .eq("category_id", productData?.category_id)
+                    .neq("id", id)
+                    .limit(4);
+                setRelatedProducts(relatedData || []);
+
+                const { data: freqData } = await supabase
+                    .from("order_items")
+                    .select("products(id, name, image_url, price, is_on_sale, discount_percentage)")
+                    .eq("order_id", supabase.from("order_items").select("order_id").eq("product_id", id))
+                    .neq("product_id", id)
+                    .limit(4);
+                setFrequentlyBought(freqData?.map((item) => item.products) || []);
+            } catch (err) {
+                console.error('Error fetching data:', err);
+            } finally {
+                setLoading(false);
             }
-
-            // Fetch all categories
-            const { data: categoriesData } = await supabase
-                .from("categories")
-                .select("id, name, slug, parent_id");
-            setCategories(categoriesData || []);
-
-            // Fetch product
-            const { data: productData } = await supabase
-                .from("products")
-                .select("*, categories(id, name, slug, parent_id)")
-                .eq("id", id)
-                .single();
-            setProduct(productData);
-            setMainImage(productData?.image_url);
-
-            // Fetch additional images
-            const { data: imagesData } = await supabase
-                .from("product_images")
-                .select("image_url")
-                .eq("product_id", id);
-            setAdditionalImages(imagesData?.map((img) => img.image_url) || []);
-
-            // Fetch reviews
-            const { data: reviewsData } = await supabase
-                .from("reviews")
-                .select("rating, comment, created_at")
-                .eq("product_id", id);
-            setReviews(reviewsData || []);
-
-            // Fetch related products
-            const { data: relatedData } = await supabase
-                .from("products")
-                .select("id, name, image_url, price, is_on_sale, discount_percentage")
-                .eq("category_id", productData?.category_id)
-                .neq("id", id)
-                .limit(4);
-            setRelatedProducts(relatedData || []);
-
-            // Fetch frequently bought together
-            const { data: freqData } = await supabase
-                .from("order_items")
-                .select(
-                    "products(id, name, image_url, price, is_on_sale, discount_percentage)"
-                )
-                .eq(
-                    "order_id",
-                    supabase.from("order_items").select("order_id").eq("product_id", id)
-                )
-                .neq("product_id", id)
-                .limit(4);
-            setFrequentlyBought(freqData?.map((item) => item.products) || []);
-            setLoading(false);
         }
         fetchData();
     }, [id]);
 
     const handleReviewSubmit = async (e) => {
         e.preventDefault();
-        const {
-            data: { user },
-        } = await supabase.auth.getUser();
+        const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
             router.push("/auth");
             return;
@@ -150,6 +140,22 @@ export default function Product() {
         return stars;
     };
 
+    const handleAddToCart = (variant) => {
+        if (!product) return;
+        const cartItem = {
+            id: variant ? `${product.id}-${variant.variantId}` : product.id,
+            product_id: product.id,
+            name: product.name,
+            price: product.price + (variant?.additionalPrice || 0),
+            quantity: 1,
+            image_url: product.image_url,
+            discount_percentage: product.discount_percentage || 0,
+            ...(variant && { size: variant.size, color: variant.color }),
+        };
+        addToCart(cartItem);
+        setIsCartOpen(true);
+    };
+
     if (loading) return <DressLoader />;
 
     return (
@@ -158,7 +164,7 @@ export default function Product() {
                 <title>{product?.name} - Vian Clothing Hub</title>
                 <meta name="description" content={product?.description} />
             </Head>
-            <main className="min-h-screen relative mb-0 bg-gray-100 pb-0">
+            <main className="min-h-screen relative mb-0 bg-gray-100 pb-0" style={{ backgroundImage: "url('/african-fabric.jpg')", backgroundSize: 'cover' }}>
                 <Navbar
                     profile={profile}
                     onCartClick={() => setIsCartOpen(true)}
@@ -170,8 +176,7 @@ export default function Product() {
                         product={product}
                         category={product?.categories}
                         categories={categories}
-                    />{" "}
-                    {/* Pass categories */}{" "}
+                    />
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* Images */}
                         <div>
@@ -179,6 +184,7 @@ export default function Product() {
                                 src={mainImage}
                                 alt={product?.name}
                                 className="w-full h-96 object-cover rounded-lg mb-4"
+                                loading="lazy"
                             />
                             <div className="flex gap-2">
                                 {[product?.image_url, ...additionalImages].map((image, i) => (
@@ -188,6 +194,7 @@ export default function Product() {
                                         alt={`${product?.name} ${i + 1}`}
                                         className="w-20 h-20 object-cover rounded-lg cursor-pointer hover:opacity-80"
                                         onClick={() => setMainImage(image)}
+                                        loading="lazy"
                                     />
                                 ))}
                             </div>
@@ -199,10 +206,9 @@ export default function Product() {
                             </h1>
                             <div className="flex gap-2 mb-4">
                                 {renderStars(
-                                    reviews.reduce((sum, r) => sum + r.rating, 0) /
-                                    reviews.length || 0
+                                    reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length || 0
                                 )}
-                            </div>{" "}
+                            </div>
                             <p className="text-purple-700 font-semibold text-xl mb-4">
                                 {product?.is_on_sale ? (
                                     <>
@@ -210,11 +216,7 @@ export default function Product() {
                                             ₦{Number(product.price).toLocaleString()}
                                         </span>
                                         <span className="ml-2 text-green-600">
-                                            ₦
-                                            {(
-                                                product.price *
-                                                (1 - product.discount_percentage / 100)
-                                            ).toLocaleString()}
+                                            ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
                                         </span>
                                     </>
                                 ) : (
@@ -222,16 +224,17 @@ export default function Product() {
                                 )}
                             </p>
                             <p className="text-gray-600 mb-4">{product?.description}</p>
-                            <button
-                                onClick={() => addToCart({ ...product, quantity: 1 })}
+                            <VariantSelector
+                                productId={product?.id}
+                                onSelectVariant={handleAddToCart}
                                 disabled={product?.is_out_of_stock}
-                                className={`w-full py-3 rounded-lg flex items-center justify-center gap-2 font-medium ${product?.is_out_of_stock
-                                        ? "bg-gray-400 cursor-not-allowed text-white"
-                                        : "bg-purple-600 hover:bg-purple-700 text-white"
-                                    }`}
+                            />
+                            <button
+                                onClick={() => toggleWishlist(product)}
+                                className="mt-4 w-full py-3 rounded-lg flex items-center justify-center gap-2 font-medium bg-gray-200 hover:bg-gray-300 text-gray-800"
                             >
-                                <FaShoppingCart />
-                                {product?.is_out_of_stock ? "Out of Stock" : "Add to Cart"}
+                                {isInWishlist(product?.id) ? <FaHeart className="text-red-600" /> : <FaRegHeart />}
+                                {isInWishlist(product?.id) ? "Remove from Wishlist" : "Add to Wishlist"}
                             </button>
                         </div>
                     </div>
@@ -260,9 +263,7 @@ export default function Product() {
                         <form onSubmit={handleReviewSubmit} className="mt-6 space-y-4">
                             <select
                                 value={newReview.rating}
-                                onChange={(e) =>
-                                    setNewReview({ ...newReview, rating: e.target.value })
-                                }
+                                onChange={(e) => setNewReview({ ...newReview, rating: e.target.value })}
                                 className="w-full px-3 py-2 border rounded-lg text-gray-700"
                                 required
                             >
@@ -275,9 +276,7 @@ export default function Product() {
                             </select>
                             <textarea
                                 value={newReview.comment}
-                                onChange={(e) =>
-                                    setNewReview({ ...newReview, comment: e.target.value })
-                                }
+                                onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
                                 className="w-full px-3 py-2 border rounded-lg text-gray-700"
                                 placeholder="Write your review"
                             />
@@ -305,6 +304,7 @@ export default function Product() {
                                         src={product.image_url}
                                         alt={product.name}
                                         className="w-full h-48 object-cover rounded-lg mb-4"
+                                        loading="lazy"
                                     />
                                     <h3 className="text-lg font-semibold text-gray-900">
                                         {product.name}
@@ -316,11 +316,7 @@ export default function Product() {
                                                     ₦{Number(product.price).toLocaleString()}
                                                 </span>
                                                 <span className="ml-2 text-green-600">
-                                                    ₦
-                                                    {(
-                                                        product.price *
-                                                        (1 - product.discount_percentage / 100)
-                                                    ).toLocaleString()}
+                                                    ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
                                                 </span>
                                             </>
                                         ) : (
