@@ -165,7 +165,7 @@ export default function Navbar({
           {/* search icon */}
           <div
             ref={containerRef}
-            className="relative flex items-center"
+            className="relative flex items-center lg:hidden"
             onClick={() => setExpanded(true)}
           >
             {/* Search Icon */}
