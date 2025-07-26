@@ -12,7 +12,7 @@ import {
   FaRegStar,
 } from "react-icons/fa";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/footer";
+import Footer from "@/components/Footer";
 import CartPanel from "@/components/CartPanel";
 import Head from "next/head";
 import DressLoader from "@/components/DressLoader";
@@ -26,47 +26,55 @@ export default function Home() {
   const [categories, setCategories] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
 
+  // Skeleton components
+  const SkeletonCategory = () => (
+    <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-100 animate-pulse">
+      <div className="h-6 bg-gray-200 rounded w-3/4 mx-auto"></div>
+    </div>
+  );
+
+  const SkeletonProduct = () => (
+    <div className="bg-white p-4 sm:p-5 rounded-xl shadow-md border border-gray-100 animate-pulse">
+      <div className="w-full h-40 sm:h-48 bg-gray-200 rounded-lg mb-4"></div>
+      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+    </div>
+  );
+
   // Fetch user profile
   useEffect(() => {
     async function fetchData() {
-      try {
-        setLoading(true);
-        const {
-          data: { user },
-          error: userError,
-        } = await supabase.auth.getUser();
-        if (userError) throw new Error("Failed to fetch user");
-        if (user) {
-          const { data: profileData, error: profileError } = await supabase
-            .from("profiles")
-            .select("email, avatar_url")
-            .eq("id", user.id)
-            .maybeSingle();
-          if (profileError) throw new Error("Failed to fetch profile");
-          setProfile(profileData);
-        }
-        // fetch categories
-        const { data: categoriesData, error: categoriesError } = await supabase
-          .from("categories")
-          .select("id, name, slug, parent_id")
-          .order("parent_id, name");
-        if (categoriesError) throw new Error("Failed to fetch categories");
-        setCategories(categoriesData || []);
-        // fetch new arrivals
-        const { data: productsData, error: productsError } = await supabase
-          .from("products")
-          .select(
-            "id, name, image_url, price, is_on_sale, discount_percentage, is_out_of_stock"
-          )
-          .eq("is_new", true)
-          .limit(8);
-        if (productsError) throw new Error("Failed to fetch products");
-        setNewArrivals(productsData || []);
-      } catch (error) {
-        console.error(error.message);
-      } finally {
-        setLoading(false);
+      setLoading(true);
+      // Fetch user profile
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("email, avatar_url")
+          .eq("id", user.id)
+          .maybeSingle();
+        setProfile(profileData);
       }
+
+      // Fetch categories
+      const { data: categoriesData } = await supabase
+        .from("categories")
+        .select("id, name, slug, parent_id")
+        .order("parent_id, name");
+      setCategories(categoriesData || []);
+
+      // Fetch new arrivals
+      const { data: productsData } = await supabase
+        .from("products")
+        .select(
+          "id, name, image_url, price, is_on_sale, discount_percentage, is_out_of_stock"
+        )
+        .eq("is_new", true)
+        .limit(8);
+      setNewArrivals(productsData || []);
+      setLoading(false);
     }
     fetchData();
   }, []);
@@ -116,6 +124,8 @@ export default function Home() {
             <Link
               href="/shop"
               className="mt-6 inline-block bg-gold-500 text-purple-800 font-semibold px-6 sm:px-8 py-2 sm:py-3 rounded-lg hover:bg-gold-600 transition-colors text-sm sm:text-base"
+              role="button"
+              aria-label="Shop now at Vian Clothing Hub"
             >
               Shop Now
             </Link>
@@ -127,17 +137,21 @@ export default function Home() {
               Shop by Category
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-              {categories.map((category) => (
-                <Link
-                  key={category.slug}
-                  href={`/category/${category?.slug}`}
-                  className="bg-white p-4 sm:p-6 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 hover:border-purple-200"
-                >
-                  <h3 className="text-lg sm:text-xl font-semibold text-purple-700 text-center">
-                    {category.name}
-                  </h3>
-                </Link>
-              ))}
+              {loading
+                ? Array(4).fill().map((_, index) => <SkeletonCategory key={index} />)
+                : categories.map((category) => (
+                    <Link
+                      key={category.slug}
+                      href={`/category/${category?.slug}`}
+                      className="bg-white p-4 sm:p-6 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 hover:border-purple-200"
+                      role="button"
+                      aria-label={`Shop ${category.name} category`}
+                    >
+                      <h3 className="text-lg sm:text-xl font-semibold text-purple-700 text-center">
+                        {category.name}
+                      </h3>
+                    </Link>
+                  ))}
             </div>
           </section>
 
@@ -147,46 +161,50 @@ export default function Home() {
               New Arrivals
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-              {newArrivals.map((product) => (
-                <Link
-                  key={product.id}
-                  href={`/product/${product.id}`}
-                  className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100"
-                >
-                  <img
-                    src={product.image_url}
-                    alt={product.name}
-                    loading="lazy"
-                    className="w-full h-40 sm:h-48 object-cover rounded-lg mb-4"
-                  />
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
-                    {product.name}
-                  </h3>
-                  <p className="text-purple-700 font-semibold text-sm sm:text-base">
-                    {product.is_on_sale ? (
-                      <>
-                        <span className="line-through text-red-600">
-                          ₦{Number(product.price).toLocaleString()}
+              {loading
+                ? Array(8).fill().map((_, index) => <SkeletonProduct key={index} />)
+                : newArrivals.map((product) => (
+                    <Link
+                      key={product.id}
+                      href={`/product/${product.id}`}
+                      className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100"
+                      role="button"
+                      aria-label={`View ${product.name} product details`}
+                    >
+                      <img
+                        src={product.image_url}
+                        alt={`Image of ${product.name}`}
+                        loading="lazy"
+                        className="w-full h-40 sm:h-48 object-cover rounded-lg mb-4"
+                      />
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
+                        {product.name}
+                      </h3>
+                      <p className="text-purple-700 font-semibold text-sm sm:text-base">
+                        {product.is_on_sale ? (
+                          <>
+                            <span className="line-through text-red-600">
+                              ₦{Number(product.price).toLocaleString()}
+                            </span>
+                            <span className="ml-2 text-green-600">
+                              ₦
+                              {(
+                                product.price *
+                                (1 - product.discount_percentage / 100)
+                              ).toLocaleString()}
+                            </span>
+                          </>
+                        ) : (
+                          `₦${Number(product.price).toLocaleString()}`
+                        )}
+                      </p>
+                      {product.is_out_of_stock && (
+                        <span className="text-red-600 text-xs sm:text-sm">
+                          Out of Stock
                         </span>
-                        <span className="ml-2 text-green-600">
-                          ₦
-                          {(
-                            product.price *
-                            (1 - product.discount_percentage / 100)
-                          ).toLocaleString()}
-                        </span>
-                      </>
-                    ) : (
-                      `₦${Number(product.price).toLocaleString()}`
-                    )}
-                  </p>
-                  {product.is_out_of_stock && (
-                    <span className="text-red-600 text-xs sm:text-sm">
-                      Out of Stock
-                    </span>
-                  )}
-                </Link>
-              ))}
+                      )}
+                    </Link>
+                  ))}
             </div>
           </section>
 
@@ -260,7 +278,7 @@ export default function Home() {
                 🔥 Flash Sales & Discounts: Enjoy up to 50% off during our Style
                 Weeks.
               </li>
-              <li>🌍 Made in Nigeria, Loved.TransactionManager Everywhere.</li>
+              <li>🌍 Made in Nigeria, Loved Everywhere.</li>
             </ul>
             <p className="text-base sm:text-lg font-semibold text-purple-700 mb-2">
               🧵 Custom Orders & Bespoke Tailoring
