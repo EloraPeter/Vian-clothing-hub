@@ -30,7 +30,7 @@ export default function Breadcrumbs({ category, product, categories = [] }) {
 
   return (
     <nav className="flex mb-6" aria-label="Breadcrumb">
-      <ol className="flex space-x-2 text-gray-600 font-playfair-display">
+      <ol className="flex flex-wrap sm:flex-nowrap space-x-2 text-gray-600 font-playfair-display">
         {crumbs.map((crumb, i) => (
           <li key={i} className="flex items-center">
             {crumb.href ? (
