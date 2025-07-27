@@ -477,95 +477,63 @@ export default function Home() {
           </section>
 
           {/* About Section */}
-<section className="bg-white p-6 sm:p-8 rounded-xl shadow-md mb-12">
-  <h2 className="text-3xl sm:text-4xl font-bold text-purple-800 font-playfair-display text-center mb-6">
-    About Vian Clothing Hub
-  </h2>
-
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-    {/* Left Column */}
-    <div className="space-y-6 text-gray-700">
-      <p className="text-base sm:text-lg">
-        <strong>Vian Clothing Hub</strong> is Nigeria’s premier online fashion destination, offering trendy ready-to-wear and custom-made outfits that celebrate African style and modern elegance.
-      </p>
-
-      <p className="text-base sm:text-lg">
-        Shop curated collections of women’s gowns, men’s traditional attire, unisex streetwear, and vibrant African prints.
-      </p>
-
-      <ul className="list-disc list-inside text-sm sm:text-md space-y-1 mb-4">
-        <li>Women’s ready-to-wear gowns, two-pieces & casuals</li>
-        <li>Men’s traditional & smart casual looks</li>
-        <li>Unisex streetwear, jackets, tees, and joggers</li>
-        <li>Matching couple styles</li>
-        <li>African-inspired prints like Ankara and Adire</li>
-      </ul>
-
-      <div className="flex items-start gap-3">
-        <FaShoppingCart className="text-2xl text-purple-700 mt-1" />
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">Curated Collections</h3>
-          <p className="text-sm text-gray-600">
-            Stylish and authentic fashion for all occasions.
-          </p>
-        </div>
-      </div>
-
-      <div className="flex items-start gap-3">
-        <FaRulerCombined className="text-2xl text-purple-700 mt-1" />
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">Bespoke Tailoring</h3>
-          <p className="text-sm text-gray-600">
-            Custom orders crafted to your measurements and style preferences.
-          </p>
-        </div>
-      </div>
-
-      <div className="flex items-start gap-3">
-        <FaShippingFast className="text-2xl text-purple-700 mt-1" />
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">Nationwide Delivery</h3>
-          <p className="text-sm text-gray-600">
-            Fast and reliable shipping with flexible payment options.
-          </p>
-        </div>
-      </div>
-
-      <p className="text-base sm:text-lg font-semibold text-purple-700 mt-6 mb-2">
-        What Makes Us Different
-      </p>
-      <ul className="list-disc list-inside text-gray-600 mb-4 text-sm sm:text-md space-y-1">
-        <li>Authentic, quality pieces</li>
-        <li>Delivery across Nigeria</li>
-        <li>Flexible payment methods</li>
-        <li>Easy 7-day returns</li>
-        <li>Regular sales and discounts</li>
-      </ul>
-
-      <div className="text-center lg:text-left">
-        <Link
-          href="/shop"
-          className="inline-block bg-gold-500 text-purple-800 font-semibold px-6 py-3 rounded-lg hover:bg-gold-600 transition-colors"
-          role="button"
-          aria-label="Start shopping at Vian Clothing Hub"
-        >
-          Shop Now
-        </Link>
-      </div>
-    </div>
-
-    {/* Right Column */}
-    <div className="hidden lg:block">
-      <img
-        src="/about-image.jpg"
-        alt="Model in Vian Clothing Hub outfit"
-        className="w-full h-96 object-cover rounded-lg shadow-lg"
-        loading="lazy"
-      />
-    </div>
-  </div>
-</section>
-
+          <section className="bg-white p-6 sm:p-8 rounded-xl shadow-md mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-purple-800 font-playfair-display text-center mb-6">
+              About Vian Clothing Hub
+            </h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+              <div className="space-y-4">
+                <p className="text-base sm:text-lg text-gray-600">
+                  <strong>Vian Clothing Hub</strong> is Nigeria’s premier online fashion destination, offering trendy ready-to-wear and custom-made outfits that celebrate African style and modern elegance.
+                </p>
+                <div className="flex items-start gap-3">
+                  <FaShoppingCart className="text-2xl text-purple-700 mt-1" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Curated Collections</h3>
+                    <p className="text-sm text-gray-600">
+                      Explore women’s gowns, men’s traditional attire, unisex streetwear, and vibrant African prints like Ankara and Adire, paired with stylish accessories.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <FaRulerCombined className="text-2xl text-purple-700 mt-1" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Bespoke Tailoring</h3>
+                    <p className="text-sm text-gray-600">
+                      Design your dream outfit with our custom order service. Submit your measurements via WhatsApp or our style form, and our expert tailors will craft your vision.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <FaShippingFast className="text-2xl text-purple-700 mt-1" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Nationwide Delivery</h3>
+                    <p className="text-sm text-gray-600">
+                      Enjoy fast, reliable shipping across Nigeria, from Lagos to Abuja, with flexible payment options and easy returns.
+                    </p>
+                  </div>
+                </div>
+                <div className="text-center lg:text-left">
+                  <Link
+                    href="/shop"
+                    className="inline-block bg-gold-500 text-purple-800 font-semibold px-6 py-3 rounded-lg hover:bg-gold-600 transition-colors"
+                    role="button"
+                    aria-label="Start shopping at Vian Clothing Hub"
+                  >
+                    Shop Now
+                  </Link>
+                </div>
+              </div>
+              <div className="hidden lg:block">
+                <img
+                  src="/about-image.jpg"
+                  alt="Model in Vian Clothing Hub outfit"
+                  className="w-full h-80 object-cover rounded-lg"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          </section>
 
           {/* Sticky CTA */}
 
