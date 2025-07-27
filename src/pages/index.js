@@ -285,7 +285,7 @@ export default function Home() {
               <h2 className="max-w-7xl mx-auto text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-6">
                 Flash Sale - Limited Time!
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 mx-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
                 {saleProducts.map((product) => (
                   <div
                     key={product.id}
@@ -345,7 +345,7 @@ export default function Home() {
             <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-8">
               Shop by Category
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 mx-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
               {loading
                 ? Array(4)
                     .fill()
