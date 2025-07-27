@@ -47,7 +47,7 @@ export default function CartPanel({ isOpen, onClose }) {
                 />
             )}
             <div
-                className={`fixed top-0 right-0 lg:w-[36rem] w-full h-full lg:h-full md:bottom-0 md:top-auto md:h-3/4 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${isOpen
+                className={`fixed top-0 right-0 lg:w-[32rem] w-full h-full lg:h-full md:bottom-0 md:top-auto md:h-3/4 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${isOpen
                     ? "translate-x-0 md:translate-y-0"
                     : "translate-x-full md:translate-y-full"
                     }`}
