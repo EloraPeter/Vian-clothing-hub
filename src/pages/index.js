@@ -137,21 +137,21 @@ export default function Home() {
   // Static carousel slides
   const carouselSlides = [
     {
-      image: "/hero1.jpg",
+      image: "/hero1.jpeg",
       title: "Discover New Arrivals",
       subtitle: "Trendy styles for every occasion",
       cta: "Shop Now",
       link: "/shop",
     },
     {
-      image: "/hero2.jpg",
+      image: "/hero2.png",
       title: "Flash Sale: Up to 50% Off",
       subtitle: "Grab your favorites before they're gone!",
       cta: "Shop Sale",
       link: "/shop?sale=true",
     },
     {
-      image: "/hero3.jpg",
+      image: "/hero3.png",
       title: "Custom Orders Tailored for You",
       subtitle: "Design your dream outfit today",
       cta: "Create Now",
@@ -236,7 +236,7 @@ export default function Home() {
                     className="w-full h-full object-cover"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-black bg-opacity-40 flex flex-col items-center justify-center text-center p-4">
+                  <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-4">
                     <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white font-playfair-display mb-2">
                       {slide.title}
                     </h1>
