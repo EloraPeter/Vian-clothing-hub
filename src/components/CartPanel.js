@@ -191,7 +191,7 @@ export default function CartPanel({ isOpen, onClose }) {
                                                                     item.quantity + 1
                                                                 )
                                                             }
-                                                            className="bg-gray-200 text-gray-700 px-3 py-1 rounded-lg hover:bg-gray-300 transition-colors duration-200"
+                                                            className="bg-gray-200 text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-300 transition-colors duration-200"
                                                             disabled={item.is_out_of_stock}
                                                         >
                                                             +
