@@ -233,7 +233,7 @@ export default function Policies({ profile }) {
             </ul>
           </aside>
           {/* Main Content */}
-          <div className="w-full md:w-3/4 bg-white text-gray-900 rounded-lg shadow-md p-6">
+          <div className="w-full md:w-3/4 bg-white text-gray-700 rounded-lg shadow-md p-6">
             {policies.find((policy) => policy.id === activePolicy)?.content || (
               <p className="text-gray-900">Select a policy to view details.</p>
             )}
