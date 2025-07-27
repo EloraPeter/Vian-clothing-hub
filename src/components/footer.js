@@ -61,7 +61,7 @@ const Footer = () => {
                         href="https://github.com/EloraPeter"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-purple-500 hover:underline"
+                        className="text-purple-600 hover:underline"
                     >
                         Elora
                     </Link>
