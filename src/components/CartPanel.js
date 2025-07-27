@@ -179,7 +179,7 @@ export default function CartPanel({ isOpen, onClose }) {
                                                         >
                                                             –
                                                         </button>
-                                                        <span className="text-lg font-medium w-12 text-center">
+                                                        <span className="text-lg text-black font-medium w-12 text-center">
                                                             {item.quantity}
                                                         </span>
                                                         <button
