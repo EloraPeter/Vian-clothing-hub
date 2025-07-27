@@ -282,7 +282,7 @@ export default function Home() {
           {/* Flash Sale Section */}
           {saleProducts.length > 0 && (
             <section className="mb-12">
-              <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-6">
+              <h2 className="max-w-7xl mx-auto text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-6">
                 Flash Sale - Limited Time!
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
