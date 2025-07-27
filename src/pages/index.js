@@ -229,7 +229,7 @@ export default function Home() {
               className="rounded-xl overflow-hidden"
             >
               {carouselSlides.map((slide, index) => (
-                <div key={index} className="relative h-[700px] sm:h-80 md:h-[500px]">
+                <div key={index} className="relative h-[500px] sm:h-50 md:h-[300px]">
                   <img
                     src={slide.image}
                     alt={slide.title}
