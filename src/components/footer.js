@@ -28,7 +28,7 @@ const Footer = () => {
                     </ul>
                 </div>
 
-                
+
                 <div>
                     <h4 className="font-bold text-lg mb-3 text-purple-100">Contact</h4>
                     <p className="text-gray-300">WhatsApp: <a href="https://wa.me/2348038879285" className="text-gold-300 hover:underline">+234 803 8879 285</a></p>
@@ -55,8 +55,17 @@ const Footer = () => {
 
             <div className="text-center text-sm text-gray-400">
                 © {new Date().getFullYear()} Vian Clothing Hub. All rights reserved.
-                <p className="text-gray-500">Created by Elora</p>
-            </div>
+                <p className="text-gray-500">
+                    Created by{" "}
+                    <Link
+                        href="https://github.com/EloraPeter"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-purple-500 hover:underline"
+                    >
+                        Elora
+                    </Link>
+                </p>            </div>
         </footer>
     );
 };
