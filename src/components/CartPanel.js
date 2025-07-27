@@ -163,8 +163,8 @@ export default function CartPanel({ isOpen, onClose }) {
                                                         )}
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center space-x-4">
-                                                    <div className="flex items-center space-x-2">
+                                                <div className="flex items-center space-x-2">
+                                                    <div className="flex items-center space-x-0">
                                                         <button
                                                             onClick={() =>
                                                                 updateQuantity(
