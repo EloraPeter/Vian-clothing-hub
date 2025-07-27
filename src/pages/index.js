@@ -216,7 +216,7 @@ export default function Home() {
         />
         <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
-        <div className="mx-auto mt-0 px-4 sm:px-6 lg:px-8 py-12">
+        <div className="mx-auto mt-0 px-4 sm:px-6 lg:px-8 py-4">
           {/* Hero Carousel */}
           <section className="relative mb-12 mt-0">
             <Carousel
@@ -229,7 +229,7 @@ export default function Home() {
               className="rounded-xl overflow-hidden"
             >
               {carouselSlides.map((slide, index) => (
-                <div key={index} className="relative h-[500px] sm:h-50 md:h-[300px]">
+                <div key={index} className="relative h-[500px] sm:h-[400px] md:h-[600px]">
                   <img
                     src={slide.image}
                     alt={slide.title}
