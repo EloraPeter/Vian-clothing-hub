@@ -243,7 +243,7 @@ export default function Home() {
                     <p className="text-sm sm:text-base text-white mb-4">{slide.subtitle}</p>
                     <Link
                       href={slide.link}
-                      className="bg-gold-500 text-purple-800 font-semibold px-6 py-2 rounded-lg hover:bg-gold-600 transition-colors"
+                      className="bg-purple-500 text-purple-100 font-semibold px-6 py-2 rounded-lg hover:bg-purple-600 transition-colors"
                       role="button"
                       aria-label={slide.cta}
                     >
@@ -497,7 +497,7 @@ export default function Home() {
               <div className="text-center">
                 <Link
                   href="/shop"
-                  className="inline-block bg-gold-500 text-purple-800 font-semibold px-6 py-3 rounded-lg hover:bg-gold-600 transition-colors"
+                  className="inline-block bg-purple-500 text-white font-semibold px-6 py-3 rounded-lg hover:bg-purple-600 transition-colors"
                   role="button"
                   aria-label="Start shopping at Vian Clothing Hub"
                 >
