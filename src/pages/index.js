@@ -8,6 +8,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/footer";
 import CartPanel from "@/components/CartPanel";
 import Head from "next/head";
+import Image from "next/image";
 import DressLoader from "@/components/DressLoader";
 import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
@@ -163,7 +164,7 @@ export default function Home() {
   const testimonials = [
     {
       name: "Chidinma O.",
-      quote: "Vian’s dresses are stunning and affordable! Fast delivery to Lagos.",
+      quote: "Vian&lsquo;s dresses are stunning and affordable! Fast delivery to Lagos.",
       rating: 5,
     },
     {
@@ -245,7 +246,7 @@ export default function Home() {
             >
               {carouselSlides.map((slide, index) => (
                 <div key={index} className="relative h-[500px] sm:h-[400px] md:h-[600px]">
-                  <img
+                  <Image
                     src={slide.image}
                     alt={slide.title}
                     className="w-full h-full object-cover"
@@ -307,7 +308,7 @@ export default function Home() {
                     className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 relative group"
                   >
                     <Link href={`/product/${product.id}`} role="button" aria-label={`View ${product.name} product details`}>
-                      <img
+                      <Image
                         src={product.image_url}
                         alt={`Image of ${product.name}`}
                         loading="lazy"
@@ -373,7 +374,7 @@ export default function Home() {
                     role="button"
                     aria-label={`Shop ${category.name} category`}
                   >
-                    <img
+                    <Image
                       src={category.products?.[0]?.image_url || "/placeholder.jpg"}
                       alt={`${category.name} category`}
                       className="w-full h-32 sm:h-40 object-cover rounded-lg mb-4 group-hover:scale-105 transition-transform"
@@ -399,7 +400,7 @@ export default function Home() {
                   className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 relative group"
                 >
                   <Link href={`/product/${product.id}`} role="button" aria-label={`View ${product.name} product details`}>
-                    <img
+                    <Image
                       src={product.image_url}
                       alt={`Image of ${product.name}`}
                       loading="lazy"
@@ -484,7 +485,7 @@ export default function Home() {
                       </span>
                     ))}
                   </div>
-                  <p className="text-sm text-gray-600 italic">"{testimonial.quote}"</p>
+                  <p className="text-sm text-gray-600 italic">&quot;{testimonial.quote}&quot;</p>
                   <p className="text-sm font-semibold text-gray-900 mt-2">{testimonial.name}</p>
                 </div>
               ))}
@@ -492,19 +493,18 @@ export default function Home() {
           </section>
 
           {/* about */}
-          <section className=" p-6 sm:p-8 lg:p-12 rounded-xl  mb-12 ">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:gap-12">
-              {/* Left content */}
+          <section className="bg-gray-200 px-4 py-10 sm:px-8 lg:px-16 rounded-xl mb-20 max-w-7xl mx-auto">
+            {/* Top Section */}
+            <div className="flex flex-col lg:flex-row items-center lg:gap-12">
+              {/* Left */}
               <div className="lg:w-1/2 text-center lg:text-left space-y-6">
                 <h2 className="text-3xl sm:text-4xl font-bold text-purple-800 font-playfair-display">
                   About Vian Clothing Hub
                 </h2>
-
                 <p className="text-base sm:text-lg text-gray-600 max-w-xl mx-auto lg:mx-0">
                   <span className="text-purple-700 font-semibold">Vian Clothing Hub</span> is Nigeria’s premier online fashion destination, blending vibrant African prints with modern elegance for every occasion.
                 </p>
-
-                <div className="flex justify-center lg:justify-start gap-4">
+                <div className="flex justify-center lg:justify-start">
                   <Link
                     href="/shop"
                     className="bg-gold-500 text-purple-800 font-semibold px-6 py-3 rounded-lg hover:bg-gold-600 hover:scale-105 transition-transform duration-200"
@@ -516,8 +516,8 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Right content: Carousel */}
-              <div className="lg:w-1/2 mt-8 lg:mt-0 max-w-xl mx-auto rounded-lg overflow-hidden shadow-lg">
+              {/* Right: Carousel */}
+              <div className="lg:w-1/2 mt-10 lg:mt-0 max-w-xl mx-auto rounded-lg overflow-hidden shadow-md">
                 <Carousel
                   showThumbs={false}
                   autoPlay
@@ -528,7 +528,7 @@ export default function Home() {
                 >
                   {galleryImages.map((image, index) => (
                     <div key={index} className="h-56 sm:h-72 lg:h-80">
-                      <img
+                      <Image
                         src={image.src}
                         alt={image.alt}
                         className="w-full h-full object-cover"
@@ -541,7 +541,7 @@ export default function Home() {
             </div>
 
             {/* Features Grid */}
-            <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
               <div className="flex items-start gap-4">
                 <FaShoppingCart className="text-3xl text-purple-700 mt-1 hover:scale-110 transition-transform duration-200" />
                 <div>
@@ -574,12 +574,12 @@ export default function Home() {
             </div>
 
             {/* Divider */}
-            <hr className="border-gold-500 w-24 mx-auto my-12" />
+            <hr className="border-gold-500 w-24 mx-auto my-16" />
 
             {/* Unique Selling Points */}
-            <div className="text-left max-w-md mx-auto space-y-4">
+            <div className="text-center max-w-md mx-auto space-y-4">
               <h3 className="text-xl font-semibold text-purple-700">Why Choose Vian?</h3>
-              <ul className="list-disc list-inside text-gray-600 text-base space-y-2">
+              <ul className="list-disc list-inside text-gray-600 text-base space-y-2 text-left">
                 <li>Authentic, high-quality fashion</li>
                 <li>Nationwide delivery to Lagos, Abuja, and beyond</li>
                 <li>Secure payments and 7-day returns</li>
@@ -588,7 +588,7 @@ export default function Home() {
             </div>
 
             {/* Bottom CTAs */}
-            <div className="mt-12 flex flex-col sm:flex-row justify-center gap-6 max-w-sm mx-auto">
+            <div className="mt-12 flex flex-col sm:flex-row justify-center gap-6">
               <Link
                 href="/shop"
                 className="bg-gold-500 text-purple-800 font-semibold px-6 py-3 rounded-lg hover:bg-gold-600 hover:scale-105 transition-transform duration-200 text-center"
@@ -607,6 +607,7 @@ export default function Home() {
               </Link>
             </div>
           </section>
+
 
 
           {/* Sticky CTA */}

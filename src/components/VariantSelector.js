@@ -37,7 +37,7 @@ export default function VariantSelector({ productId, onSelectVariant, disabled }
     if (!colors.includes(selectedColor)) {
       setSelectedColor(colors[0] || '');
     }
-  }, [selectedSize, variants]);
+  }, [selectedColor, selectedSize, variants]);
 
   const handleAddToCart = () => {
     if (!selectedSize || !selectedColor) {
