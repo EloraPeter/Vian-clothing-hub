@@ -348,27 +348,27 @@ export default function Home() {
             <div className="grid grid-cols-1 mx-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
               {loading
                 ? Array(4)
-                    .fill()
-                    .map((_, index) => <SkeletonCategory key={index} />)
+                  .fill()
+                  .map((_, index) => <SkeletonCategory key={index} />)
                 : categories.map((category) => (
-                    <Link
-                      key={category.slug}
-                      href={`/category/${category?.slug}`}
-                      className="bg-white p-4 sm:p-6 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 hover:border-purple-200 relative group"
-                      role="button"
-                      aria-label={`Shop ${category.name} category`}
-                    >
-                      <img
-                        src={category.products?.[0]?.image_url || "/placeholder.jpg"}
-                        alt={`${category.name} category`}
-                        className="w-full h-32 sm:h-40 object-cover rounded-lg mb-4 group-hover:scale-105 transition-transform"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <h3 className="text-lg sm:text-xl font-semibold text-white">{category.name}</h3>
-                      </div>
-                    </Link>
-                  ))}
+                  <Link
+                    key={category.slug}
+                    href={`/category/${category?.slug}`}
+                    className="bg-white p-4 sm:p-6 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 hover:border-purple-200 relative group"
+                    role="button"
+                    aria-label={`Shop ${category.name} category`}
+                  >
+                    <img
+                      src={category.products?.[0]?.image_url || "/placeholder.jpg"}
+                      alt={`${category.name} category`}
+                      className="w-full h-32 sm:h-40 object-cover rounded-lg mb-4 group-hover:scale-105 transition-transform"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <h3 className="text-lg sm:text-xl font-semibold text-white">{category.name}</h3>
+                    </div>
+                  </Link>
+                ))}
             </div>
           </section>
 
@@ -536,9 +536,10 @@ export default function Home() {
           </section>
 
           {/* Sticky CTA */}
+
           <button
             onClick={() => setIsCartOpen(true)}
-            className="fixed animate-ping bottom-4 right-4 bg-purple-600 text-white p-4 rounded-full shadow-lg hover:bg-purple-700 transition-colors z-50"
+            className="fixed bottom-4 right-4 bg-purple-600 text-white p-4 rounded-full shadow-lg hover:bg-purple-700 transition-colors z-50"
             aria-label="Open cart"
           >
             <FaShoppingCart className="text-xl" />
@@ -547,6 +548,8 @@ export default function Home() {
                 {cart.length}
               </span>
             )}
+            <div className="absolute -inset-4 bg-purple-200 bg-opacity-20 rounded-full animate-ping" />
+
           </button>
         </div>
 
