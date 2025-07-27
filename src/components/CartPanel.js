@@ -219,6 +219,8 @@ export default function CartPanel({ isOpen, onClose }) {
                                     ))}
                                 </ul>
                             </div>
+
+                            
                             <div className="border-t border-gray-200 p-6">
                                 <div className="flex justify-between items-center">
                                     <p className="text-xl font-bold text-gray-900">
