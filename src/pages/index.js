@@ -216,9 +216,9 @@ export default function Home() {
         />
         <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="mx-auto mt-0 px-4 sm:px-6 lg:px-8 py-12">
           {/* Hero Carousel */}
-          <section className="relative mb-12">
+          <section className="relative mb-12 mt-0">
             <Carousel
               showThumbs={false}
               autoPlay
@@ -345,7 +345,7 @@ export default function Home() {
             <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-8">
               Shop by Category
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
               {loading
                 ? Array(4)
                     .fill()
@@ -377,7 +377,7 @@ export default function Home() {
             <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-8">
               New Arrivals
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
               {newArrivals.map((product) => (
                 <div
                   key={product.id}
@@ -449,7 +449,7 @@ export default function Home() {
           </section>
 
           {/* Testimonials */}
-          <section className="bg-white rounded-xl shadow-md p-6 sm:p-8 mb-12">
+          <section className="max-w-7xl mx-auto p-6 sm:p-8 mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-8">
               What Our Customers Say
             </h2>
