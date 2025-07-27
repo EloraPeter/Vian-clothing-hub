@@ -154,7 +154,6 @@ export default function Product() {
       ...(variant && { size: variant.size, color: variant.color }),
     };
     addToCart(cartItem);
-    setIsCartOpen(true);
   };
 
   const getCurrentPrice = () => {
