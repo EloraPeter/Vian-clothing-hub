@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
-import { FaHeart, FaRegHeart, FaShoppingCart, FaStar, FaStarHalfAlt, FaRegStar, FaShippingFast, FaUndo, FaLock } from "react-icons/fa";
+import { FaHeart, FaRegHeart, FaShoppingCart, FaStar, FaStarHalfAlt, FaRegStar, FaShippingFast, FaUndo, FaLock, FaRulerCombined } from "react-icons/fa";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/footer";
 import CartPanel from "@/components/CartPanel";
