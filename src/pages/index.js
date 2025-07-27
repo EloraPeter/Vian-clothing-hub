@@ -477,32 +477,60 @@ export default function Home() {
           </section>
 
           {/* About Section */}
-          <section className="bg-gray-100 p-6 sm:p-8 rounded-xl">
-            <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-6">
+          <section className="bg-white p-6 sm:p-8 rounded-xl shadow-md mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-purple-800 font-playfair-display text-center mb-6">
               About Vian Clothing Hub
             </h2>
-            <div className="space-y-6 text-gray-600 text-sm sm:text-base">
-              <p>
-                Welcome to <strong>Vian Clothing Hub</strong>, Nigeria’s premier online fashion destination. From trendy ready-to-wear styles to elegant custom pieces, we offer premium-quality fashion delivered to your doorstep.
-              </p>
-              <p>
-                Shop our curated collections of women’s gowns, men’s traditional attire, unisex streetwear, and African-inspired prints like Ankara and Adire. Complete your look with accessories like handbags, jewelry, and headwraps.
-              </p>
-              <p>
-                Our bespoke tailoring service lets you design custom outfits for events, bridal parties, or corporate needs. Simply send us your measurements via our style form or WhatsApp, and our expert tailors will bring your vision to life.
-              </p>
-              <p>
-                Explore our Vian Beauty and Lifestyle Collection for skincare, wigs, and home fragrances. Follow us on social media <strong>@vianclothinghub</strong> for style inspiration and exclusive offers.
-              </p>
-              <div className="text-center">
-                <Link
-                  href="/shop"
-                  className="inline-block bg-purple-500 text-white font-semibold px-6 py-3 rounded-lg hover:bg-purple-600 transition-colors"
-                  role="button"
-                  aria-label="Start shopping at Vian Clothing Hub"
-                >
-                  Start Shopping
-                </Link>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+              <div className="space-y-4">
+                <p className="text-base sm:text-lg text-gray-600">
+                  <strong>Vian Clothing Hub</strong> is Nigeria’s premier online fashion destination, offering trendy ready-to-wear and custom-made outfits that celebrate African style and modern elegance.
+                </p>
+                <div className="flex items-start gap-3">
+                  <FaShoppingCart className="text-2xl text-purple-700 mt-1" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Curated Collections</h3>
+                    <p className="text-sm text-gray-600">
+                      Explore women’s gowns, men’s traditional attire, unisex streetwear, and vibrant African prints like Ankara and Adire, paired with stylish accessories.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <FaRulerCombined className="text-2xl text-purple-700 mt-1" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Bespoke Tailoring</h3>
+                    <p className="text-sm text-gray-600">
+                      Design your dream outfit with our custom order service. Submit your measurements via WhatsApp or our style form, and our expert tailors will craft your vision.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <FaShippingFast className="text-2xl text-purple-700 mt-1" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Nationwide Delivery</h3>
+                    <p className="text-sm text-gray-600">
+                      Enjoy fast, reliable shipping across Nigeria, from Lagos to Abuja, with flexible payment options and easy returns.
+                    </p>
+                  </div>
+                </div>
+                <div className="text-center lg:text-left">
+                  <Link
+                    href="/shop"
+                    className="inline-block bg-gold-500 text-purple-800 font-semibold px-6 py-3 rounded-lg hover:bg-gold-600 transition-colors"
+                    role="button"
+                    aria-label="Start shopping at Vian Clothing Hub"
+                  >
+                    Shop Now
+                  </Link>
+                </div>
+              </div>
+              <div className="hidden lg:block">
+                <img
+                  src="/about-image.jpg"
+                  alt="Model in Vian Clothing Hub outfit"
+                  className="w-full h-80 object-cover rounded-lg"
+                  loading="lazy"
+                />
               </div>
             </div>
           </section>
