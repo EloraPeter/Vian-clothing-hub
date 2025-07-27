@@ -216,7 +216,7 @@ export default function Home() {
         />
         <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-12">
           {/* Hero Carousel */}
           <section className="relative mb-12">
             <Carousel
@@ -256,7 +256,7 @@ export default function Home() {
           </section>
 
           {/* Why Shop With Us */}
-          <section className="bg-white rounded-xl shadow-md p-6 sm:p-8 mb-12">
+          <section className="max-w-7xl mx-auto bg-white rounded-xl shadow-md p-6 sm:p-8 mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-6">
               Why Shop With Vian?
             </h2>
