@@ -492,29 +492,32 @@ export default function Home() {
           </section>
 
           {/* about */}
-          <section className="bg-white p-6 sm:p-8 lg:p-12 rounded-xl shadow-md mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-purple-800 font-playfair-display text-center mb-8">
-              About Vian Clothing Hub
-            </h2>
+          <section className=" p-6 sm:p-8 lg:p-12 rounded-xl  mb-12 ">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:gap-12">
+              {/* Left content */}
+              <div className="lg:w-1/2 text-center lg:text-left space-y-6">
+                <h2 className="text-3xl sm:text-4xl font-bold text-purple-800 font-playfair-display">
+                  About Vian Clothing Hub
+                </h2>
 
-            <div className="flex flex-col items-center space-y-8">
-              {/* CTA Top */}
-              <Link
-                href="/shop"
-                className="inline-block bg-gold-500 text-purple-800 font-semibold px-6 py-3 rounded-lg hover:bg-gold-600 hover:scale-105 transition-all duration-200"
-                role="button"
-                aria-label="Start shopping at Vian Clothing Hub"
-              >
-                Discover Our Style
-              </Link>
+                <p className="text-base sm:text-lg text-gray-600 max-w-xl mx-auto lg:mx-0">
+                  <span className="text-purple-700 font-semibold">Vian Clothing Hub</span> is Nigeria’s premier online fashion destination, blending vibrant African prints with modern elegance for every occasion.
+                </p>
 
-              {/* Intro */}
-              <p className="text-base sm:text-lg text-gray-600 text-center max-w-3xl">
-                <span className="text-purple-700 font-semibold">Vian Clothing Hub</span> is Nigeria’s premier online fashion destination, blending vibrant African prints with modern elegance for every occasion.
-              </p>
+                <div className="flex justify-center lg:justify-start gap-4">
+                  <Link
+                    href="/shop"
+                    className="bg-gold-500 text-purple-800 font-semibold px-6 py-3 rounded-lg hover:bg-gold-600 hover:scale-105 transition-transform duration-200"
+                    role="button"
+                    aria-label="Start shopping at Vian Clothing Hub"
+                  >
+                    Discover Our Style
+                  </Link>
+                </div>
+              </div>
 
-              {/* Image Carousel */}
-              <div className="w-full max-w-2xl">
+              {/* Right content: Carousel */}
+              <div className="lg:w-1/2 mt-8 lg:mt-0 max-w-xl mx-auto rounded-lg overflow-hidden shadow-lg">
                 <Carousel
                   showThumbs={false}
                   autoPlay
@@ -522,10 +525,9 @@ export default function Home() {
                   interval={4000}
                   showStatus={false}
                   showArrows={true}
-                  className="rounded-lg overflow-hidden"
                 >
                   {galleryImages.map((image, index) => (
-                    <div key={index} className="h-48 sm:h-64 lg:h-80">
+                    <div key={index} className="h-56 sm:h-72 lg:h-80">
                       <img
                         src={image.src}
                         alt={image.alt}
@@ -536,75 +538,76 @@ export default function Home() {
                   ))}
                 </Carousel>
               </div>
+            </div>
 
-              {/* Features */}
-              <div className="w-full space-y-6">
-                <div className="flex items-start gap-4">
-                  <FaShoppingCart className="text-2xl text-purple-700 mt-1 hover:scale-110 transition-transform duration-200" />
-                  <div>
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Curated Collections</h3>
-                    <p className="text-sm sm:text-base text-gray-600">
-                      Shop women’s gowns, men’s traditional attire, unisex streetwear, and African prints like Ankara and Adire.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <FaRulerCombined className="text-2xl text-purple-700 mt-1 hover:scale-110 transition-transform duration-200" />
-                  <div>
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Bespoke Tailoring</h3>
-                    <p className="text-sm sm:text-base text-gray-600">
-                      Create custom outfits with our expert tailors, crafted to your measurements and style.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <FaShippingFast className="text-2xl text-purple-700 mt-1 hover:scale-110 transition-transform duration-200" />
-                  <div>
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Nationwide Delivery</h3>
-                    <p className="text-sm sm:text-base text-gray-600">
-                      Fast, reliable shipping across Nigeria with flexible payments and easy returns.
-                    </p>
-                  </div>
+            {/* Features Grid */}
+            <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-5xl mx-auto">
+              <div className="flex items-start gap-4">
+                <FaShoppingCart className="text-3xl text-purple-700 mt-1 hover:scale-110 transition-transform duration-200" />
+                <div>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Curated Collections</h3>
+                  <p className="text-sm sm:text-base text-gray-600">
+                    Shop women’s gowns, men’s traditional attire, unisex streetwear, and African prints like Ankara and Adire.
+                  </p>
                 </div>
               </div>
 
-              {/* Divider */}
-              <hr className="border-gold-500 w-24 mx-auto" />
-
-              {/* Unique Selling Points */}
-              <div className="text-center">
-                <h3 className="text-lg sm:text-xl font-semibold text-purple-700 mb-4">Why Choose Vian?</h3>
-                <ul className="list-none text-sm sm:text-base text-gray-600 space-y-2 max-w-md mx-auto">
-                  <li>Authentic, high-quality fashion</li>
-                  <li>Nationwide delivery to Lagos, Abuja, and beyond</li>
-                  <li>Secure payments and 7-day returns</li>
-                  <li>Exclusive sales and discounts</li>
-                </ul>
+              <div className="flex items-start gap-4">
+                <FaRulerCombined className="text-3xl text-purple-700 mt-1 hover:scale-110 transition-transform duration-200" />
+                <div>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Bespoke Tailoring</h3>
+                  <p className="text-sm sm:text-base text-gray-600">
+                    Create custom outfits with our expert tailors, crafted to your measurements and style.
+                  </p>
+                </div>
               </div>
 
-              {/* CTAs Bottom */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link
-                  href="/shop"
-                  className="inline-block bg-gold-500 text-purple-800 font-semibold px-6 py-3 rounded-lg hover:bg-gold-600 hover:scale-105 transition-all duration-200"
-                  role="button"
-                  aria-label="Start shopping at Vian Clothing Hub"
-                >
-                  Shop Now
-                </Link>
-                <Link
-                  href="/about"
-                  className="inline-block bg-transparent border-2 border-purple-700 text-purple-700 font-semibold px-6 py-3 rounded-lg hover:bg-purple-700 hover:text-white transition-all duration-200"
-                  role="button"
-                  aria-label="Learn more about Vian Clothing Hub"
-                >
-                  Learn More
-                </Link>
+              <div className="flex items-start gap-4">
+                <FaShippingFast className="text-3xl text-purple-700 mt-1 hover:scale-110 transition-transform duration-200" />
+                <div>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Nationwide Delivery</h3>
+                  <p className="text-sm sm:text-base text-gray-600">
+                    Fast, reliable shipping across Nigeria with flexible payments and easy returns.
+                  </p>
+                </div>
               </div>
             </div>
+
+            {/* Divider */}
+            <hr className="border-gold-500 w-24 mx-auto my-12" />
+
+            {/* Unique Selling Points */}
+            <div className="text-left max-w-md mx-auto space-y-4">
+              <h3 className="text-xl font-semibold text-purple-700">Why Choose Vian?</h3>
+              <ul className="list-disc list-inside text-gray-600 text-base space-y-2">
+                <li>Authentic, high-quality fashion</li>
+                <li>Nationwide delivery to Lagos, Abuja, and beyond</li>
+                <li>Secure payments and 7-day returns</li>
+                <li>Exclusive sales and discounts</li>
+              </ul>
+            </div>
+
+            {/* Bottom CTAs */}
+            <div className="mt-12 flex flex-col sm:flex-row justify-center gap-6 max-w-sm mx-auto">
+              <Link
+                href="/shop"
+                className="bg-gold-500 text-purple-800 font-semibold px-6 py-3 rounded-lg hover:bg-gold-600 hover:scale-105 transition-transform duration-200 text-center"
+                role="button"
+                aria-label="Start shopping at Vian Clothing Hub"
+              >
+                Shop Now
+              </Link>
+              <Link
+                href="/about"
+                className="border-2 border-purple-700 text-purple-700 font-semibold px-6 py-3 rounded-lg hover:bg-purple-700 hover:text-white transition-colors duration-200 text-center"
+                role="button"
+                aria-label="Learn more about Vian Clothing Hub"
+              >
+                Learn More
+              </Link>
+            </div>
           </section>
+
 
           {/* Sticky CTA */}
 
