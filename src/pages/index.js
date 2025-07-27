@@ -3,28 +3,25 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
-import {
-  FaHeart,
-  FaRegHeart,
-  FaShoppingCart,
-  FaStar,
-  FaStarHalfAlt,
-  FaRegStar,
-} from "react-icons/fa";
+import { FaHeart, FaRegHeart, FaShoppingCart, FaStar, FaStarHalfAlt, FaRegStar, FaShippingFast, FaUndo, FaLock } from "react-icons/fa";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/footer";
 import CartPanel from "@/components/CartPanel";
 import Head from "next/head";
 import DressLoader from "@/components/DressLoader";
+import { Carousel } from "react-responsive-carousel";
+import "react-responsive-carousel/lib/styles/carousel.min.css";
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [profile, setProfile] = useState(null);
   const { addToCart, cart } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { toggleWishlist, isInWishlist } = useWishlist();
   const [categories, setCategories] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
+  const [saleProducts, setSaleProducts] = useState([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
@@ -32,6 +29,7 @@ export default function Home() {
   // Skeleton components
   const SkeletonCategory = () => (
     <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-100 animate-pulse">
+      <div className="w-full h-32 sm:h-40 bg-gray-200 rounded-lg mb-4"></div>
       <div className="h-6 bg-gray-200 rounded w-3/4 mx-auto"></div>
     </div>
   );
@@ -40,7 +38,8 @@ export default function Home() {
     <div className="bg-white p-4 sm:p-5 rounded-xl shadow-md border border-gray-100 animate-pulse">
       <div className="w-full h-40 sm:h-48 bg-gray-200 rounded-lg mb-4"></div>
       <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+      <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
     </div>
   );
 
@@ -48,56 +47,73 @@ export default function Home() {
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
-      // Fetch user profile
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("email, avatar_url")
-          .eq("id", user.id)
-          .maybeSingle();
-        setProfile(profileData);
+      try {
+        // Fetch user profile
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profileData, error: profileError } = await supabase
+            .from("profiles")
+            .select("email, avatar_url")
+            .eq("id", user.id)
+            .maybeSingle();
+          if (profileError) throw new Error(profileError.message);
+          setProfile(profileData);
+        }
+
+        // Fetch categories with a sample product image
+        const { data: categoriesData, error: catError } = await supabase
+          .from("categories")
+          .select("id, name, slug, parent_id, products(image_url)")
+          .order("parent_id, name");
+        if (catError) throw new Error(catError.message);
+        setCategories(categoriesData || []);
+
+        // Fetch initial new arrivals
+        const { data: productsData, error: prodError } = await supabase
+          .from("products")
+          .select("id, name, image_url, price, is_on_sale, discount_percentage, is_out_of_stock")
+          .eq("is_new", true)
+          .range(0, 7);
+        if (prodError) throw new Error(prodError.message);
+        setNewArrivals(productsData || []);
+        setHasMore(productsData && productsData.length === 8);
+
+        // Fetch sale products
+        const { data: saleData, error: saleError } = await supabase
+          .from("products")
+          .select("id, name, image_url, price, is_on_sale, discount_percentage, is_out_of_stock")
+          .eq("is_on_sale", true)
+          .limit(6);
+        if (saleError) throw new Error(saleError.message);
+        setSaleProducts(saleData || []);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
-
-      // Fetch categories
-      const { data: categoriesData } = await supabase
-        .from("categories")
-        .select("id, name, slug, parent_id")
-        .order("parent_id, name");
-      setCategories(categoriesData || []);
-
-      // Fetch initial new arrivals
-      const { data: productsData } = await supabase
-        .from("products")
-        .select(
-          "id, name, image_url, price, is_on_sale, discount_percentage, is_out_of_stock"
-        )
-        .eq("is_new", true)
-        .range(0, 7); // Fetch first 8 products
-      setNewArrivals(productsData || []);
-      setHasMore(productsData && productsData.length === 8);
-      setLoading(false);
     }
     fetchData();
   }, []);
 
   // Fetch more products for infinite scroll
   useEffect(() => {
-    if (page === 1) return; // Skip initial fetch
+    if (page === 1) return;
     async function fetchMoreProducts() {
       setIsFetchingMore(true);
-      const { data: productsData } = await supabase
-        .from("products")
-        .select(
-          "id, name, image_url, price, is_on_sale, discount_percentage, is_out_of_stock"
-        )
-        .eq("is_new", true)
-        .range((page - 1) * 8, page * 8 - 1);
-      setNewArrivals((prev) => [...prev, ...(productsData || [])]);
-      setHasMore(productsData && productsData.length === 8);
-      setIsFetchingMore(false);
+      try {
+        const { data: productsData, error } = await supabase
+          .from("products")
+          .select("id, name, image_url, price, is_on_sale, discount_percentage, is_out_of_stock")
+          .eq("is_new", true)
+          .range((page - 1) * 8, page * 8 - 1);
+        if (error) throw new Error(error.message);
+        setNewArrivals((prev) => [...prev, ...(productsData || [])]);
+        setHasMore(productsData && productsData.length === 8);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setIsFetchingMore(false);
+      }
     }
     fetchMoreProducts();
   }, [page]);
@@ -106,8 +122,7 @@ export default function Home() {
   useEffect(() => {
     const handleScroll = () => {
       if (
-        window.innerHeight + window.scrollY >=
-          document.body.offsetHeight - 500 &&
+        window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 &&
         hasMore &&
         !isFetchingMore &&
         !loading
@@ -119,7 +134,56 @@ export default function Home() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [hasMore, isFetchingMore, loading]);
 
+  // Static carousel slides
+  const carouselSlides = [
+    {
+      image: "/hero1.jpg",
+      title: "Discover New Arrivals",
+      subtitle: "Trendy styles for every occasion",
+      cta: "Shop Now",
+      link: "/shop",
+    },
+    {
+      image: "/hero2.jpg",
+      title: "Flash Sale: Up to 50% Off",
+      subtitle: "Grab your favorites before they're gone!",
+      cta: "Shop Sale",
+      link: "/shop?sale=true",
+    },
+    {
+      image: "/hero3.jpg",
+      title: "Custom Orders Tailored for You",
+      subtitle: "Design your dream outfit today",
+      cta: "Create Now",
+      link: "/custom-order",
+    },
+  ];
+
+  // Static testimonials
+  const testimonials = [
+    {
+      name: "Chidinma O.",
+      quote: "Vian’s dresses are stunning and affordable! Fast delivery to Lagos.",
+      rating: 5,
+    },
+    {
+      name: "Ahmed T.",
+      quote: "The custom tailoring was perfect for my event. Highly recommend!",
+      rating: 4.5,
+    },
+    {
+      name: "Funmi A.",
+      quote: "Love the quality and variety. My go-to for Nigerian fashion!",
+      rating: 5,
+    },
+  ];
+
   if (loading) return <DressLoader />;
+  if (error) return (
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <p className="text-red-600 text-lg">Error: {error}</p>
+    </div>
+  );
 
   return (
     <>
@@ -152,28 +216,133 @@ export default function Home() {
         />
         <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-          {/* Hero Banner */}
-          <section className="relative text-center py-12 sm:py-16 md:py-20 mb-8 sm:mb-12">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-purple-800 font-playfair-display">
-              Welcome to Vian Clothing Hub
-            </h1>
-            <p className="text-base sm:text-lg text-black mt-4">
-              Discover Nigeria’s Finest Fashion – Trendy, Authentic, Affordable
-            </p>
-            <Link
-              href="/shop"
-              className="mt-6 inline-block bg-gold-500 text-purple-800 font-semibold px-6 sm:px-8 py-2 sm:py-3 rounded-lg hover:bg-gold-600 transition-colors text-sm sm:text-base"
-              role="button"
-              aria-label="Shop now at Vian Clothing Hub"
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {/* Hero Carousel */}
+          <section className="relative mb-12">
+            <Carousel
+              showThumbs={false}
+              autoPlay
+              infiniteLoop
+              interval={5000}
+              showStatus={false}
+              showArrows={true}
+              className="rounded-xl overflow-hidden"
             >
-              Shop Now
-            </Link>
+              {carouselSlides.map((slide, index) => (
+                <div key={index} className="relative h-64 sm:h-80 md:h-96">
+                  <img
+                    src={slide.image}
+                    alt={slide.title}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-40 flex flex-col items-center justify-center text-center p-4">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white font-playfair-display mb-2">
+                      {slide.title}
+                    </h1>
+                    <p className="text-sm sm:text-base text-white mb-4">{slide.subtitle}</p>
+                    <Link
+                      href={slide.link}
+                      className="bg-gold-500 text-purple-800 font-semibold px-6 py-2 rounded-lg hover:bg-gold-600 transition-colors"
+                      role="button"
+                      aria-label={slide.cta}
+                    >
+                      {slide.cta}
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </Carousel>
           </section>
 
+          {/* Why Shop With Us */}
+          <section className="bg-white rounded-xl shadow-md p-6 sm:p-8 mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-6">
+              Why Shop With Vian?
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div className="flex flex-col items-center text-center">
+                <FaShippingFast className="text-4xl text-purple-700 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900">Nationwide Delivery</h3>
+                <p className="text-sm text-gray-600">Fast shipping to Lagos, Abuja, and beyond.</p>
+              </div>
+              <div className="flex flex-col items-center text-center">
+                <FaUndo className="text-4xl text-purple-700 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900">Easy Returns</h3>
+                <p className="text-sm text-gray-600">Hassle-free returns within 7 days.</p>
+              </div>
+              <div className="flex flex-col items-center text-center">
+                <FaLock className="text-4xl text-purple-700 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900">Secure Payments</h3>
+                <p className="text-sm text-gray-600">Pay safely with card, transfer, or COD.</p>
+              </div>
+            </div>
+          </section>
+
+          {/* Flash Sale Section */}
+          {saleProducts.length > 0 && (
+            <section className="mb-12">
+              <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-6">
+                Flash Sale - Limited Time!
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                {saleProducts.map((product) => (
+                  <div
+                    key={product.id}
+                    className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 relative group"
+                  >
+                    <Link href={`/product/${product.id}`} role="button" aria-label={`View ${product.name} product details`}>
+                      <img
+                        src={product.image_url}
+                        alt={`Image of ${product.name}`}
+                        loading="lazy"
+                        className="w-full h-40 sm:h-48 object-cover rounded-lg mb-4"
+                      />
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{product.name}</h3>
+                      <p className="text-purple-700 font-semibold text-sm sm:text-base">
+                        <span className="line-through text-red-600">₦{Number(product.price).toLocaleString()}</span>
+                        <span className="ml-2 text-green-600">
+                          ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
+                        </span>
+                      </p>
+                    </Link>
+                    <div className="flex items-center mt-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <FaStar key={star} className="text-yellow-400 text-sm" />
+                      ))}
+                    </div>
+                    {product.is_out_of_stock ? (
+                      <span className="text-red-600 text-xs sm:text-sm absolute top-2 right-2 bg-red-100 px-2 py-1 rounded">
+                        Out of Stock
+                      </span>
+                    ) : (
+                      <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => addToCart({ ...product, quantity: 1 })}
+                          className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700"
+                          aria-label={`Add ${product.name} to cart`}
+                        >
+                          <FaShoppingCart />
+                        </button>
+                        <button
+                          onClick={() => toggleWishlist(product.id)}
+                          className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700"
+                          aria-label={isInWishlist(product.id) ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
+                        >
+                          {isInWishlist(product.id) ? <FaHeart /> : <FaRegHeart />}
+                        </button>
+                      </div>
+                    )}
+                    <span className="absolute top-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded">Sale</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* Category Tiles */}
-          <section className="mb-8 sm:mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-6 sm:mb-8">
+          <section className="mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-8">
               Shop by Category
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -185,172 +354,172 @@ export default function Home() {
                     <Link
                       key={category.slug}
                       href={`/category/${category?.slug}`}
-                      className="bg-white p-4 sm:p-6 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 hover:border-purple-200"
+                      className="bg-white p-4 sm:p-6 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 hover:border-purple-200 relative group"
                       role="button"
                       aria-label={`Shop ${category.name} category`}
                     >
-                      <h3 className="text-lg sm:text-xl font-semibold text-purple-700 text-center">
-                        {category.name}
-                      </h3>
+                      <img
+                        src={category.products?.[0]?.image_url || "/placeholder.jpg"}
+                        alt={`${category.name} category`}
+                        className="w-full h-32 sm:h-40 object-cover rounded-lg mb-4 group-hover:scale-105 transition-transform"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <h3 className="text-lg sm:text-xl font-semibold text-white">{category.name}</h3>
+                      </div>
                     </Link>
                   ))}
             </div>
           </section>
 
           {/* New Arrivals */}
-          <section className="mb-8 sm:mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-6 sm:mb-8">
+          <section className="mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-8">
               New Arrivals
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-              {loading
-                ? Array(8)
-                    .fill()
-                    .map((_, index) => <SkeletonProduct key={index} />)
-                : newArrivals.map((product) => (
-                    <Link
-                      key={product.id}
-                      href={`/product/${product.id}`}
-                      className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100"
-                      role="button"
-                      aria-label={`View ${product.name} product details`}
-                    >
-                      <img
-                        src={product.image_url}
-                        alt={`Image of ${product.name}`}
-                        loading="lazy"
-                        className="w-full h-40 sm:h-48 object-cover rounded-lg mb-4"
-                      />
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
-                        {product.name}
-                      </h3>
-                      <p className="text-purple-700 font-semibold text-sm sm:text-base">
-                        {product.is_on_sale ? (
-                          <>
-                            <span className="line-through text-red-600">
-                              ₦{Number(product.price).toLocaleString()}
-                            </span>
-                            <span className="ml-2 text-green-600">
-                              ₦
-                              {(
-                                product.price *
-                                (1 - product.discount_percentage / 100)
-                              ).toLocaleString()}
-                            </span>
-                          </>
-                        ) : (
-                          `₦${Number(product.price).toLocaleString()}`
-                        )}
-                      </p>
-                      {product.is_out_of_stock && (
-                        <span className="text-red-600 text-xs sm:text-sm">
-                          Out of Stock
-                        </span>
+              {newArrivals.map((product) => (
+                <div
+                  key={product.id}
+                  className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 relative group"
+                >
+                  <Link href={`/product/${product.id}`} role="button" aria-label={`View ${product.name} product details`}>
+                    <img
+                      src={product.image_url}
+                      alt={`Image of ${product.name}`}
+                      loading="lazy"
+                      className="w-full h-40 sm:h-48 object-cover rounded-lg mb-4"
+                    />
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{product.name}</h3>
+                    <p className="text-purple-700 font-semibold text-sm sm:text-base">
+                      {product.is_on_sale ? (
+                        <>
+                          <span className="line-through text-red-600">₦{Number(product.price).toLocaleString()}</span>
+                          <span className="ml-2 text-green-600">
+                            ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
+                          </span>
+                        </>
+                      ) : (
+                        `₦${Number(product.price).toLocaleString()}`
                       )}
-                    </Link>
+                    </p>
+                  </Link>
+                  <div className="flex items-center mt-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <FaStar key={star} className="text-yellow-400 text-sm" />
+                    ))}
+                  </div>
+                  {product.is_out_of_stock ? (
+                    <span className="text-red-600 text-xs sm:text-sm absolute top-2 right-2 bg-red-100 px-2 py-1 rounded">
+                      Out of Stock
+                    </span>
+                  ) : (
+                    <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => addToCart({ ...product, quantity: 1 })}
+                        className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700"
+                        aria-label={`Add ${product.name} to cart`}
+                      >
+                        <FaShoppingCart />
+                      </button>
+                      <button
+                        onClick={() => toggleWishlist(product.id)}
+                        className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700"
+                        aria-label={isInWishlist(product.id) ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
+                      >
+                        {isInWishlist(product.id) ? <FaHeart /> : <FaRegHeart />}
+                      </button>
+                    </div>
+                  )}
+                  {product.is_new && (
+                    <span className="absolute top-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded">New</span>
+                  )}
+                </div>
+              ))}
+            </div>
+            {isFetchingMore && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mt-6">
+                {Array(4)
+                  .fill()
+                  .map((_, index) => (
+                    <SkeletonProduct key={index} />
                   ))}
+              </div>
+            )}
+          </section>
+
+          {/* Testimonials */}
+          <section className="bg-white rounded-xl shadow-md p-6 sm:p-8 mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-8">
+              What Our Customers Say
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {testimonials.map((testimonial, index) => (
+                <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <div className="flex items-center mb-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span key={star}>
+                        {star <= Math.floor(testimonial.rating) ? (
+                          <FaStar className="text-yellow-400 text-sm" />
+                        ) : star === Math.ceil(testimonial.rating) && testimonial.rating % 1 !== 0 ? (
+                          <FaStarHalfAlt className="text-yellow-400 text-sm" />
+                        ) : (
+                          <FaRegStar className="text-yellow-400 text-sm" />
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-sm text-gray-600 italic">"{testimonial.quote}"</p>
+                  <p className="text-sm font-semibold text-gray-900 mt-2">{testimonial.name}</p>
+                </div>
+              ))}
             </div>
           </section>
 
           {/* About Section */}
-          <section className="bg-gray-100 p-4 sm:p-6 mb-8 text-left">
-            <h1 className="text-2xl sm:text-3xl font-bold text-purple-700 mb-4">
-              Vian Clothing Hub – Nigeria’s Ultimate Fashion Destination
-            </h1>
-            <p className="text-base sm:text-lg text-gray-600 mb-4">
-              Discover the Best of African & Contemporary Fashion Online
-            </p>
-            <p className="text-sm sm:text-md text-gray-600 mb-4">
-              Welcome to Vian Clothing Hub, your No.1 online fashion store in
-              Nigeria. From trendy ready-to-wear styles to elegant custom
-              pieces, Vian Clothing Hub offers you the convenience of shopping
-              premium-quality fashion items from the comfort of your home,
-              workplace, or even on-the-go.
-            </p>
-            <p className="text-sm sm:text-md text-gray-600 mb-4">
-              Our platform was built for modern Nigerians who want stylish,
-              affordable, and expressive fashion—delivered fast and stress-free.
-              Whether you’re in Lagos, Asaba, Abuja, or anywhere in Nigeria,
-              Vian Clothing Hub delivers style to your doorstep.
-            </p>
-            <p className="text-base sm:text-lg font-semibold text-purple-700 mb-2">
-              🔥 Trendy, Original, and Affordable
-            </p>
-            <p className="text-sm sm:text-md text-gray-600 mb-4">
-              We take pride in offering authentic and stylish fashion that
-              reflects your personality. Whether you’re going to a wedding,
-              brunch, work, church, or simply dressing up for yourself, Vian
-              Clothing Hub has the perfect outfit.
-            </p>
-            <p className="text-sm sm:text-md text-gray-600 mb-4">
-              Shop from our wide collection of:
-            </p>
-            <ul className="list-disc list-inside mt-2 text-gray-600 text-sm sm:text-md">
-              <li>Women’s Ready-to-Wear Gowns, Two-Pieces & Casuals</li>
-              <li>Men’s Traditional & Smart Casual Looks</li>
-              <li>Unisex Streetwear, Jackets, Tees, and Joggers</li>
-              <li>Matching Couple Styles</li>
-              <li>African-Inspired Prints (Ankara, Adire, Aso Oke)</li>
-            </ul>
-            <p className="text-sm sm:text-md text-gray-600">
-              Plus, we stock accessories like handbags, jewelry, headwraps,
-              bonnets, scarves, and more — all made to match your outfits
-              perfectly.
-            </p>
-
-            <p className="text-base sm:text-lg font-semibold text-purple-700 mb-2 mt-4">
-              ✨ What Makes Vian Clothing Hub Special?
-            </p>
-            <ul className="list-disc list-inside text-gray-600 mb-4 text-sm sm:text-md">
-              <li>
-                🎯 Authenticity Guaranteed: Every piece is made or sourced with
-                quality in mind.
-              </li>
-              <li>
-                🚚 Nationwide Delivery: From Lagos to Asaba to Kano — we ship
-                everywhere!
-              </li>
-              <li>
-                💳 Flexible Payments: Pay on delivery or online with your card,
-                transfer, or USSD.
-              </li>
-              <li>
-                ♻️ Easy Returns: Not satisfied? Return it within 7 days. No
-                stress, no wahala.
-              </li>
-              <li>
-                🔥 Flash Sales & Discounts: Enjoy up to 50% off during our Style
-                Weeks.
-              </li>
-              <li>🌍 Made in Nigeria, Loved Everywhere.</li>
-            </ul>
-            <p className="text-base sm:text-lg font-semibold text-purple-700 mb-2">
-              🧵 Custom Orders & Bespoke Tailoring
-            </p>
-            <p className="text-sm sm:text-md text-gray-600 mb-4">
-              Looking for something made just for you? At Vian Clothing Hub, you
-              can place custom orders for events, bridal parties, corporate
-              uniforms, and more. Our talented in-house tailors and fashion
-              designers are ready to bring your dream outfit to life.
-            </p>
-            <p className="text-sm sm:text-md text-gray-600 mb-4">
-              Just send us your measurements and preferred style via WhatsApp or
-              our style form, and we’ll do the magic.
-            </p>
-            <p className="text-base sm:text-lg font-semibold text-purple-700 mb-2">
-              💄 Beauty, Lifestyle & More
-            </p>
-            <p className="text-sm sm:text-md text-gray-600 mb-4">
-              Complete your look with our Vian Beauty and Lifestyle Collection —
-              featuring skincare, wigs, bonnets, beauty sets, and home
-              fragrances to keep you glowing from head to toe.
-            </p>
-            <p className="text-sm sm:text-md text-gray-600 mb-4">
-              📱 Shop On the Go Visit our website anytime, or shop directly via
-              our WhatsApp store. Follow us on social media @vianclothinghub to
-              see new arrivals, style inspiration, and exclusive offers.
-            </p>
+          <section className="bg-gray-100 p-6 sm:p-8 rounded-xl">
+            <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-6">
+              About Vian Clothing Hub
+            </h2>
+            <div className="space-y-6 text-gray-600 text-sm sm:text-base">
+              <p>
+                Welcome to <strong>Vian Clothing Hub</strong>, Nigeria’s premier online fashion destination. From trendy ready-to-wear styles to elegant custom pieces, we offer premium-quality fashion delivered to your doorstep.
+              </p>
+              <p>
+                Shop our curated collections of women’s gowns, men’s traditional attire, unisex streetwear, and African-inspired prints like Ankara and Adire. Complete your look with accessories like handbags, jewelry, and headwraps.
+              </p>
+              <p>
+                Our bespoke tailoring service lets you design custom outfits for events, bridal parties, or corporate needs. Simply send us your measurements via our style form or WhatsApp, and our expert tailors will bring your vision to life.
+              </p>
+              <p>
+                Explore our Vian Beauty and Lifestyle Collection for skincare, wigs, and home fragrances. Follow us on social media <strong>@vianclothinghub</strong> for style inspiration and exclusive offers.
+              </p>
+              <div className="text-center">
+                <Link
+                  href="/shop"
+                  className="inline-block bg-gold-500 text-purple-800 font-semibold px-6 py-3 rounded-lg hover:bg-gold-600 transition-colors"
+                  role="button"
+                  aria-label="Start shopping at Vian Clothing Hub"
+                >
+                  Start Shopping
+                </Link>
+              </div>
+            </div>
           </section>
+
+          {/* Sticky CTA */}
+          <button
+            onClick={() => setIsCartOpen(true)}
+            className="fixed bottom-4 right-4 bg-purple-600 text-white p-4 rounded-full shadow-lg hover:bg-purple-700 transition-colors z-50"
+            aria-label="Open cart"
+          >
+            <FaShoppingCart className="text-xl" />
+            {cart.length > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
+                {cart.length}
+              </span>
+            )}
+          </button>
         </div>
 
         <Footer />
