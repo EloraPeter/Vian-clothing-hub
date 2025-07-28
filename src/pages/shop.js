@@ -18,9 +18,9 @@ export default function Shop() {
     const [productsPerPage] = useState(30);
     const [sortOption, setSortOption] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("");
-const { addToCart, cart } = useCart();
+    const { addToCart, cart } = useCart();
     const [isCartOpen, setIsCartOpen] = useState(false);
-const [categories, setCategories] = useState([]);
+    const [categories, setCategories] = useState([]);
     const { toggleWishlist, isInWishlist } = useWishlist();
 
     // Fetch user profile
@@ -55,16 +55,16 @@ const [categories, setCategories] = useState([]);
     }, []);
 
     useEffect(() => {
-  async function fetchCategories() {
-    const { data: categoriesData, error } = await supabase
-  .from('categories')
-  .select('id, name, slug, parent_id')
-  .order('parent_id, name');
-    if (error) console.error("Error fetching categories:", error.message);
-    else setCategories(categoriesData);
-  }
-  fetchCategories();
-}, []);
+        async function fetchCategories() {
+            const { data: categoriesData, error } = await supabase
+                .from('categories')
+                .select('id, name, slug, parent_id')
+                .order('parent_id, name');
+            if (error) console.error("Error fetching categories:", error.message);
+            else setCategories(categoriesData);
+        }
+        fetchCategories();
+    }, []);
 
 
     // Filter and sort products
@@ -114,7 +114,7 @@ const [categories, setCategories] = useState([]);
             <Navbar
                 profile={profile}
                 onCartClick={() => setIsCartOpen(true)}
-cartItemCount={cart.length}
+                cartItemCount={cart.length}
             />
             <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
             <div className="max-w-7xl mx-auto px-4 py-12">
@@ -128,18 +128,18 @@ cartItemCount={cart.length}
                 {/* Filter/Sort Bar */}
                 <div className="mb-6 flex flex-wrap gap-4">
                     <select
-  value={selectedCategory}
-  onChange={(e) => setSelectedCategory(e.target.value)}
-  className="text-gray-600 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-  aria-label="Filter by category"
->
-  <option value="">All Categories</option>
-  {categories.map((cat) => (
-    <option key={cat.id} value={cat.id}>
-      {cat.name}
-    </option>
-  ))}
-</select>
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="text-gray-600 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        aria-label="Filter by category"
+                    >
+                        <option value="">All Categories</option>
+                        {categories.map((cat) => (
+                            <option key={cat.id} value={cat.id}>
+                                {cat.name}
+                            </option>
+                        ))}
+                    </select>
 
                 </div>
 
@@ -241,8 +241,8 @@ cartItemCount={cart.length}
                                     })}
                                     disabled={product.is_out_of_stock}
                                     className={`mt-4 w-full py-3 rounded-lg flex items-center justify-center gap-2 transition-colors duration-200 font-medium ${product.is_out_of_stock
-                                            ? 'bg-gray-400 cursor-not-allowed text-white'
-                                            : 'bg-purple-600 hover:bg-purple-700 text-white'
+                                        ? 'bg-gray-400 cursor-not-allowed text-white'
+                                        : 'bg-purple-600 hover:bg-purple-700 text-white'
                                         }`}
                                     aria-label={`Add ${product.name} to cart`}
                                 >
@@ -278,7 +278,7 @@ cartItemCount={cart.length}
                 </div>
 
 
-               
+
             </div>
             <Footer />
         </div>
