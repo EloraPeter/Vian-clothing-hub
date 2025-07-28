@@ -457,39 +457,51 @@ export default function CustomOrderForm({ user, profile }) {
       return null;
     }
 
-    return new Promise((resolve, reject) => {
-      const handler = window.PaystackPop.setup({
-        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-        email: form.email,
-        amount: 5000 * 100, // ₦5,000 in kobo
-        currency: 'NGN',
-        ref: `VIAN_CUSTOM_${Date.now()}`,
-        callback: async (response) => {
-          try {
-            const { data, error } = await supabase.functions.invoke('verify-paystack-payment', {
-              body: { reference: response.reference },
-            });
-            if (error || !data?.success) {
-              setMessage('Payment verification failed. Please contact support.');
+    if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      setMessage('A valid email is required for payment.');
+      setLoading(false);
+      return null;
+    }
+
+    try {
+      return await new Promise((resolve, reject) => {
+        const handler = window.PaystackPop.setup({
+          key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
+          email: form.email,
+          amount: 500000, // ₦5,000 in kobo (5000 * 100)
+          currency: 'NGN',
+          ref: `VIAN_CUSTOM_${Date.now()}`,
+          callback: async (response) => {
+            try {
+              const { data, error } = await supabase.functions.invoke('verify-paystack-payment', {
+                body: JSON.stringify({ reference: response.reference }),
+              });
+              if (error || !data?.success) {
+                setMessage('Payment verification failed. Please contact support.');
+                setLoading(false);
+                reject(new Error('Payment verification failed'));
+                return;
+              }
+              resolve(response.reference);
+            } catch (err) {
+              setMessage('Payment processing failed: ' + err.message);
               setLoading(false);
-              reject(new Error('Payment verification failed'));
-              return;
+              reject(err);
             }
-            resolve(response.reference);
-          } catch (err) {
-            setMessage('Payment processing failed: ' + err.message);
+          },
+          onClose: () => {
+            setMessage('Payment cancelled. You can try again.');
             setLoading(false);
-            reject(err);
-          }
-        },
-        onClose: () => {
-          setMessage('Payment cancelled. You can try again.');
-          setLoading(false);
-          reject(new Error('Payment cancelled'));
-        },
+            reject(new Error('Payment cancelled'));
+          },
+        });
+        handler.openIframe();
       });
-      handler.openIframe();
-    });
+    } catch (err) {
+      setMessage('Payment initiation failed: ' + err.message);
+      setLoading(false);
+      return null;
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -604,8 +616,7 @@ export default function CustomOrderForm({ user, profile }) {
   return (
     <div className="bg-white max-w-3xl mx-auto p-8 rounded-lg shadow-lg my-10">
       {renderStepIndicator()}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Script src="https://js.paystack.co/v1/inline.js" strategy="afterInteractive" />
+      <form onSubmit={handleSubmit} className="space-y-6" id="custom-order-form">
         {step === 1 && (
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold text-purple-800">Personal Information</h2>
@@ -773,6 +784,7 @@ export default function CustomOrderForm({ user, profile }) {
         {step === 4 && (
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold text-purple-800">Delivery & Review</h2>
+            <Script src="https://js.paystack.co/v1/inline.js" strategy="lazyOnload" />
             {savedAddresses.length > 0 && (
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700">Select Saved Address</label>
