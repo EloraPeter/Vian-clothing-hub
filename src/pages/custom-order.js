@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/router";
-import { useCart } from "@/context/CartContext";
 import CustomOrderForm from '@/components/CustomOrderForm';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/footer';
@@ -16,7 +15,6 @@ export default function CustomOrderPage() {
   const [error, setError] = useState(null);
   const router = useRouter();
 
-  // Fetch user profile
   useEffect(() => {
     async function fetchProfile() {
       setLoading(true);
@@ -29,7 +27,6 @@ export default function CustomOrderPage() {
         }
 
         setUser(user);
-        console.log("Fetching profile for user ID:", user.id);
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("email, avatar_url")
@@ -39,9 +36,7 @@ export default function CustomOrderPage() {
         if (profileError) {
           console.error("Profile fetch error:", profileError.message);
           setError(profileError.message);
-          setProfile(null);
         } else {
-          console.log("Profile data:", profileData);
           setProfile(profileData || { email: user.email, avatar_url: null });
         }
       } catch (err) {
@@ -52,75 +47,6 @@ export default function CustomOrderPage() {
     }
     fetchProfile();
   }, [router]);
-
-  const initiatePayment = async (formData, callback) => {
-    if (!window.PaystackPop) {
-      setError('Paystack SDK not loaded. Please try again later.');
-      return;
-    }
-
-    const handler = window.PaystackPop.setup({
-      key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-      email: profile?.email || user.email,
-      amount: 5000 * 100, // ₦5,000 in kobo
-      currency: 'NGN',
-      ref: `VIAN_CUSTOM_${Date.now()}`,
-      callback: async (response) => {
-        try {
-          const { error, data } = await supabase.functions.invoke('verify-paystack-payment', {
-            body: { reference: response.reference },
-          });
-          if (error || !data.success) {
-            setError('Payment verification failed. Please contact support.');
-            return;
-          }
-          await callback(response.reference);
-        } catch (err) {
-          setError('Payment processing failed: ' + err.message);
-        }
-      },
-      onClose: () => {
-        setError('Payment cancelled. You can try again or contact support.');
-      },
-    });
-    handler.openIframe();
-  };
-
-  const handleFormSubmit = async (formData) => {
-    if (!user) {
-      setError('You must be logged in to place an order.');
-      return;
-    }
-
-    const submitOrder = async (paymentReference) => {
-      try {
-        const { error } = await supabase.from('custom_orders').insert([
-          {
-            user_id: user.id,
-            full_name: formData.full_name,
-            phone: formData.phone,
-            email: formData.email,
-            fabric: formData.fabric,
-            style: formData.style,
-            measurements: formData.measurements,
-            additional_notes: formData.additional_notes,
-            address: formData.address,
-            deposit: 5000,
-            status: 'pending',
-            created_at: new Date().toISOString(),
-            payment_reference: paymentReference,
-          },
-        ]);
-        if (error) throw error;
-        alert('Payment successful! Custom order placed successfully.');
-        router.push('/dashboard');
-      } catch (err) {
-        setError('Order submission failed: ' + err.message);
-      }
-    };
-
-    await initiatePayment(formData, submitOrder);
-  };
 
   if (loading) return <DressLoader />;
   if (error) return (
@@ -152,10 +78,11 @@ export default function CustomOrderPage() {
       <main className="min-h-screen bg-gray-50">
         <Navbar profile={profile} />
         <div className="container mx-auto px-4 py-8">
-          <h1 className="text-4xl font-bold text-center mb-8 text-purple-800">
-            Design Your Dream Outfit
-          </h1>
-          <CustomOrderForm onSubmit={handleFormSubmit} />
+          <div className="bg-purple-100 rounded-lg p-6 mb-8 text-center">
+            <h1 className="text-4xl font-bold mb-4 text-purple-800">Design Your Dream Outfit</h1>
+            <p className="text-lg text-gray-700">Create a unique piece tailored to your style. A non-refundable ₦5,000 deposit is required to confirm your order.</p>
+          </div>
+          <CustomOrderForm user={user} profile={profile} />
         </div>
         <Footer />
       </main>
