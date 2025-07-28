@@ -6,7 +6,9 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/footer';
 import DressLoader from '@/components/DressLoader';
 import Head from "next/head";
-import Script from "next/script";
+
+// Force dynamic rendering to avoid ISR issues
+export const dynamic = 'force-dynamic';
 
 export default function CustomOrderPage() {
   const [profile, setProfile] = useState(null);
@@ -63,7 +65,6 @@ export default function CustomOrderPage() {
 
   return (
     <>
-      <Script src="https://js.paystack.co/v1/inline.js" strategy="afterInteractive" />
       <Head>
         <title>Custom Order - Vian Clothing Hub</title>
         <meta
