@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
-import { FaHeart, FaRegHeart, FaShoppingCart, FaStar, FaStarHalfAlt, FaRegStar, FaSearch, FaTh, FaList } from "react-icons/fa";
+import { FaHeart, FaRegHeart, FaShoppingCart, FaStar, FaStarHalfAlt, FaRegStar, FaSearch, FaTh, FaList, FaTimes } from "react-icons/fa";
 import { toast, ToastContainer } from 'react-toastify';
 import debounce from 'lodash.debounce';
 import 'react-toastify/dist/ReactToastify.css';
@@ -19,7 +19,7 @@ export default function Shop() {
     const [currentPage, setCurrentPage] = useState(1);
     const [productsPerPage] = useState(30);
     const [sortOption, setSortOption] = useState("");
-    const [selectedCategory, setSelectedCategory] = useState("");
+    const [selectedCategories, setSelectedCategories] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -28,29 +28,46 @@ export default function Shop() {
     const [recentlyViewed, setRecentlyViewed] = useState([]);
     const [viewMode, setViewMode] = useState("grid");
     const [priceRange, setPriceRange] = useState([0, 30000]);
+    const [minPrice, setMinPrice] = useState(0);
+    const [maxPrice, setMaxPrice] = useState(30000);
+    const [ratingFilter, setRatingFilter] = useState("");
+    const [inStockOnly, setInStockOnly] = useState(false);
     const { addToCart, cart } = useCart();
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [categories, setCategories] = useState([]);
     const { toggleWishlist, isInWishlist } = useWishlist();
     const [totalProducts, setTotalProducts] = useState(0);
+    const [searchSuggestions, setSearchSuggestions] = useState([]);
+    const [reviews, setReviews] = useState([]);
     const modalRef = useRef(null);
+    const searchInputRef = useRef(null);
 
     // Load preferences from local storage
     useEffect(() => {
-        const savedCategory = localStorage.getItem('selectedCategory');
-        const savedSort = localStorage.getItem('sortOption');
-        const savedViewMode = localStorage.getItem('viewMode');
-        if (savedCategory) setSelectedCategory(savedCategory);
-        if (savedSort) setSortOption(savedSort);
-        if (savedViewMode) setViewMode(savedViewMode);
+        const saved = JSON.parse(localStorage.getItem('shopFilters') || '{}');
+        if (saved.selectedCategories) setSelectedCategories(saved.selectedCategories);
+        if (saved.sortOption) setSortOption(saved.sortOption);
+        if (saved.viewMode) setViewMode(saved.viewMode);
+        if (saved.priceRange) setPriceRange(saved.priceRange);
+        if (saved.minPrice) setMinPrice(saved.minPrice);
+        if (saved.maxPrice) setMaxPrice(saved.maxPrice);
+        if (saved.ratingFilter) setRatingFilter(saved.ratingFilter);
+        if (saved.inStockOnly !== undefined) setInStockOnly(saved.inStockOnly);
     }, []);
 
     // Save preferences to local storage
     useEffect(() => {
-        localStorage.setItem('selectedCategory', selectedCategory);
-        localStorage.setItem('sortOption', sortOption);
-        localStorage.setItem('viewMode', viewMode);
-    }, [selectedCategory, sortOption, viewMode]);
+        localStorage.setItem('shopFilters', JSON.stringify({
+            selectedCategories,
+            sortOption,
+            viewMode,
+            priceRange,
+            minPrice,
+            maxPrice,
+            ratingFilter,
+            inStockOnly
+        }));
+    }, [selectedCategories, sortOption, viewMode, priceRange, minPrice, maxPrice, ratingFilter, inStockOnly]);
 
     // Fetch user profile
     useEffect(() => {
@@ -63,43 +80,62 @@ export default function Shop() {
                     .eq("id", user.id)
                     .maybeSingle();
                 if (!profileError) setProfile(profileData);
-                else console.error("Profile fetch error:", profileError.message);
-            } else if (userError) console.error("User fetch error:", userError.message);
+                else {
+                    console.error("Profile fetch error:", profileError.message);
+                    toast.error("Failed to load profile.");
+                }
+            } else if (userError) {
+                console.error("User fetch error:", userError.message);
+                toast.error("Failed to load user data.");
+            }
         }
         fetchProfile();
     }, []);
 
-    // Fetch products with pagination and count
+    // Fetch products and reviews
     useEffect(() => {
-        async function fetchProducts() {
+        async function fetchData() {
             setLoading(true);
-            let query = supabase
-                .from('products')
-                .select('*, product_images(image_url)', { count: 'exact' })
-                .ilike('name', `%${searchQuery}%`);
-            if (selectedCategory) query = query.eq('category_id', selectedCategory);
-            query = query.gte('price', priceRange[0]).lte('price', priceRange[1]);
-            query = query.range((currentPage - 1) * productsPerPage, currentPage * productsPerPage - 1);
-            const { data, error, count } = await query;
-            if (error) console.error("Error fetching products:", error.message);
-            else {
-                setProducts((prev) => currentPage === 1 ? data : [...prev, ...data]);
+            const [{ data: productData, error: productError, count }, { data: reviewData, error: reviewError }] = await Promise.all([
+                supabase
+                    .from('products')
+                    .select('*, product_images(image_url)', { count: 'exact' })
+                    .range((currentPage - 1) * productsPerPage, currentPage * productsPerPage - 1),
+                supabase
+                    .from('reviews')
+                    .select('product_id, rating')
+            ]);
+            if (productError) {
+                console.error("Error fetching products:", productError.message);
+                toast.error("Failed to load products.");
+            } else {
+                setProducts((prev) => currentPage === 1 ? productData : [...prev, ...productData]);
                 setTotalProducts(count);
+            }
+            if (reviewError) {
+                console.error("Error fetching reviews:", reviewError.message);
+                toast.error("Failed to load reviews.");
+            } else {
+                setReviews(reviewData);
             }
             setLoading(false);
         }
-        fetchProducts();
-    }, [searchQuery, currentPage, selectedCategory, priceRange]);
+        fetchData();
+    }, [currentPage]);
 
     // Fetch categories
     useEffect(() => {
         async function fetchCategories() {
             const { data: categoriesData, error } = await supabase
                 .from('categories')
-                .select('id, name, slug, parent_id, image_url')
+                .select('id, name, slug, parent_id')
                 .order('parent_id, name');
-            if (error) console.error("Error fetching categories:", error.message);
-            else setCategories(categoriesData);
+            if (error) {
+                console.error("Error fetching categories:", error.message);
+                toast.error("Failed to load categories.");
+            } else {
+                setCategories(categoriesData);
+            }
         }
         fetchCategories();
     }, []);
@@ -107,22 +143,50 @@ export default function Shop() {
     // Fetch related products
     useEffect(() => {
         async function fetchRelatedProducts() {
-            const { data, error } = await supabase
-                .from('products')
-                .select('*, product_images(image_url)')
-                .eq('category_id', selectedCategory)
-                .limit(4);
-            if (error) console.error("Error fetching related products:", error.message);
-            else setRelatedProducts(data);
+            if (selectedCategories.length > 0) {
+                const { data, error } = await supabase
+                    .from('products')
+                    .select('*, product_images(image_url)')
+                    .in('category_id', selectedCategories)
+                    .limit(4);
+                if (error) {
+                    console.error("Error fetching related products:", error.message);
+                    toast.error("Failed to load related products.");
+                } else {
+                    setRelatedProducts(data);
+                }
+            } else {
+                setRelatedProducts([]);
+            }
         }
-        if (selectedCategory) fetchRelatedProducts();
-    }, [selectedCategory]);
+        fetchRelatedProducts();
+    }, [selectedCategories]);
 
     // Load recently viewed from local storage
     useEffect(() => {
         const saved = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
         setRecentlyViewed(saved);
     }, []);
+
+    // Search suggestions
+    useEffect(() => {
+        const suggestions = [
+            ...new Set([
+                ...products.map(p => p.name),
+                ...products.map(p => p.old_category).filter(Boolean),
+                ...categories.map(c => c.name)
+            ])
+        ].filter(item => item.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 5);
+        setSearchSuggestions(searchQuery ? suggestions : []);
+    }, [searchQuery, products, categories]);
+
+    // Compute average ratings
+    const getAverageRating = useCallback((productId) => {
+        const productReviews = reviews.filter(r => r.product_id === productId);
+        if (productReviews.length === 0) return 0;
+        const total = productReviews.reduce((sum, r) => sum + r.rating, 0);
+        return total / productReviews.length;
+    }, [reviews]);
 
     // Memoized renderStars function
     const renderStars = useCallback((rating) => {
@@ -139,9 +203,22 @@ export default function Shop() {
         return stars;
     }, []);
 
-    // Filter and sort products
+    // Client-side filtering
     const displayedProducts = useMemo(() => {
         let result = [...products];
+        if (searchQuery) {
+            result = result.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+        }
+        if (selectedCategories.length > 0) {
+            result = result.filter(p => selectedCategories.includes(p.category_id));
+        }
+        if (inStockOnly) {
+            result = result.filter(p => !p.is_out_of_stock);
+        }
+        result = result.filter(p => p.price >= minPrice && p.price <= maxPrice);
+        if (ratingFilter) {
+            result = result.filter(p => getAverageRating(p.id) >= parseInt(ratingFilter));
+        }
         if (sortOption === "price-asc") {
             result.sort((a, b) => a.price - b.price);
         } else if (sortOption === "price-desc") {
@@ -149,10 +226,21 @@ export default function Shop() {
         } else if (sortOption === "newest") {
             result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         } else if (sortOption === "rating") {
-            result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            result.sort((a, b) => getAverageRating(b.id) - getAverageRating(a.id));
         }
         return result;
-    }, [products, sortOption]);
+    }, [products, searchQuery, selectedCategories, inStockOnly, minPrice, maxPrice, ratingFilter, sortOption, getAverageRating]);
+
+    // Group products by category for carousels
+    const categoryGroups = useMemo(() => {
+        const groups = {};
+        products.forEach(p => {
+            const catName = p.old_category || categories.find(c => c.id === p.category_id)?.name || 'Other';
+            if (!groups[catName]) groups[catName] = [];
+            groups[catName].push(p);
+        });
+        return groups;
+    }, [products, categories]);
 
     // Calculate total pages
     const totalPages = Math.ceil(totalProducts / productsPerPage);
@@ -177,8 +265,7 @@ export default function Shop() {
     const debouncedSearch = useCallback(
         debounce((query) => {
             setSearchQuery(query);
-            setCurrentPage(1);
-        }, 500),
+        }, 300),
         []
     );
 
@@ -204,6 +291,18 @@ export default function Shop() {
 
     const closeQuickView = useCallback(() => {
         setQuickViewProduct(null);
+    }, []);
+
+    // Reset filters
+    const resetFilters = useCallback(() => {
+        setSelectedCategories([]);
+        setPriceRange([0, 30000]);
+        setMinPrice(0);
+        setMaxPrice(30000);
+        setRatingFilter("");
+        setInStockOnly(false);
+        setSearchQuery("");
+        setCurrentPage(1);
     }, []);
 
     // Focus trap for modal
@@ -243,7 +342,7 @@ export default function Shop() {
         "@context": "https://schema.org/",
         "@type": "Product",
         "name": product.name,
-        "image": product.image_url,
+        "image": product.image_url.startsWith('data:image') ? '/path/to/placeholder.jpg' : product.image_url,
         "description": product.description,
         "sku": product.id,
         "offers": {
@@ -255,6 +354,11 @@ export default function Shop() {
             "availability": product.is_out_of_stock
                 ? "https://schema.org/OutOfStock"
                 : "https://schema.org/InStock"
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": getAverageRating(product.id).toFixed(1),
+            "reviewCount": reviews.filter(r => r.product_id === product.id).length
         }
     }));
 
@@ -272,14 +376,14 @@ export default function Shop() {
                 cartItemCount={cart.length}
             />
             <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-            <div className=" mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Promotional Banner */}
                 {products.some(p => p.is_on_sale) && (
                     <div className="mb-12 relative rounded-xl overflow-hidden">
                         <img
                             src="/path/to/sale-banner.jpg"
                             alt="Sale Promotion"
-                            className="w-full h-100 object-cover"
+                            className="w-full h-64 object-cover"
                             loading="lazy"
                         />
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -289,6 +393,7 @@ export default function Shop() {
                                 <button
                                     className="mt-4 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
                                     aria-label="Shop sale items"
+                                    onClick={() => setSelectedCategories(categories.filter(c => products.some(p => p.is_on_sale && p.category_id === c.id)).map(c => c.id))}
                                 >
                                     Shop Now
                                 </button>
@@ -297,17 +402,37 @@ export default function Shop() {
                     </div>
                 )}
 
-                {/* Search Bar */}
-                <div className="mb-8">
+                {/* Search Bar with Suggestions */}
+                <div className="mb-8 relative">
                     <div className="relative max-w-3xl mx-auto">
                         <input
                             type="text"
-                            placeholder="Search products..."
+                            placeholder="Search products or categories..."
                             onChange={(e) => debouncedSearch(e.target.value)}
                             className="w-full p-3 pl-10 text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                            aria-label="Search products"
+                            aria-label="Search products or categories"
+                            ref={searchInputRef}
                         />
                         <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        {searchSuggestions.length > 0 && (
+                            <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-lg mt-1 shadow-lg">
+                                {searchSuggestions.map((suggestion, index) => (
+                                    <li
+                                        key={index}
+                                        className="p-2 hover:bg-purple-100 cursor-pointer"
+                                        onClick={() => {
+                                            setSearchQuery(suggestion);
+                                            setSearchSuggestions([]);
+                                            searchInputRef.current.focus();
+                                        }}
+                                        role="option"
+                                        aria-label={`Select ${suggestion}`}
+                                    >
+                                        {suggestion}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
                 </div>
 
@@ -321,19 +446,6 @@ export default function Shop() {
                         >
                             Filters
                         </button>
-                        <select
-                            value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="p-2 text-gray-700 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                            aria-label="Select product category"
-                        >
-                            <option value="">All Categories</option>
-                            {categories.map((cat) => (
-                                <option key={cat.id} value={cat.id}>
-                                    {cat.name}
-                                </option>
-                            ))}
-                        </select>
                         <select
                             value={sortOption}
                             onChange={(e) => setSortOption(e.target.value)}
@@ -352,6 +464,13 @@ export default function Shop() {
                             aria-label="Toggle advanced filters"
                         >
                             Advanced Filters
+                        </button>
+                        <button
+                            className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                            onClick={resetFilters}
+                            aria-label="Clear all filters"
+                        >
+                            Clear Filters
                         </button>
                         <div className="flex gap-2">
                             <button
@@ -375,20 +494,52 @@ export default function Shop() {
                             <h3 className="text-lg font-semibold mb-4">Filters</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Price Range (₦{priceRange[0]} - ₦{priceRange[1]})</label>
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="30000"
-                                        value={priceRange[1]}
-                                        onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-                                        className="w-full"
-                                        aria-label="Filter by price range"
-                                    />
+                                    <label className="block text-sm font-medium text-gray-700">Categories</label>
+                                    <div className="max-h-64 overflow-y-auto">
+                                        {categories.map((cat) => (
+                                            <div key={cat.id} className="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedCategories.includes(cat.id)}
+                                                    onChange={() => {
+                                                        setSelectedCategories(prev =>
+                                                            prev.includes(cat.id)
+                                                                ? prev.filter(id => id !== cat.id)
+                                                                : [...prev, cat.id]
+                                                        );
+                                                    }}
+                                                    className="h-4 w-4 text-purple-600 focus:ring-purple-600"
+                                                    aria-label={`Filter by ${cat.name}`}
+                                                />
+                                                <span className={cat.parent_id ? 'ml-4' : ''}>{cat.name}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Price Range (₦{minPrice} - ₦{maxPrice})</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="number"
+                                            value={minPrice}
+                                            onChange={(e) => setMinPrice(Math.max(0, parseInt(e.target.value) || 0))}
+                                            className="p-2 border border-gray-200 rounded-lg w-full"
+                                            aria-label="Minimum price"
+                                        />
+                                        <input
+                                            type="number"
+                                            value={maxPrice}
+                                            onChange={(e) => setMaxPrice(Math.min(30000, parseInt(e.target.value) || 30000))}
+                                            className="p-2 border border-gray-200 rounded-lg w-full"
+                                            aria-label="Maximum price"
+                                        />
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Rating</label>
                                     <select
+                                        value={ratingFilter}
+                                        onChange={(e) => setRatingFilter(e.target.value)}
                                         className="p-2 border border-gray-200 rounded-lg w-full"
                                         aria-label="Filter by rating"
                                     >
@@ -397,138 +548,276 @@ export default function Shop() {
                                         <option value="3">3+ Stars</option>
                                     </select>
                                 </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Availability</label>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={inStockOnly}
+                                            onChange={() => setInStockOnly(!inStockOnly)}
+                                            className="h-4 w-4 text-purple-600 focus:ring-purple-600"
+                                            aria-label="Show in stock only"
+                                        />
+                                        <span>In Stock Only</span>
+                                    </div>
+                                </div>
                             </div>
-                            <button
-                                className="mt-4 p-2 bg-purple-600 text-white rounded-lg"
-                                onClick={() => {
-                                    setIsFilterOpen(false);
-                                    setIsMobileFilterOpen(false);
-                                }}
-                                aria-label="Apply filters"
-                            >
-                                Apply Filters
-                            </button>
+                            <div className="mt-4 flex gap-2">
+                                <button
+                                    className="p-2 bg-purple-600 text-white rounded-lg"
+                                    onClick={() => {
+                                        setIsFilterOpen(false);
+                                        setIsMobileFilterOpen(false);
+                                    }}
+                                    aria-label="Apply filters"
+                                >
+                                    Apply Filters
+                                </button>
+                                <button
+                                    className="p-2 bg-red-600 text-white rounded-lg"
+                                    onClick={resetFilters}
+                                    aria-label="Clear all filters"
+                                >
+                                    Clear Filters
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
 
-                {/* Product Grid/List */}
-                <div
-                    className={viewMode === "grid"
-                        ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6"
-                        : "space-y-6"}
-                    aria-live="polite"
-                >
-                    {displayedProducts.length > 0 ? (
-                        displayedProducts.map((product) => (
-                            <div
-                                key={product.id}
-                                className={viewMode === "grid"
-                                    ? "bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-300 relative group"
-                                    : "bg-white p-6 rounded-xl shadow-md flex flex-col sm:flex-row gap-6 border border-gray-100 hover:border-purple-300"}
-                                role="article"
-                                aria-label={`Product: ${product.name}${product.is_on_sale ? `, on sale with ${product.discount_percentage}% off` : ''}`}
-                            >
-                                <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
-                                    {product.is_on_sale && (
-                                        <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-sm">
-                                            Sale {product.discount_percentage}% Off
-                                        </span>
-                                    )}
-                                    {product.is_out_of_stock && (
-                                        <span className="bg-gray-600 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-sm">
-                                            Out of Stock
-                                        </span>
-                                    )}
-                                    {product.is_new && (
-                                        <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-sm">
-                                            New
-                                        </span>
-                                    )}
-                                </div>
-                                <button
-                                    onClick={() => handleToggleWishlist(product)}
-                                    className="absolute top-4 right-4 z-10 p-2 bg-white/90 rounded-full hover:bg-red-100 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
-                                    aria-label={isInWishlist(product.id) ? "Remove from wishlist" : "Add to wishlist"}
+                {/* Category Carousels */}
+                {Object.keys(categoryGroups).map(catName => (
+                    <div key={catName} className="mt-12">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-6">Shop {catName}</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {categoryGroups[catName].slice(0, 4).map((product) => (
+                                <div
+                                    key={product.id}
+                                    className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-300 relative group"
+                                    role="article"
+                                    aria-label={`Product: ${product.name}${product.is_on_sale ? `, on sale with ${product.discount_percentage}% off` : ''}`}
                                 >
-                                    {isInWishlist(product.id) ? (
-                                        <FaHeart className="text-red-500 w-5 h-5" />
-                                    ) : (
-                                        <FaRegHeart className="text-gray-400 group-hover:text-red-400 w-5 h-5" />
-                                    )}
-                                </button>
-                                <a href={`/product/${product.id}`} className="block">
-                                    <div className={viewMode === "grid" ? "relative overflow-hidden rounded-xl aspect-[3/4] mb-4" : "relative overflow-hidden rounded-xl w-full sm:w-1/3 aspect-[3/4]"}>
-                                        <img
-                                            src={product.image_url.startsWith('data:image') ? '/path/to/placeholder.jpg' : product.image_url}
-                                            srcSet={product.image_url.startsWith('data:image') ? undefined : `${product.image_url}?format=webp&w=300 300w, ${product.image_url}?format=webp&w=600 600w`}
-                                            sizes="(max-width: 600px) 300px, 600px"
-                                            alt={product.name}
-                                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                            loading="lazy"
-                                        />
-                                        <button
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                openQuickView(product);
-                                            }}
-                                            className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white text-purple-600 px-4 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                                            aria-label={`Quick view ${product.name}`}
-                                        >
-                                            Quick View
-                                        </button>
-                                    </div>
-                                </a>
-                                <div className={viewMode === "grid" ? "space-y-2" : "flex-1 space-y-2"}>
-                                    <h2 className={viewMode === "grid" ? "text-2xl font-bold text-gray-900 line-clamp-1" : "text-xl font-bold text-gray-900 line-clamp-2"}>{product.name}</h2>
-                                    <div className="flex gap-2 items-center">
-                                        <div className="flex gap-0.5">{renderStars(product.rating || 0)}</div>
-                                        <span className="text-gray-500 text-sm">({product.review_count || 0} reviews)</span>
-                                    </div>
-                                    <p className="text-gray-500 text-sm font-light line-clamp-2 min-h-[48px]">
-                                        {product.description}
-                                    </p>
-                                    <div className="text-xl font-semibold">
-                                        {product.discount_percentage > 0 ? (
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-gray-500 line-through">
-                                                    ₦{Number(product.price).toLocaleString()}
-                                                </span>
-                                                <span className="text-green-600">
-                                                    ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
-                                                </span>
-                                            </div>
-                                        ) : (
-                                            <span className="text-purple-700">
-                                                ₦{Number(product.price).toLocaleString()}
+                                    <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
+                                        {product.is_on_sale && (
+                                            <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-sm">
+                                                Sale {product.discount_percentage}% Off
+                                            </span>
+                                        )}
+                                        {product.is_out_of_stock && (
+                                            <span className="bg-gray-600 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-sm">
+                                                Out of Stock
+                                            </span>
+                                        )}
+                                        {product.is_new && (
+                                            <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-sm">
+                                                New
                                             </span>
                                         )}
                                     </div>
                                     <button
-                                        onClick={() => addToCart({
-                                            ...product,
-                                            quantity: 1,
-                                            is_on_sale: product.is_on_sale,
-                                            discount_percentage: product.discount_percentage,
-                                            is_out_of_stock: product.is_out_of_stock,
-                                        })}
-                                        disabled={product.is_out_of_stock}
-                                        className={`mt-4 w-full py-3 rounded-lg flex items-center justify-center gap-2 font-medium ${
-                                            product.is_out_of_stock
-                                                ? 'bg-gray-400 cursor-not-allowed text-white'
-                                                : 'bg-purple-600 hover:bg-purple-700 text-white'
-                                        }`}
-                                        aria-label={`Add ${product.name} to cart`}
+                                        onClick={() => handleToggleWishlist(product)}
+                                        className="absolute top-4 right-4 z-10 p-2 bg-white/90 rounded-full hover:bg-red-100 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
+                                        aria-label={isInWishlist(product.id) ? "Remove from wishlist" : "Add to wishlist"}
                                     >
-                                        <FaShoppingCart className="w-4 h-4" />
-                                        <span>{product.is_out_of_stock ? 'Out of Stock' : 'Add to Cart'}</span>
+                                        {isInWishlist(product.id) ? (
+                                            <FaHeart className="text-red-500 w-5 h-5" />
+                                        ) : (
+                                            <FaRegHeart className="text-gray-400 group-hover:text-red-400 w-5 h-5" />
+                                        )}
                                     </button>
+                                    <a href={`/product/${product.id}`} className="block">
+                                        <div className="relative overflow-hidden rounded-xl aspect-[3/4] mb-4">
+                                            <img
+                                                src={product.image_url.startsWith('data:image') ? '/path/to/placeholder.jpg' : product.image_url}
+                                                srcSet={product.image_url.startsWith('data:image') ? undefined : `${product.image_url}?format=webp&w=300 300w, ${product.image_url}?format=webp&w=600 600w`}
+                                                sizes="(max-width: 600px) 300px, 600px"
+                                                alt={product.name}
+                                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                loading="lazy"
+                                            />
+                                            <button
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    openQuickView(product);
+                                                }}
+                                                className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white text-purple-600 px-4 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                                aria-label={`Quick view ${product.name}`}
+                                            >
+                                                Quick View
+                                            </button>
+                                        </div>
+                                    </a>
+                                    <div className="space-y-2">
+                                        <h2 className="text-2xl font-bold text-gray-900 line-clamp-1">{product.name}</h2>
+                                        <div className="flex gap-2 items-center">
+                                            <div className="flex gap-0.5">{renderStars(getAverageRating(product.id))}</div>
+                                            <span className="text-gray-500 text-sm">({reviews.filter(r => r.product_id === product.id).length} reviews)</span>
+                                        </div>
+                                        <p className="text-gray-500 text-sm font-light line-clamp-2 min-h-[48px]">
+                                            {product.description}
+                                        </p>
+                                        <div className="text-xl font-semibold">
+                                            {product.discount_percentage > 0 ? (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-gray-500 line-through">
+                                                        ₦{Number(product.price).toLocaleString()}
+                                                    </span>
+                                                    <span className="text-green-600">
+                                                        ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span className="text-purple-700">
+                                                    ₦{Number(product.price).toLocaleString()}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={() => addToCart({
+                                                ...product,
+                                                quantity: 1,
+                                                is_on_sale: product.is_on_sale,
+                                                discount_percentage: product.discount_percentage,
+                                                is_out_of_stock: product.is_out_of_stock,
+                                            })}
+                                            disabled={product.is_out_of_stock}
+                                            className={`mt-4 w-full py-3 rounded-lg flex items-center justify-center gap-2 font-medium ${
+                                                product.is_out_of_stock
+                                                    ? 'bg-gray-400 cursor-not-allowed text-white'
+                                                    : 'bg-purple-600 hover:bg-purple-700 text-white'
+                                            }`}
+                                            aria-label={`Add ${product.name} to cart`}
+                                        >
+                                            <FaShoppingCart className="w-4 h-4" />
+                                            <span>{product.is_out_of_stock ? 'Out of Stock' : 'Add to Cart'}</span>
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))
-                    ) : (
-                        <p className="text-center text-gray-600 col-span-full">No products available.</p>
-                    )}
+                            ))}
+                        </div>
+                    </div>
+                ))}
+
+                {/* All Products */}
+                <div className="mt-12">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-6">All Products</h2>
+                    <div
+                        className={viewMode === "grid"
+                            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6"
+                            : "space-y-6"}
+                        aria-live="polite"
+                    >
+                        {displayedProducts.length > 0 ? (
+                            displayedProducts.map((product) => (
+                                <div
+                                    key={product.id}
+                                    className={viewMode === "grid"
+                                        ? "bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-300 relative group"
+                                        : "bg-white p-6 rounded-xl shadow-md flex flex-col sm:flex-row gap-6 border border-gray-100 hover:border-purple-300"}
+                                    role="article"
+                                    aria-label={`Product: ${product.name}${product.is_on_sale ? `, on sale with ${product.discount_percentage}% off` : ''}`}
+                                >
+                                    <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
+                                        {product.is_on_sale && (
+                                            <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-sm">
+                                                Sale {product.discount_percentage}% Off
+                                            </span>
+                                        )}
+                                        {product.is_out_of_stock && (
+                                            <span className="bg-gray-600 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-sm">
+                                                Out of Stock
+                                            </span>
+                                        )}
+                                        {product.is_new && (
+                                            <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-sm">
+                                                New
+                                            </span>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={() => handleToggleWishlist(product)}
+                                        className="absolute top-4 right-4 z-10 p-2 bg-white/90 rounded-full hover:bg-red-100 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
+                                        aria-label={isInWishlist(product.id) ? "Remove from wishlist" : "Add to wishlist"}
+                                    >
+                                        {isInWishlist(product.id) ? (
+                                            <FaHeart className="text-red-500 w-5 h-5" />
+                                        ) : (
+                                            <FaRegHeart className="text-gray-400 group-hover:text-red-400 w-5 h-5" />
+                                        )}
+                                    </button>
+                                    <a href={`/product/${product.id}`} className="block">
+                                        <div className={viewMode === "grid" ? "relative overflow-hidden rounded-xl aspect-[3/4] mb-4" : "relative overflow-hidden rounded-xl w-full sm:w-1/3 aspect-[3/4]"}>
+                                            <img
+                                                src={product.image_url.startsWith('data:image') ? '/path/to/placeholder.jpg' : product.image_url}
+                                                srcSet={product.image_url.startsWith('data:image') ? undefined : `${product.image_url}?format=webp&w=300 300w, ${product.image_url}?format=webp&w=600 600w`}
+                                                sizes="(max-width: 600px) 300px, 600px"
+                                                alt={product.name}
+                                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                loading="lazy"
+                                            />
+                                            <button
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    openQuickView(product);
+                                                }}
+                                                className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white text-purple-600 px-4 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                                aria-label={`Quick view ${product.name}`}
+                                            >
+                                                Quick View
+                                            </button>
+                                        </div>
+                                    </a>
+                                    <div className={viewMode === "grid" ? "space-y-2" : "flex-1 space-y-2"}>
+                                        <h2 className={viewMode === "grid" ? "text-2xl font-bold text-gray-900 line-clamp-1" : "text-xl font-bold text-gray-900 line-clamp-2"}>{product.name}</h2>
+                                        <div className="flex gap-2 items-center">
+                                            <div className="flex gap-0.5">{renderStars(getAverageRating(product.id))}</div>
+                                            <span className="text-gray-500 text-sm">({reviews.filter(r => r.product_id === product.id).length} reviews)</span>
+                                        </div>
+                                        <p className="text-gray-500 text-sm font-light line-clamp-2 min-h-[48px]">
+                                            {product.description}
+                                        </p>
+                                        <div className="text-xl font-semibold">
+                                            {product.discount_percentage > 0 ? (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-gray-500 line-through">
+                                                        ₦{Number(product.price).toLocaleString()}
+                                                    </span>
+                                                    <span className="text-green-600">
+                                                        ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span className="text-purple-700">
+                                                    ₦{Number(product.price).toLocaleString()}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={() => addToCart({
+                                                ...product,
+                                                quantity: 1,
+                                                is_on_sale: product.is_on_sale,
+                                                discount_percentage: product.discount_percentage,
+                                                is_out_of_stock: product.is_out_of_stock,
+                                            })}
+                                            disabled={product.is_out_of_stock}
+                                            className={`mt-4 w-full py-3 rounded-lg flex items-center justify-center gap-2 font-medium ${
+                                                product.is_out_of_stock
+                                                    ? 'bg-gray-400 cursor-not-allowed text-white'
+                                                    : 'bg-purple-600 hover:bg-purple-700 text-white'
+                                            }`}
+                                            aria-label={`Add ${product.name} to cart`}
+                                        >
+                                            <FaShoppingCart className="w-4 h-4" />
+                                            <span>{product.is_out_of_stock ? 'Out of Stock' : 'Add to Cart'}</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-center text-gray-600 col-span-full">No products match your filters.</p>
+                        )}
+                    </div>
                 </div>
 
                 {/* Pagination */}
@@ -660,7 +949,7 @@ export default function Shop() {
                             )}
                             <button
                                 onClick={() => addToCart({
-                                    ...quickViewProduct,
+                                    ...product,
                                     quantity: 1,
                                     is_on_sale: quickViewProduct.is_on_sale,
                                     discount_percentage: quickViewProduct.discount_percentage,
