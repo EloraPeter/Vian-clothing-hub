@@ -1,0 +1,1 @@
+INSERT INTO "public"."order_items" ("id", "order_id", "product_id", "quantity", "created_at") VALUES ('39ece16e-161b-4be0-a022-bebd27f23b7b', '9448bf48-064e-476c-9d40-54975a7edac6', '3', '1', '2025-07-22 14:41:16.377902+00');
