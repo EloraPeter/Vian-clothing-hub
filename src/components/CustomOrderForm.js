@@ -218,7 +218,7 @@ export default function CustomOrderForm({ user, profile }) {
           if (!response.ok) throw new Error('Reverse geocoding failed');
           const data = await response.json();
           if (data.display_name) {
-            setForm((prev) => ({ ...prev, address: data.display_name, lat: parseFloat(lat), lng: parseFloat(lng) }));
+            setForm((prev) => ({ ...prev, address: data.display_name, lat: parseFloat(lat), lng: parseFloat(lon) }));
             setSelectedAddressId('');
             setIsEditingAddress(false);
             setEditAddressId(null);
@@ -254,10 +254,15 @@ export default function CustomOrderForm({ user, profile }) {
   };
 
   const createAdminNotification = async (message) => {
-    const { data: adminProfiles } = await supabase
+    const { data: adminProfiles, error } = await supabase
       .from('profiles')
       .select('id')
       .eq('is_admin', true);
+    
+    if (error) {
+      console.error('Error fetching admin profiles:', error.message);
+      return;
+    }
     
     if (adminProfiles) {
       for (const admin of adminProfiles) {
@@ -447,42 +452,46 @@ export default function CustomOrderForm({ user, profile }) {
     }
   };
 
-  const initiatePayment = async (callback) => {
+  const initiatePayment = async () => {
     if (!window.PaystackPop) {
       setMessage('Paystack SDK not loaded. Please try again later.');
+      setLoading(false);
       return false;
     }
 
-    const handler = window.PaystackPop.setup({
-      key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-      email: form.email,
-      amount: 5000 * 100, // ₦5,000 in kobo
-      currency: 'NGN',
-      ref: `VIAN_CUSTOM_${Date.now()}`,
-      callback: async (response) => {
-        try {
-          const { error, data } = await supabase.functions.invoke('verify-paystack-payment', {
-            body: { reference: response.reference },
-          });
-          if (error || !data.success) {
-            setMessage('Payment verification failed. Please contact support.');
-            return;
+    return new Promise((resolve, reject) => {
+      const handler = window.PaystackPop.setup({
+        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
+        email: form.email,
+        amount: 5000 * 100, // ₦5,000 in kobo
+        currency: 'NGN',
+        ref: `VIAN_CUSTOM_${Date.now()}`,
+        callback: async (response) => {
+          try {
+            const { error, data } = await supabase.functions.invoke('verify-paystack-payment', {
+              body: { reference: response.reference },
+            });
+            if (error || !data.success) {
+              setMessage('Payment verification failed. Please contact support.');
+              setLoading(false);
+              reject(new Error('Payment verification failed'));
+              return;
+            }
+            resolve(response.reference);
+          } catch (err) {
+            setMessage('Payment processing failed: ' + err.message);
+            setLoading(false);
+            reject(err);
           }
-          await callback(response.reference);
-          return true;
-        } catch (err) {
-          setMessage('Payment processing failed: ' + err.message);
-          return false;
-        }
-      },
-      onClose: () => {
-        setMessage('Payment cancelled. You can try again.');
-        setLoading(false);
-        return false;
-      },
+        },
+        onClose: () => {
+          setMessage('Payment cancelled. You can try again.');
+          setLoading(false);
+          reject(new Error('Payment cancelled'));
+        },
+      });
+      handler.openIframe();
     });
-    handler.openIframe();
-    return true;
   };
 
   const handleSubmit = async (e) => {
@@ -502,46 +511,45 @@ export default function CustomOrderForm({ user, profile }) {
     setLoading(true);
     setMessage('');
 
-    const submitOrder = async (paymentReference) => {
-      try {
-        const { error, data } = await supabase.from('custom_orders').insert([
-          {
-            user_id: user.id,
-            full_name: form.full_name,
-            phone: form.phone,
-            email: form.email,
-            fabric: form.fabric,
-            style: form.style,
-            measurements: JSON.stringify(form.measurements),
-            additional_notes: form.additional_notes,
-            address: form.address,
-            lat: form.lat,
-            lng: form.lng,
-            deposit: 5000,
-            status: 'pending',
-            delivery_status: 'not_started',
-            created_at: new Date().toISOString(),
-            payment_reference: paymentReference,
-          },
-        ]).select().single();
+    try {
+      const paymentReference = await initiatePayment();
+      if (!paymentReference) return;
 
-        if (error) throw error;
+      const { error, data } = await supabase.from('custom_orders').insert([
+        {
+          user_id: user.id,
+          full_name: form.full_name,
+          phone: form.phone,
+          email: form.email,
+          fabric: form.fabric,
+          style: form.style,
+          measurements: JSON.stringify(form.measurements),
+          additional_notes: form.additional_notes,
+          address: form.address,
+          lat: form.lat,
+          lng: form.lng,
+          deposit: 5000,
+          status: 'pending',
+          delivery_status: 'not_started',
+          created_at: new Date().toISOString(),
+          payment_reference: paymentReference,
+        },
+      ]).select().single();
 
-        setMessage('Order submitted successfully!');
-        const userNotificationText = `Your custom order has been submitted! Fabric: ${form.fabric}, Style: ${form.style}. A non-refundable deposit of ₦5,000 has been paid. Please check the app for updates: https://vianclothinghub.com`;
-        await sendWhatsAppNotification(form.phone, userNotificationText);
-        const adminNotificationText = `New custom order submitted by ${form.full_name} (ID: ${data.id}). Fabric: ${form.fabric}, Style: ${form.style}. Please set the outfit price in the admin dashboard.`;
-        await sendWhatsAppNotification('2348087522801', adminNotificationText);
-        await createAdminNotification(adminNotificationText);
-        router.push('/dashboard');
-      } catch (err) {
-        setMessage('Order submission failed: ' + err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+      if (error) throw error;
 
-    await initiatePayment(submitOrder);
+      setMessage('Order submitted successfully!');
+      const userNotificationText = `Your custom order has been submitted! Fabric: ${form.fabric}, Style: ${form.style}. A non-refundable deposit of ₦5,000 has been paid. Please check the app for updates: https://vianclothinghub.com`;
+      await sendWhatsAppNotification(form.phone, userNotificationText);
+      const adminNotificationText = `New custom order submitted by ${form.full_name} (ID: ${data.id}). Fabric: ${form.fabric}, Style: ${form.style}. Please set the outfit price in the admin dashboard.`;
+      await sendWhatsAppNotification('2348087522801', adminNotificationText);
+      await createAdminNotification(adminNotificationText);
+      router.push('/dashboard');
+    } catch (err) {
+      setMessage('Order submission failed: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderStepIndicator = () => (
@@ -596,326 +604,324 @@ export default function CustomOrderForm({ user, profile }) {
   );
 
   return (
-    <>
-      <Script src="https://js.paystack.co/v1/inline.js" strategy="afterInteractive" />
-      <div className="bg-white max-w-3xl mx-auto p-8 rounded-lg shadow-lg my-10">
-        {renderStepIndicator()}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {step === 1 && (
-            <div className="space-y-4">
-              <h2 className="text-2xl font-semibold text-purple-800">Personal Information</h2>
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                <input
-                  type="text"
-                  value={form.full_name}
-                  onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-                  className={`w-full border p-3 rounded-lg ${errors.full_name ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
-                  required
-                />
-                <InformationCircleIcon className="w-5 h-5 text-gray-400 absolute right-3 top-9" title="Enter your full name as it appears on your ID" />
-                {errors.full_name && <p className="text-red-500 text-sm mt-1">{errors.full_name}</p>}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <input
-                  type="email"
-                  value={form.email}
-                  readOnly
-                  className="w-full border p-3 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed"
-                />
-                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-              </div>
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700">Phone Number</label>
-                <input
-                  type="text"
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className={`w-full border p-3 rounded-lg ${errors.phone ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
-                  required
-                />
-                <InformationCircleIcon className="w-5 h-5 text-gray-400 absolute right-3 top-9" title="Enter a valid phone number for WhatsApp notifications" />
-                {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
-              </div>
+    <div className="bg-white max-w-3xl mx-auto p-8 rounded-lg shadow-lg my-10">
+      {renderStepIndicator()}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <Script src="https://js.paystack.co/v1/inline.js" strategy="afterInteractive" />
+        {step === 1 && (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-semibold text-purple-800">Personal Information</h2>
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700">Full Name</label>
+              <input
+                type="text"
+                value={form.full_name}
+                onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                className={`w-full border p-3 rounded-lg ${errors.full_name ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
+                required
+              />
+              <InformationCircleIcon className="w-5 h-5 text-gray-400 absolute right-3 top-9" title="Enter your full name as it appears on your ID" />
+              {errors.full_name && <p className="text-red-500 text-sm mt-1">{errors.full_name}</p>}
             </div>
-          )}
-          {step === 2 && (
-            <div className="space-y-4">
-              <h2 className="text-2xl font-semibold text-purple-800">Design Details</h2>
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700">Fabric</label>
-                <select
-                  value={form.fabric}
-                  onChange={(e) => setForm({ ...form, fabric: e.target.value })}
-                  className={`w-full border p-3 rounded-lg ${errors.fabric ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
-                  required
-                >
-                  <option value="">Select Fabric</option>
-                  <option value="Cotton">Cotton</option>
-                  <option value="Silk">Silk</option>
-                  <option value="Chiffon">Chiffon</option>
-                  <option value="Ankara">Ankara</option>
-                  <option value="Lace">Lace</option>
-                  <option value="Adire">Adire</option>
-                  <option value="Custom">Custom (Specify in Notes)</option>
-                </select>
-                <InformationCircleIcon className="w-5 h-5 text-gray-400 absolute right-3 top-9" title="Choose a fabric or specify your own in the notes" />
-                {errors.fabric && <p className="text-red-500 text-sm mt-1">{errors.fabric}</p>}
-              </div>
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700">Style</label>
-                <select
-                  value={form.style}
-                  onChange={(e) => setForm({ ...form, style: e.target.value })}
-                  className={`w-full border p-3 rounded-lg ${errors.style ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
-                  required
-                >
-                  <option value="">Select Style</option>
-                  <option value="A-Line Dress">A-Line Dress</option>
-                  <option value="Gown">Gown</option>
-                  <option value="Skirt and Blouse">Skirt and Blouse</option>
-                  <option value="Traditional Attire">Traditional Attire</option>
-                  <option value="Suit">Suit</option>
-                  <option value="Bubu">Bubu</option>
-                  <option value="Kaftan">Kaftan</option>
-                  <option value="Agbada">Agbada</option>
-                  <option value="Custom">Custom (Specify in Notes)</option>
-                </select>
-                <InformationCircleIcon className="w-5 h-5 text-gray-400 absolute right-3 top-9" title="Choose a style or describe your custom design" />
-                {errors.style && <p className="text-red-500 text-sm mt-1">{errors.style}</p>}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Additional Notes</label>
-                <textarea
-                  value={form.additional_notes}
-                  onChange={(e) => setForm({ ...form, additional_notes: e.target.value })}
-                  className="w-full border p-3 rounded-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500"
-                  placeholder="E.g., Add embroidery details, specific color preferences, or custom fabric/style details"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <input
+                type="email"
+                value={form.email}
+                readOnly
+                className="w-full border p-3 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed"
+              />
+              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
             </div>
-          )}
-          {step === 3 && (
-            <div className="space-y-4">
-              <h2 className="text-2xl font-semibold text-purple-800">Measurements</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="relative">
-                  <label className="block text-sm font-medium text-gray-700">Bust (cm)</label>
-                  <input
-                    type="number"
-                    value={form.measurements.bust}
-                    onChange={(e) => setForm({ ...form, measurements: { ...form.measurements, bust: e.target.value } })}
-                    className={`w-full border p-3 rounded-lg ${errors.bust ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
-                    required
-                    min="1"
-                  />
-                  <InformationCircleIcon className="w-5 h-5 text-gray-400 absolute right-3 top-9" title="Measure around the fullest part of your bust" />
-                  {errors.bust && <p className="text-red-500 text-sm mt-1">{errors.bust}</p>}
-                </div>
-                <div className="relative">
-                  <label className="block text-sm font-medium text-gray-700">Waist (cm)</label>
-                  <input
-                    type="number"
-                    value={form.measurements.waist}
-                    onChange={(e) => setForm({ ...form, measurements: { ...form.measurements, waist: e.target.value } })}
-                    className={`w-full border p-3 rounded-lg ${errors.waist ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
-                    required
-                    min="1"
-                  />
-                  <InformationCircleIcon className="w-5 h-5 text-gray-400 absolute right-3 top-9" title="Measure around the narrowest part of your waist" />
-                  {errors.waist && <p className="text-red-500 text-sm mt-1">{errors.waist}</p>}
-                </div>
-                <div className="relative">
-                  <label className="block text-sm font-medium text-gray-700">Hips (cm)</label>
-                  <input
-                    type="number"
-                    value={form.measurements.hips}
-                    onChange={(e) => setForm({ ...form, measurements: { ...form.measurements, hips: e.target.value } })}
-                    className={`w-full border p-3 rounded-lg ${errors.hips ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
-                    required
-                    min="1"
-                  />
-                  <InformationCircleIcon className="w-5 h-5 text-gray-400 absolute right-3 top-9" title="Measure around the fullest part of your hips" />
-                  {errors.hips && <p className="text-red-500 text-sm mt-1">{errors.hips}</p>}
-                </div>
-                <div className="relative">
-                  <label className="block text-sm font-medium text-gray-700">Shoulder (cm)</label>
-                  <input
-                    type="number"
-                    value={form.measurements.shoulder}
-                    onChange={(e) => setForm({ ...form, measurements: { ...form.measurements, shoulder: e.target.value } })}
-                    className="w-full border p-3 rounded-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500"
-                    min="1"
-                  />
-                  <InformationCircleIcon className="w-5 h-5 text-gray-400 absolute right-3 top-9" title="Measure from one shoulder edge to the other" />
-                </div>
-                <div className="relative">
-                  <label className="block text-sm font-medium text-gray-700">Length (cm)</label>
-                  <input
-                    type="number"
-                    value={form.measurements.length}
-                    onChange={(e) => setForm({ ...form, measurements: { ...form.measurements, length: e.target.value } })}
-                    className="w-full border p-3 rounded-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500"
-                    min="1"
-                  />
-                  <InformationCircleIcon className="w-5 h-5 text-gray-400 absolute right-3 top-9" title="Measure from shoulder to desired hemline" />
-                </div>
-              </div>
-              {renderMeasurementGuide()}
-            </div>
-          )}
-          {step === 4 && (
-            <div className="space-y-4">
-              <h2 className="text-2xl font-semibold text-purple-800">Delivery & Review</h2>
-              {savedAddresses.length > 0 && (
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Select Saved Address</label>
-                  <select
-                    value={selectedAddressId}
-                    onChange={handleSavedAddressChange}
-                    className="w-full border p-3 rounded-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500"
-                  >
-                    <option value="">Select an address</option>
-                    {savedAddresses.map((addr) => (
-                      <option key={addr.id} value={addr.id}>{addr.address}</option>
-                    ))}
-                  </select>
-                  <div className="mt-4 grid grid-cols-1 gap-4">
-                    {savedAddresses.map((addr) => (
-                      <div key={addr.id} className="flex justify-between items-center border-b border-gray-200 pb-2">
-                        <span className="text-gray-700">{addr.address}</span>
-                        <div>
-                          <button
-                            onClick={() => handleEditAddress(addr)}
-                            className="text-purple-600 hover:underline mr-4"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteAddress(addr.id)}
-                            className="text-red-600 hover:underline"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">{isEditingAddress ? 'Edit Address' : 'Enter or Search Address'}</label>
-                <input
-                  type="text"
-                  value={form.address}
-                  onChange={(e) => setForm({ ...form, address: e.target.value })}
-                  className={`w-full border p-3 rounded-lg ${errors.address ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
-                  placeholder="Enter delivery address"
-                  required
-                />
-                {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
-              </div>
-              <button
-                type="button"
-                onClick={handleSaveAddress}
-                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
-              >
-                {isEditingAddress ? 'Update Address' : 'Save Address'}
-              </button>
-              <div className="h-64 w-full mt-4" ref={mapContainerRef}></div>
-              <div className="bg-gray-100 p-4 rounded-lg mt-4">
-                <h3 className="text-lg font-semibold text-purple-800">Order Summary</h3>
-                <p><strong>Full Name:</strong> {form.full_name}</p>
-                <p><strong>Email:</strong> {form.email}</p>
-                <p><strong>Phone:</strong> {form.phone}</p>
-                <p><strong>Delivery Address:</strong> {form.address || 'Not selected'}</p>
-                <p><strong>Fabric:</strong> {form.fabric}</p>
-                <p><strong>Style:</strong> {form.style}</p>
-                <p><strong>Measurements:</strong> Bust: {form.measurements.bust || '-'}cm, Waist: {form.measurements.waist || '-'}cm, Hips: {form.measurements.hips || '-'}cm, Shoulder: {form.measurements.shoulder || '-'}cm, Length: {form.measurements.length || '-'}cm</p>
-                <p><strong>Additional Notes:</strong> {form.additional_notes || 'None'}</p>
-                <p><strong>Deposit:</strong> ₦{form.deposit}</p>
-              </div>
-            </div>
-          )}
-          <div className="flex justify-between mt-6">
-            {step > 1 && (
-              <button
-                type="button"
-                onClick={handleBack}
-                className="bg-gray-300 text-gray-700 py-2 px-6 rounded-lg hover:bg-gray-400"
-              >
-                Back
-              </button>
-            )}
-            {step < 4 ? (
-              <button
-                type="button"
-                onClick={handleNext}
-                className="bg-purple-700 text-white py-2 px-6 rounded-lg hover:bg-purple-800"
-              >
-                Next
-              </button>
-            ) : (
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-purple-700 text-white py-2 px-6 rounded-lg hover:bg-purple-800 disabled:bg-purple-400"
-              >
-                {loading ? 'Processing...' : 'Confirm Order'}
-              </button>
-            )}
-          </div>
-          {message && (
-            <p className={`text-center mt-4 text-sm ${message.includes('Error') || message.includes('failed') ? 'text-red-600' : 'text-green-700'}`}>
-              {message}
-            </p>
-          )}
-        </form>
-        {showConfirmation && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-              <h3 className="text-xl font-semibold text-purple-800 mb-4">Confirm Your Order</h3>
-              <p className="text-gray-700">A non-refundable ₦5,000 deposit is required to proceed. You will be redirected to the payment page.</p>
-              <div className="flex justify-end mt-6 space-x-4">
-                <button
-                  onClick={() => setShowConfirmation(false)}
-                  className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmOrder}
-                  className="bg-purple-700 text-white py-2 px-4 rounded-lg hover:bg-purple-800"
-                >
-                  Proceed to Payment
-                </button>
-              </div>
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+              <input
+                type="text"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                className={`w-full border p-3 rounded-lg ${errors.phone ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
+                required
+              />
+              <InformationCircleIcon className="w-5 h-5 text-gray-400 absolute right-3 top-9" title="Enter a valid phone number for WhatsApp notifications" />
+              {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
             </div>
           </div>
         )}
-        <div className="mt-8">
-          <h3 className="text-xl font-semibold text-purple-800">Order Timeline</h3>
-          <p className="text-gray-600 mt-2">Your custom order will take approximately 2-4 weeks to process, depending on fabric availability and design complexity. You’ll receive updates via WhatsApp and in-app notifications.</p>
+        {step === 2 && (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-semibold text-purple-800">Design Details</h2>
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700">Fabric</label>
+              <select
+                value={form.fabric}
+                onChange={(e) => setForm({ ...form, fabric: e.target.value })}
+                className={`w-full border p-3 rounded-lg ${errors.fabric ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
+                required
+              >
+                <option value="">Select Fabric</option>
+                <option value="Cotton">Cotton</option>
+                <option value="Silk">Silk</option>
+                <option value="Chiffon">Chiffon</option>
+                <option value="Ankara">Ankara</option>
+                <option value="Lace">Lace</option>
+                <option value="Adire">Adire</option>
+                <option value="Custom">Custom (Specify in Notes)</option>
+              </select>
+              <InformationCircleIcon className="w-5 h-5 text-gray-400 absolute right-3 top-9" title="Choose a fabric or specify your own in the notes" />
+              {errors.fabric && <p className="text-red-500 text-sm mt-1">{errors.fabric}</p>}
+            </div>
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700">Style</label>
+              <select
+                value={form.style}
+                onChange={(e) => setForm({ ...form, style: e.target.value })}
+                className={`w-full border p-3 rounded-lg ${errors.style ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
+                required
+              >
+                <option value="">Select Style</option>
+                <option value="A-Line Dress">A-Line Dress</option>
+                <option value="Gown">Gown</option>
+                <option value="Skirt and Blouse">Skirt and Blouse</option>
+                <option value="Traditional Attire">Traditional Attire</option>
+                <option value="Suit">Suit</option>
+                <option value="Bubu">Bubu</option>
+                <option value="Kaftan">Kaftan</option>
+                <option value="Agbada">Agbada</option>
+                <option value="Custom">Custom (Specify in Notes)</option>
+              </select>
+              <InformationCircleIcon className="w-5 h-5 text-gray-400 absolute right-3 top-9" title="Choose a style or describe your custom design" />
+              {errors.style && <p className="text-red-500 text-sm mt-1">{errors.style}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Additional Notes</label>
+              <textarea
+                value={form.additional_notes}
+                onChange={(e) => setForm({ ...form, additional_notes: e.target.value })}
+                className="w-full border p-3 rounded-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500"
+                placeholder="E.g., Add embroidery details, specific color preferences, or custom fabric/style details"
+              />
+            </div>
+          </div>
+        )}
+        {step === 3 && (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-semibold text-purple-800">Measurements</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700">Bust (cm)</label>
+                <input
+                  type="number"
+                  value={form.measurements.bust}
+                  onChange={(e) => setForm({ ...form, measurements: { ...form.measurements, bust: e.target.value } })}
+                  className={`w-full border p-3 rounded-lg ${errors.bust ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
+                  required
+                  min="1"
+                />
+                <InformationCircleIcon className="w-5 h-5 text-gray-400 absolute right-3 top-9" title="Measure around the fullest part of your bust" />
+                {errors.bust && <p className="text-red-500 text-sm mt-1">{errors.bust}</p>}
+              </div>
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700">Waist (cm)</label>
+                <input
+                  type="number"
+                  value={form.measurements.waist}
+                  onChange={(e) => setForm({ ...form, measurements: { ...form.measurements, waist: e.target.value } })}
+                  className={`w-full border p-3 rounded-lg ${errors.waist ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
+                  required
+                  min="1"
+                />
+                <InformationCircleIcon className="w-5 h-5 text-gray-400 absolute right-3 top-9" title="Measure around the narrowest part of your waist" />
+                {errors.waist && <p className="text-red-500 text-sm mt-1">{errors.waist}</p>}
+              </div>
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700">Hips (cm)</label>
+                <input
+                  type="number"
+                  value={form.measurements.hips}
+                  onChange={(e) => setForm({ ...form, measurements: { ...form.measurements, hips: e.target.value } })}
+                  className={`w-full border p-3 rounded-lg ${errors.hips ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
+                  required
+                  min="1"
+                />
+                <InformationCircleIcon className="w-5 h-5 text-gray-400 absolute right-3 top-9" title="Measure around the fullest part of your hips" />
+                {errors.hips && <p className="text-red-500 text-sm mt-1">{errors.hips}</p>}
+              </div>
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700">Shoulder (cm)</label>
+                <input
+                  type="number"
+                  value={form.measurements.shoulder}
+                  onChange={(e) => setForm({ ...form, measurements: { ...form.measurements, shoulder: e.target.value } })}
+                  className="w-full border p-3 rounded-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500"
+                  min="1"
+                />
+                <InformationCircleIcon className="w-5 h-5 text-gray-400 absolute right-3 top-9" title="Measure from one shoulder edge to the other" />
+              </div>
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700">Length (cm)</label>
+                <input
+                  type="number"
+                  value={form.measurements.length}
+                  onChange={(e) => setForm({ ...form, measurements: { ...form.measurements, length: e.target.value } })}
+                  className="w-full border p-3 rounded-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500"
+                  min="1"
+                />
+                <InformationCircleIcon className="w-5 h-5 text-gray-400 absolute right-3 top-9" title="Measure from shoulder to desired hemline" />
+              </div>
+            </div>
+            {renderMeasurementGuide()}
+          </div>
+        )}
+        {step === 4 && (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-semibold text-purple-800">Delivery & Review</h2>
+            {savedAddresses.length > 0 && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700">Select Saved Address</label>
+                <select
+                  value={selectedAddressId}
+                  onChange={handleSavedAddressChange}
+                  className="w-full border p-3 rounded-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500"
+                >
+                  <option value="">Select an address</option>
+                  {savedAddresses.map((addr) => (
+                    <option key={addr.id} value={addr.id}>{addr.address}</option>
+                  ))}
+                </select>
+                <div className="mt-4 grid grid-cols-1 gap-4">
+                  {savedAddresses.map((addr) => (
+                    <div key={addr.id} className="flex justify-between items-center border-b border-gray-200 pb-2">
+                      <span className="text-gray-700">{addr.address}</span>
+                      <div>
+                        <button
+                          onClick={() => handleEditAddress(addr)}
+                          className="text-purple-600 hover:underline mr-4"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAddress(addr.id)}
+                          className="text-red-600 hover:underline"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">{isEditingAddress ? 'Edit Address' : 'Enter or Search Address'}</label>
+              <input
+                type="text"
+                value={form.address}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
+                className={`w-full border p-3 rounded-lg ${errors.address ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
+                placeholder="Enter delivery address"
+                required
+              />
+              {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
+            </div>
+            <button
+              type="button"
+              onClick={handleSaveAddress}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+            >
+              {isEditingAddress ? 'Update Address' : 'Save Address'}
+            </button>
+            <div className="h-64 w-full mt-4" ref={mapContainerRef}></div>
+            <div className="bg-gray-100 p-4 rounded-lg mt-4">
+              <h3 className="text-lg font-semibold text-purple-800">Order Summary</h3>
+              <p><strong>Full Name:</strong> {form.full_name}</p>
+              <p><strong>Email:</strong> {form.email}</p>
+              <p><strong>Phone:</strong> {form.phone}</p>
+              <p><strong>Delivery Address:</strong> {form.address || 'Not selected'}</p>
+              <p><strong>Fabric:</strong> {form.fabric}</p>
+              <p><strong>Style:</strong> {form.style}</p>
+              <p><strong>Measurements:</strong> Bust: {form.measurements.bust || '-'}cm, Waist: {form.measurements.waist || '-'}cm, Hips: {form.measurements.hips || '-'}cm, Shoulder: {form.measurements.shoulder || '-'}cm, Length: {form.measurements.length || '-'}cm</p>
+              <p><strong>Additional Notes:</strong> {form.additional_notes || 'None'}</p>
+              <p><strong>Deposit:</strong> ₦{form.deposit}</p>
+            </div>
+          </div>
+        )}
+        <div className="flex justify-between mt-6">
+          {step > 1 && (
+            <button
+              type="button"
+              onClick={handleBack}
+              className="bg-gray-300 text-gray-700 py-2 px-6 rounded-lg hover:bg-gray-400"
+            >
+              Back
+            </button>
+          )}
+          {step < 4 ? (
+            <button
+              type="button"
+              onClick={handleNext}
+              className="bg-purple-700 text-white py-2 px-6 rounded-lg hover:bg-purple-800"
+            >
+              Next
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-purple-700 text-white py-2 px-6 rounded-lg hover:bg-purple-800 disabled:bg-purple-400"
+            >
+              {loading ? 'Processing...' : 'Confirm Order'}
+            </button>
+          )}
         </div>
-        <div className="mt-8">
-          <h3 className="text-xl font-semibold text-purple-800">Frequently Asked Questions</h3>
-          <div className="mt-4 space-y-4">
-            <div>
-              <p className="font-medium text-gray-700">How long does it take to process a custom order?</p>
-              <p className="text-gray-600">Custom orders typically take 2-4 weeks to process, depending on complexity and fabric availability.</p>
-            </div>
-            <div>
-              <p className="font-medium text-gray-700">Is the deposit refundable?</p>
-              <p className="text-gray-600">The ₦5,000 deposit is non-refundable but will be deducted from the final outfit cost.</p>
-            </div>
-            <div>
-              <p className="font-medium text-gray-700">Can I provide my own fabric?</p>
-              <p className="text-gray-600">Yes, you can specify your own fabric in the additional notes section or contact us for details.</p>
+        {message && (
+          <p className={`text-center mt-4 text-sm ${message.includes('Error') || message.includes('failed') ? 'text-red-600' : 'text-green-700'}`}>
+            {message}
+          </p>
+        )}
+      </form>
+      {showConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h3 className="text-xl font-semibold text-purple-800 mb-4">Confirm Your Order</h3>
+            <p className="text-gray-700">A non-refundable ₦5,000 deposit is required to proceed. You will be redirected to the payment page.</p>
+            <div className="flex justify-end mt-6 space-x-4">
+              <button
+                onClick={() => setShowConfirmation(false)}
+                className="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmOrder}
+                className="bg-purple-700 text-white py-2 px-4 rounded-lg hover:bg-purple-800"
+              >
+                Proceed to Payment
+              </button>
             </div>
           </div>
         </div>
+      )}
+      <div className="mt-8">
+        <h3 className="text-xl font-semibold text-purple-800">Order Timeline</h3>
+        <p className="text-gray-600 mt-2">Your custom order will take approximately 2-4 weeks to process, depending on fabric availability and design complexity. You’ll receive updates via WhatsApp and in-app notifications.</p>
       </div>
-    </>
+      <div className="mt-8">
+        <h3 className="text-xl font-semibold text-purple-800">Frequently Asked Questions</h3>
+        <div className="mt-4 space-y-4">
+          <div>
+            <p className="font-medium text-gray-700">How long does it take to process a custom order?</p>
+            <p className="text-gray-600">Custom orders typically take 2-4 weeks to process, depending on design complexity and fabric availability.</p>
+          </div>
+          <div>
+            <p className="font-medium text-gray-700">Is the deposit refundable?</p>
+            <p className="text-gray-600">The ₦5,000 deposit is non-refundable but will be deducted from the final outfit cost.</p>
+          </div>
+          <div>
+            <p className="font-medium text-gray-700">Can I provide my own fabric?</p>
+            <p className="text-gray-600">Yes, you can specify your own fabric in the additional notes section or contact us for details.</p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
