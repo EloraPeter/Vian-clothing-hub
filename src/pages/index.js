@@ -362,36 +362,40 @@ export default function Home() {
 )}
 
           {/* Category Tiles */}
-          <section className="mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-8">
-              Shop by Category
-            </h2>
-            <div className="grid grid-cols-1 mx-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
-              {loading
-                ? Array(4)
-                  .fill()
-                  .map((_, index) => <SkeletonCategory key={index} />)
-                : categories.map((category) => (
-                  <Link
-                    key={category.slug}
-                    href={`/category/${category?.slug}`}
-                    className="bg-white p-4 sm:p-6 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 hover:border-purple-200 relative group"
-                    role="button"
-                    aria-label={`Shop ${category.name} category`}
-                  >
-                    <Image
-                      src={category.products?.[0]?.image_url || "/placeholder.jpg"}
-                      alt={`${category.name} category`}
-                      className="w-full h-32 sm:h-40 object-cover rounded-lg mb-4 group-hover:scale-105 transition-transform"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <h3 className="text-lg sm:text-xl font-semibold text-white">{category.name}</h3>
-                    </div>
-                  </Link>
-                ))}
+<section className="mb-12">
+  <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-8">
+    Shop by Category
+  </h2>
+  <div className="grid grid-cols-1 mx-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
+    {loading
+      ? Array(4)
+          .fill()
+          .map((_, index) => <SkeletonCategory key={index} />)
+      : categories.map((category) => (
+          <Link
+            key={category.slug}
+            href={`/category/${category?.slug}`}
+            className="bg-white p-4 sm:p-6 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 hover:border-purple-200 relative group"
+            role="button"
+            aria-label={`Shop ${category.name} category`}
+          >
+            <div className="relative w-full h-32 sm:h-40 mb-4">
+              <Image
+                src={category.products?.[0]?.image_url || "/placeholder.jpg"}
+                alt={`${category.name} category`}
+                layout="fill"
+                objectFit="cover"
+                className="rounded-lg group-hover:scale-105 transition-transform"
+                loading="lazy"
+              />
             </div>
-          </section>
+            <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <h3 className="text-lg sm:text-xl font-semibold text-white">{category.name}</h3>
+            </div>
+          </Link>
+        ))}
+  </div>
+</section>
 
           {/* New Arrivals */}
           <section className="mb-12">

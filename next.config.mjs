@@ -8,6 +8,11 @@ const nextConfig = {
         hostname: 'qsxoycbgstdmwnihazlq.supabase.co',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'encrypted-tbn0.gstatic.com',
+        pathname: '/images/**',
+      },
     ],
   },
   async rewrites() {
