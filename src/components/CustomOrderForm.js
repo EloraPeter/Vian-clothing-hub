@@ -196,7 +196,7 @@ export default function CustomOrderForm({ onSubmit }) {
                 type="text"
                 value={form.full_name}
                 onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-                className={`w-full border p-3 rounded-lg ${errors.full_name ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
+                className={`w-full border p-3 rounded-lg ${errors.full_name ? 'border-red-500' : 'border-gray-300'} text-gray-700 focus:ring-purple-500 focus:border-purple-500`}
                 required
               />
               {errors.full_name && <p className="text-red-500 text-sm mt-1">{errors.full_name}</p>}
@@ -216,7 +216,7 @@ export default function CustomOrderForm({ onSubmit }) {
                 type="text"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className={`w-full border p-3 rounded-lg ${errors.phone ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
+                className={`w-full border p-3 rounded-lg ${errors.phone ? 'border-red-500' : 'border-gray-300'} text-gray-700 focus:ring-purple-500 focus:border-purple-500`}
                 required
               />
               {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
@@ -226,7 +226,7 @@ export default function CustomOrderForm({ onSubmit }) {
               <textarea
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
-                className={`w-full border p-3 rounded-lg ${errors.address ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
+                className={`w-full border p-3 rounded-lg ${errors.address ? 'border-red-500' : 'border-gray-300'} text-gray-700 focus:ring-purple-500 focus:border-purple-500`}
                 required
               />
               {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
@@ -242,7 +242,7 @@ export default function CustomOrderForm({ onSubmit }) {
                 type="text"
                 value={form.fabric}
                 onChange={(e) => setForm({ ...form, fabric: e.target.value })}
-                className={`w-full border p-3 rounded-lg ${errors.fabric ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
+                className={`w-full border p-3 rounded-lg ${errors.fabric ? 'border-red-500' : 'border-gray-300'} text-gray-700 focus:ring-purple-500 focus:border-purple-500`}
                 required
               />
               {errors.fabric && <p className="text-red-500 text-sm mt-1">{errors.fabric}</p>}
@@ -253,7 +253,7 @@ export default function CustomOrderForm({ onSubmit }) {
                 type="text"
                 value={form.style}
                 onChange={(e) => setForm({ ...form, style: e.target.value })}
-                className={`w-full border p-3 rounded-lg ${errors.style ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
+                className={`w-full border p-3 rounded-lg ${errors.style ? 'border-red-500' : 'border-gray-300'} text-gray-700 focus:ring-purple-500 focus:border-purple-500`}
                 required
               />
               {errors.style && <p className="text-red-500 text-sm mt-1">{errors.style}</p>}
@@ -263,7 +263,7 @@ export default function CustomOrderForm({ onSubmit }) {
               <textarea
                 value={form.additional_notes}
                 onChange={(e) => setForm({ ...form, additional_notes: e.target.value })}
-                className="w-full border p-3 rounded-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500"
+                className="w-full border p-3 rounded-lg border-gray-300 text-gray-700 focus:ring-purple-500 focus:border-purple-500"
                 placeholder="E.g., Add embroidery details, specific color preferences, etc."
               />
             </div>
