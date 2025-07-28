@@ -13,6 +13,8 @@ import {
     FaTh,
     FaList,
     FaTimes,
+    FaChevronLeft,
+    FaChevronRight,
 } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import debounce from "lodash.debounce";
@@ -31,6 +33,9 @@ export default function Shop() {
     const [productsPerPage] = useState(30);
     const [sortOption, setSortOption] = useState("");
     const [selectedCategories, setSelectedCategories] = useState([]);
+    const [selectedSizes, setSelectedSizes] = useState([]);
+    const [selectedColors, setSelectedColors] = useState([]);
+    const [selectedMaterials, setSelectedMaterials] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -50,14 +55,43 @@ export default function Shop() {
     const [totalProducts, setTotalProducts] = useState(0);
     const [searchSuggestions, setSearchSuggestions] = useState([]);
     const [reviews, setReviews] = useState([]);
+    const [variants, setVariants] = useState([]);
+    const [selectedVariant, setSelectedVariant] = useState(null);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const modalRef = useRef(null);
     const searchInputRef = useRef(null);
+
+    // Countdown timer for promotional banner
+    const [saleEndTime, setSaleEndTime] = useState(
+        new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    );
+    const [timeLeft, setTimeLeft] = useState("");
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const now = new Date();
+            const end = new Date(saleEndTime);
+            const diff = end - now;
+            if (diff <= 0) {
+                setTimeLeft("Sale Ended");
+                clearInterval(interval);
+                return;
+            }
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [saleEndTime]);
 
     // Load preferences from local storage
     useEffect(() => {
         const saved = JSON.parse(localStorage.getItem("shopFilters") || "{}");
-        if (saved.selectedCategories)
-            setSelectedCategories(saved.selectedCategories);
+        if (saved.selectedCategories) setSelectedCategories(saved.selectedCategories);
+        if (saved.selectedSizes) setSelectedSizes(saved.selectedSizes);
+        if (saved.selectedColors) setSelectedColors(saved.selectedColors);
+        if (saved.selectedMaterials) setSelectedMaterials(saved.selectedMaterials);
         if (saved.sortOption) setSortOption(saved.sortOption);
         if (saved.viewMode) setViewMode(saved.viewMode);
         if (saved.priceRange) setPriceRange(saved.priceRange);
@@ -73,6 +107,9 @@ export default function Shop() {
             "shopFilters",
             JSON.stringify({
                 selectedCategories,
+                selectedSizes,
+                selectedColors,
+                selectedMaterials,
                 sortOption,
                 viewMode,
                 priceRange,
@@ -84,6 +121,9 @@ export default function Shop() {
         );
     }, [
         selectedCategories,
+        selectedSizes,
+        selectedColors,
+        selectedMaterials,
         sortOption,
         viewMode,
         priceRange,
@@ -96,10 +136,7 @@ export default function Shop() {
     // Fetch user profile
     useEffect(() => {
         async function fetchProfile() {
-            const {
-                data: { user },
-                error: userError,
-            } = await supabase.auth.getUser();
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
             if (user) {
                 const { data: profileData, error: profileError } = await supabase
                     .from("profiles")
@@ -119,13 +156,14 @@ export default function Shop() {
         fetchProfile();
     }, []);
 
-    // Fetch products and reviews
+    // Fetch products, reviews, and variants
     useEffect(() => {
         async function fetchData() {
             setLoading(true);
             const [
                 { data: productData, error: productError, count },
                 { data: reviewData, error: reviewError },
+                { data: variantData, error: variantError },
             ] = await Promise.all([
                 supabase
                     .from("products")
@@ -134,7 +172,8 @@ export default function Shop() {
                         (currentPage - 1) * productsPerPage,
                         currentPage * productsPerPage - 1
                     ),
-                supabase.from("reviews").select("product_id, rating"),
+                supabase.from("reviews").select("product_id, rating, comment, created_at"),
+                supabase.from("product_variants").select("*"),
             ]);
             if (productError) {
                 console.error("Error fetching products:", productError.message);
@@ -150,6 +189,12 @@ export default function Shop() {
                 toast.error("Failed to load reviews.");
             } else {
                 setReviews(reviewData);
+            }
+            if (variantError) {
+                console.error("Error fetching variants:", variantError.message);
+                toast.error("Failed to load product variants.");
+            } else {
+                setVariants(variantData);
             }
             setLoading(false);
         }
@@ -208,12 +253,14 @@ export default function Shop() {
                 ...products.map((p) => p.name),
                 ...products.map((p) => p.old_category).filter(Boolean),
                 ...categories.map((c) => c.name),
+                ...variants.map((v) => v.color).filter(Boolean),
+                ...variants.map((v) => v.size).filter(Boolean),
             ]),
         ]
             .filter((item) => item.toLowerCase().includes(searchQuery.toLowerCase()))
-            .slice(0, 5);
+            .slice(0, 8);
         setSearchSuggestions(searchQuery ? suggestions : []);
-    }, [searchQuery, products, categories]);
+    }, [searchQuery, products, categories, variants]);
 
     // Compute average ratings
     const getAverageRating = useCallback(
@@ -248,11 +295,27 @@ export default function Shop() {
         let result = [...products];
         if (searchQuery) {
             result = result.filter((p) =>
-                p.name.toLowerCase().includes(searchQuery.toLowerCase())
+                p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                categories.find((c) => c.id === p.category_id)?.name.toLowerCase().includes(searchQuery.toLowerCase())
             );
         }
         if (selectedCategories.length > 0) {
             result = result.filter((p) => selectedCategories.includes(p.category_id));
+        }
+        if (selectedSizes.length > 0) {
+            result = result.filter((p) =>
+                variants.some((v) => v.product_id === p.id && selectedSizes.includes(v.size))
+            );
+        }
+        if (selectedColors.length > 0) {
+            result = result.filter((p) =>
+                variants.some((v) => v.product_id === p.id && selectedColors.includes(v.color))
+            );
+        }
+        if (selectedMaterials.length > 0) {
+            result = result.filter((p) =>
+                variants.some((v) => v.product_id === p.id && selectedMaterials.includes(v.material))
+            );
         }
         if (inStockOnly) {
             result = result.filter((p) => !p.is_out_of_stock);
@@ -277,12 +340,17 @@ export default function Shop() {
         products,
         searchQuery,
         selectedCategories,
+        selectedSizes,
+        selectedColors,
+        selectedMaterials,
         inStockOnly,
         minPrice,
         maxPrice,
         ratingFilter,
         sortOption,
         getAverageRating,
+        variants,
+        categories,
     ]);
 
     // Group products by category for carousels
@@ -322,6 +390,7 @@ export default function Shop() {
     const debouncedSearch = useCallback(
         debounce((query) => {
             setSearchQuery(query);
+            setCurrentPage(1);
         }, 300),
         []
     );
@@ -331,11 +400,11 @@ export default function Shop() {
         (product) => {
             toggleWishlist(product);
             toast.success(
-                `${product.name} ${isInWishlist(product.id) ? "removed from" : "added to"
-                } wishlist!`,
+                `${product.name} ${isInWishlist(product.id) ? "removed from" : "added to"} wishlist!`,
                 {
                     position: "top-right",
                     autoClose: 2000,
+                    className: "bg-gradient-to-r from-purple-600 to-indigo-600 text-white",
                 }
             );
         },
@@ -346,6 +415,8 @@ export default function Shop() {
     const openQuickView = useCallback(
         (product) => {
             setQuickViewProduct(product);
+            setSelectedVariant(null);
+            setCurrentImageIndex(0);
             const updatedRecentlyViewed = [
                 product,
                 ...recentlyViewed.filter((p) => p.id !== product.id),
@@ -361,11 +432,16 @@ export default function Shop() {
 
     const closeQuickView = useCallback(() => {
         setQuickViewProduct(null);
+        setSelectedVariant(null);
+        setCurrentImageIndex(0);
     }, []);
 
     // Reset filters
     const resetFilters = useCallback(() => {
         setSelectedCategories([]);
+        setSelectedSizes([]);
+        setSelectedColors([]);
+        setSelectedMaterials([]);
         setPriceRange([0, 30000]);
         setMinPrice(0);
         setMaxPrice(30000);
@@ -374,6 +450,30 @@ export default function Shop() {
         setSearchQuery("");
         setCurrentPage(1);
     }, []);
+
+    // Handle variant selection
+    const handleVariantSelect = useCallback((variant) => {
+        setSelectedVariant(variant);
+    }, []);
+
+    // Handle image carousel navigation
+    const nextImage = useCallback(() => {
+        if (!quickViewProduct) return;
+        const images = [
+            quickViewProduct.image_url,
+            ...(quickViewProduct.product_images?.map((img) => img.image_url) || []),
+        ];
+        setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    }, [quickViewProduct]);
+
+    const prevImage = useCallback(() => {
+        if (!quickViewProduct) return;
+        const images = [
+            quickViewProduct.image_url,
+            ...(quickViewProduct.product_images?.map((img) => img.image_url) || []),
+        ];
+        setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    }, [quickViewProduct]);
 
     // Focus trap for modal
     useEffect(() => {
@@ -414,7 +514,10 @@ export default function Shop() {
         name: product.name,
         image: product.image_url.startsWith("data:image")
             ? "/path/to/placeholder.jpg"
-            : product.image_url,
+            : [
+                product.image_url,
+                ...(product.product_images?.map((img) => img.image_url) || []),
+            ],
         description: product.description,
         sku: product.id,
         offers: {
@@ -435,12 +538,20 @@ export default function Shop() {
         },
     }));
 
+    // Available sizes, colors, and materials for filters
+    const availableSizes = [...new Set(variants.map((v) => v.size).filter(Boolean))];
+    const availableColors = [...new Set(variants.map((v) => v.color).filter(Boolean))];
+    const availableMaterials = [...new Set(variants.map((v) => v.material).filter(Boolean))];
+
     return (
-        <div className="min-h-screen bg-gray-50 font-sans">
+        <div className="min-h-screen bg-gray-100 font-sans">
             <Helmet>
-                <script type="application/ld+json">
-                    {JSON.stringify(structuredData)}
-                </script>
+                <title>Shop Fashion - Explore Dresses, Shirts, and More</title>
+                <meta
+                    name="description"
+                    content="Discover a wide range of fashion items including dresses, shirts, and accessories. Shop now for exclusive deals and new arrivals!"
+                />
+                <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
             </Helmet>
             <ToastContainer />
             <Navbar
@@ -449,22 +560,24 @@ export default function Shop() {
                 cartItemCount={cart.length}
             />
             <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-            <div className=" mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Promotional Banner */}
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Promotional Banner with Countdown */}
                 {products.some((p) => p.is_on_sale) && (
-                    <div className="mb-12 relative rounded-xl overflow-hidden">
+                    <div className="mb-12 relative rounded-2xl overflow-hidden shadow-lg">
                         <img
                             src="/path/to/sale-banner.jpg"
                             alt="Sale Promotion"
-                            className="w-full h-64 object-cover"
+                            className="w-full h-64 sm:h-80 object-cover"
                             loading="lazy"
                         />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/40 flex items-center justify-center">
                             <div className="text-center text-white">
-                                <h2 className="text-3xl font-bold">Limited Time Sale!</h2>
-                                <p className="text-lg mt-2">Up to 7% off on select items</p>
+                                <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+                                    Flash Sale! Up to 7% Off
+                                </h2>
+                                <p className="text-lg sm:text-xl mt-2">Hurry, ends in {timeLeft}</p>
                                 <button
-                                    className="mt-4 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                                    className="mt-4 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-md"
                                     aria-label="Shop sale items"
                                     onClick={() =>
                                         setSelectedCategories(
@@ -486,23 +599,23 @@ export default function Shop() {
                 )}
 
                 {/* Search Bar with Suggestions */}
-                <div className="mb-8 relative">
-                    <div className="relative max-w-3xl mx-auto">
+                <div className="mb-8 relative max-w-4xl mx-auto">
+                    <div className="relative">
                         <input
                             type="text"
-                            placeholder="Search products or categories..."
+                            placeholder="Search dresses, shirts, accessories..."
                             onChange={(e) => debouncedSearch(e.target.value)}
-                            className="w-full p-3 pl-10 text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                            className="w-full p-4 pl-12 text-gray-900 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-600 shadow-sm"
                             aria-label="Search products or categories"
                             ref={searchInputRef}
                         />
-                        <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
                         {searchSuggestions.length > 0 && (
-                            <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-lg mt-1 shadow-lg">
+                            <ul className="absolute z-20 w-full bg-white border border-gray-200 rounded-lg mt-2 shadow-xl max-h-60 overflow-y-auto">
                                 {searchSuggestions.map((suggestion, index) => (
                                     <li
                                         key={index}
-                                        className="p-2 hover:bg-purple-100 cursor-pointer"
+                                        className="p-3 hover:bg-purple-50 cursor-pointer transition-colors duration-200"
                                         onClick={() => {
                                             setSearchQuery(suggestion);
                                             setSearchSuggestions([]);
@@ -520,10 +633,10 @@ export default function Shop() {
                 </div>
 
                 {/* Filter/Sort Bar */}
-                <div className="sticky top-0 z-10 bg-gray-50 py-4 mb-8">
+                <div className="sticky top-0 z-10 bg-gray-100 py-4 mb-8">
                     <div className="flex flex-wrap items-center gap-4">
                         <button
-                            className="md:hidden p-2 bg-purple-600 text-white rounded-lg"
+                            className="md:hidden px-4 py-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors"
                             onClick={() => setIsMobileFilterOpen(true)}
                             aria-label="Open filters"
                         >
@@ -542,14 +655,14 @@ export default function Shop() {
                             <option value="rating">Top Rated</option>
                         </select>
                         <button
-                            className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                            className="px-4 py-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors"
                             onClick={() => setIsFilterOpen(!isFilterOpen)}
                             aria-label="Toggle advanced filters"
                         >
                             Advanced Filters
                         </button>
                         <button
-                            className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                            className="px-4 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
                             onClick={resetFilters}
                             aria-label="Clear all filters"
                         >
@@ -558,20 +671,14 @@ export default function Shop() {
                         <div className="flex gap-2">
                             <button
                                 onClick={() => setViewMode("grid")}
-                                className={`p-2 rounded-lg ${viewMode === "grid"
-                                        ? "bg-purple-600 text-white"
-                                        : "bg-gray-200 text-gray-700"
-                                    }`}
+                                className={`p-2 rounded-lg ${viewMode === "grid" ? "bg-purple-600 text-white" : "bg-gray-200 text-gray-700"} hover:bg-purple-700 hover:text-white transition-colors`}
                                 aria-label="Grid view"
                             >
                                 <FaTh />
                             </button>
                             <button
                                 onClick={() => setViewMode("list")}
-                                className={`p-2 rounded-lg ${viewMode === "list"
-                                        ? "bg-purple-600 text-white"
-                                        : "bg-gray-200 text-gray-700"
-                                    }`}
+                                className={`p-2 rounded-lg ${viewMode === "list" ? "bg-purple-600 text-white" : "bg-gray-200 text-gray-700"} hover:bg-purple-700 hover:text-white transition-colors`}
                                 aria-label="List view"
                             >
                                 <FaList />
@@ -579,14 +686,23 @@ export default function Shop() {
                         </div>
                     </div>
                     {(isFilterOpen || isMobileFilterOpen) && (
-                        <div className="mt-4 bg-white p-6 rounded-lg shadow-lg">
-                            <h3 className="text-lg font-semibold mb-4">Filters</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="mt-4 bg-white p-6 rounded-2xl shadow-lg">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
+                                <button
+                                    className="md:hidden text-gray-600 hover:text-gray-800"
+                                    onClick={() => setIsMobileFilterOpen(false)}
+                                    aria-label="Close filters"
+                                >
+                                    <FaTimes />
+                                </button>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Categories
                                     </label>
-                                    <div className="max-h-64 overflow-y-auto">
+                                    <div className="max-h-64 overflow-y-auto space-y-2">
                                         {categories.map((cat) => (
                                             <div key={cat.id} className="flex items-center gap-2">
                                                 <input
@@ -599,10 +715,10 @@ export default function Shop() {
                                                                 : [...prev, cat.id]
                                                         );
                                                     }}
-                                                    className="h-4 w-4 text-purple-600 focus:ring-purple-600"
+                                                    className="h-4 w-4 text-purple-600 focus:ring-purple-600 rounded"
                                                     aria-label={`Filter by ${cat.name}`}
                                                 />
-                                                <span className={cat.parent_id ? "ml-4" : ""}>
+                                                <span className={cat.parent_id ? "ml-4 text-gray-600" : "text-gray-800"}>
                                                     {cat.name}
                                                 </span>
                                             </div>
@@ -610,8 +726,8 @@ export default function Shop() {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Price Range (₦{minPrice} - ₦{maxPrice})
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Price Range (₦{minPrice.toLocaleString()} - ₦{maxPrice.toLocaleString()})
                                     </label>
                                     <div className="flex gap-2">
                                         <input
@@ -620,39 +736,46 @@ export default function Shop() {
                                             onChange={(e) =>
                                                 setMinPrice(Math.max(0, parseInt(e.target.value) || 0))
                                             }
-                                            className="p-2 border border-gray-200 rounded-lg w-full"
+                                            className="p-2 border border-gray-200 rounded-lg w-full focus:ring-2 focus:ring-purple-600"
                                             aria-label="Minimum price"
                                         />
                                         <input
                                             type="number"
                                             value={maxPrice}
                                             onChange={(e) =>
-                                                setMaxPrice(
-                                                    Math.min(30000, parseInt(e.target.value) || 30000)
-                                                )
+                                                setMaxPrice(Math.min(30000, parseInt(e.target.value) || 30000))
                                             }
-                                            className="p-2 border border-gray-200 rounded-lg w-full"
+                                            className="p-2 border border-gray-200 rounded-lg w-full focus:ring-2 focus:ring-purple-600"
                                             aria-label="Maximum price"
                                         />
                                     </div>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="30000"
+                                        step="100"
+                                        value={maxPrice}
+                                        onChange={(e) => setMaxPrice(parseInt(e.target.value))}
+                                        className="w-full mt-2"
+                                        aria-label="Price range slider"
+                                    />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Rating
                                     </label>
                                     <select
                                         value={ratingFilter}
                                         onChange={(e) => setRatingFilter(e.target.value)}
-                                        className="p-2 border border-gray-200 rounded-lg w-full"
+                                        className="p-2 border border-gray-200 rounded-lg w-full focus:ring-2 focus:ring-purple-600"
                                         aria-label="Filter by rating"
                                     >
                                         <option value="">All Ratings</option>
                                         <option value="4">4+ Stars</option>
                                         <option value="3">3+ Stars</option>
+                                        <option value="2">2+ Stars</option>
                                     </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">
+                                    <label className="block text-sm font-medium text-gray-700 mt-4 mb-2">
                                         Availability
                                     </label>
                                     <div className="flex items-center gap-2">
@@ -660,16 +783,57 @@ export default function Shop() {
                                             type="checkbox"
                                             checked={inStockOnly}
                                             onChange={() => setInStockOnly(!inStockOnly)}
-                                            className="h-4 w-4 text-purple-600 focus:ring-purple-600"
+                                            className="h-4 w-4 text-purple-600 focus:ring-purple-600 rounded"
                                             aria-label="Show in stock only"
                                         />
                                         <span>In Stock Only</span>
                                     </div>
+                                    <label className="block text-sm font-medium text-gray-700 mt-4 mb-2">
+                                        Size
+                                    </label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {availableSizes.map((size) => (
+                                            <button
+                                                key={size}
+                                                className={`px-3 py-1 border rounded-full ${selectedSizes.includes(size) ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-700"} hover:bg-purple-600 hover:text-white transition-colors`}
+                                                onClick={() =>
+                                                    setSelectedSizes((prev) =>
+                                                        prev.includes(size)
+                                                            ? prev.filter((s) => s !== size)
+                                                            : [...prev, size]
+                                                    )
+                                                }
+                                                aria-label={`Filter by size ${size}`}
+                                            >
+                                                {size}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <label className="block text-sm font-medium text-gray-700 mt-4 mb-2">
+                                        Color
+                                    </label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {availableColors.map((color) => (
+                                            <button
+                                                key={color}
+                                                className={`w-8 h-8 rounded-full border ${selectedColors.includes(color) ? "ring-2 ring-purple-600" : ""}`}
+                                                style={{ backgroundColor: color.toLowerCase() }}
+                                                onClick={() =>
+                                                    setSelectedColors((prev) =>
+                                                        prev.includes(color)
+                                                            ? prev.filter((c) => c !== color)
+                                                            : [...prev, color]
+                                                    )
+                                                }
+                                                aria-label={`Filter by color ${color}`}
+                                            ></button>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
-                            <div className="mt-4 flex gap-2">
+                            <div className="mt-6 flex gap-2">
                                 <button
-                                    className="p-2 bg-purple-600 text-white rounded-lg"
+                                    className="px-4 py-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors"
                                     onClick={() => {
                                         setIsFilterOpen(false);
                                         setIsMobileFilterOpen(false);
@@ -679,7 +843,7 @@ export default function Shop() {
                                     Apply Filters
                                 </button>
                                 <button
-                                    className="p-2 bg-red-600 text-white rounded-lg"
+                                    className="px-4 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
                                     onClick={resetFilters}
                                     aria-label="Clear all filters"
                                 >
@@ -692,180 +856,189 @@ export default function Shop() {
 
                 {/* All Products */}
                 <div className="mt-12">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                        All Products
+                    <h2 className="text-3xl font-extrabold text-gray-900 mb-6">
+                        Explore All Products
                     </h2>
+                    {loading && currentPage > 1 && (
+                        <div className="text-center py-4">
+                            <DressLoader />
+                        </div>
+                    )}
                     <div
                         className={
                             viewMode === "grid"
-                                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6"
+                                ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
                                 : "space-y-6"
                         }
                         aria-live="polite"
                     >
                         {displayedProducts.length > 0 ? (
-                            displayedProducts.map((product) => (
-                                <div
-                                    key={product.id}
-                                    className={
-                                        viewMode === "grid"
-                                            ? "bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-300 relative group"
-                                            : "bg-white p-6 rounded-xl shadow-md flex flex-col sm:flex-row gap-6 border border-gray-100 hover:border-purple-300"
-                                    }
-                                    role="article"
-                                    aria-label={`Product: ${product.name}${product.is_on_sale
-                                            ? `, on sale with ${product.discount_percentage}% off`
-                                            : ""
-                                        }`}
-                                >
-                                    <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
-                                        {product.is_on_sale && (
-                                            <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-sm">
-                                                Sale {product.discount_percentage}% Off
-                                            </span>
-                                        )}
-                                        {product.is_out_of_stock && (
-                                            <span className="bg-gray-600 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-sm">
-                                                Out of Stock
-                                            </span>
-                                        )}
-                                        {product.is_new && (
-                                            <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-sm">
-                                                New
-                                            </span>
-                                        )}
-                                    </div>
-                                    <button
-                                        onClick={() => handleToggleWishlist(product)}
-                                        className="absolute top-4 right-4 z-10 p-2 bg-white/90 rounded-full hover:bg-red-100 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
-                                        aria-label={
-                                            isInWishlist(product.id)
-                                                ? "Remove from wishlist"
-                                                : "Add to wishlist"
-                                        }
-                                    >
-                                        {isInWishlist(product.id) ? (
-                                            <FaHeart className="text-red-500 w-5 h-5" />
-                                        ) : (
-                                            <FaRegHeart className="text-gray-400 group-hover:text-red-400 w-5 h-5" />
-                                        )}
-                                    </button>
-                                    <a href={`/product/${product.id}`} className="block">
-                                        <div
-                                            className={
-                                                viewMode === "grid"
-                                                    ? "relative overflow-hidden rounded-xl aspect-[3/4] mb-4"
-                                                    : "relative overflow-hidden rounded-xl w-full sm:w-1/3 aspect-[3/4]"
-                                            }
-                                        >
-                                            <img
-                                                src={
-                                                    product.image_url.startsWith("data:image")
-                                                        ? "/path/to/placeholder.jpg"
-                                                        : product.image_url
-                                                }
-                                                srcSet={
-                                                    product.image_url.startsWith("data:image")
-                                                        ? undefined
-                                                        : `${product.image_url}?format=webp&w=300 300w, ${product.image_url}?format=webp&w=600 600w`
-                                                }
-                                                sizes="(max-width: 600px) 300px, 600px"
-                                                alt={product.name}
-                                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                                loading="lazy"
-                                            />
-                                            <button
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    openQuickView(product);
-                                                }}
-                                                className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white text-purple-600 px-4 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                                                aria-label={`Quick view ${product.name}`}
-                                            >
-                                                Quick View
-                                            </button>
-                                        </div>
-                                    </a>
+                            displayedProducts.map((product) => {
+                                const productVariants = variants.filter((v) => v.product_id === product.id);
+                                return (
                                     <div
+                                        key={product.id}
                                         className={
-                                            viewMode === "grid" ? "space-y-2" : "flex-1 space-y-2"
+                                            viewMode === "grid"
+                                                ? "bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-300 relative group"
+                                                : "bg-white p-6 rounded-2xl shadow-md flex flex-col sm:flex-row gap-6 border border-gray-100 hover:border-purple-300"
                                         }
+                                        role="article"
+                                        aria-label={`Product: ${product.name}${product.is_on_sale ? `, on sale with ${product.discount_percentage}% off` : ""}`}
                                     >
-                                        <h2
-                                            className={
-                                                viewMode === "grid"
-                                                    ? "text-2xl font-bold text-gray-900 line-clamp-1"
-                                                    : "text-xl font-bold text-gray-900 line-clamp-2"
-                                            }
-                                        >
-                                            {product.name}
-                                        </h2>
-                                        <div className="flex gap-2 items-center">
-                                            <div className="flex gap-0.5">
-                                                {renderStars(getAverageRating(product.id))}
-                                            </div>
-                                            <span className="text-gray-500 text-sm">
-                                                (
-                                                {
-                                                    reviews.filter((r) => r.product_id === product.id)
-                                                        .length
-                                                }{" "}
-                                                reviews)
-                                            </span>
-                                        </div>
-                                        <p className="text-gray-500 text-sm font-light line-clamp-2 min-h-[48px]">
-                                            {product.description}
-                                        </p>
-                                        <div className="text-xl font-semibold">
-                                            {product.discount_percentage > 0 ? (
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-gray-500 line-through">
-                                                        ₦{Number(product.price).toLocaleString()}
-                                                    </span>
-                                                    <span className="text-green-600">
-                                                        ₦
-                                                        {(
-                                                            product.price *
-                                                            (1 - product.discount_percentage / 100)
-                                                        ).toLocaleString()}
-                                                    </span>
-                                                </div>
-                                            ) : (
-                                                <span className="text-purple-700">
-                                                    ₦{Number(product.price).toLocaleString()}
+                                        <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
+                                            {product.is_on_sale && (
+                                                <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm">
+                                                    Sale {product.discount_percentage}% Off
+                                                </span>
+                                            )}
+                                            {product.is_out_of_stock && (
+                                                <span className="bg-gray-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm">
+                                                    Out of Stock
+                                                </span>
+                                            )}
+                                            {product.is_new && (
+                                                <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm">
+                                                    New
                                                 </span>
                                             )}
                                         </div>
                                         <button
-                                            onClick={() =>
-                                                addToCart({
-                                                    ...product,
-                                                    quantity: 1,
-                                                    is_on_sale: product.is_on_sale,
-                                                    discount_percentage: product.discount_percentage,
-                                                    is_out_of_stock: product.is_out_of_stock,
-                                                })
+                                            onClick={() => handleToggleWishlist(product)}
+                                            className="absolute top-4 right-4 z-10 p-2 bg-white/90 rounded-full hover:bg-red-100 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
+                                            aria-label={
+                                                isInWishlist(product.id)
+                                                    ? "Remove from wishlist"
+                                                    : "Add to wishlist"
                                             }
-                                            disabled={product.is_out_of_stock}
-                                            className={`mt-4 w-full py-3 rounded-lg flex items-center justify-center gap-2 font-medium ${product.is_out_of_stock
-                                                    ? "bg-gray-400 cursor-not-allowed text-white"
-                                                    : "bg-purple-600 hover:bg-purple-700 text-white"
-                                                }`}
-                                            aria-label={`Add ${product.name} to cart`}
                                         >
-                                            <FaShoppingCart className="w-4 h-4" />
-                                            <span>
-                                                {product.is_out_of_stock
-                                                    ? "Out of Stock"
-                                                    : "Add to Cart"}
-                                            </span>
+                                            {isInWishlist(product.id) ? (
+                                                <FaHeart className="text-red-500 w-5 h-5 animate-pulse" />
+                                            ) : (
+                                                <FaRegHeart className="text-gray-400 group-hover:text-red-400 w-5 h-5" />
+                                            )}
                                         </button>
+                                        <a href={`/product/${product.id}`} className="block">
+                                            <div
+                                                className={
+                                                    viewMode === "grid"
+                                                        ? "relative overflow-hidden rounded-xl aspect-[3/4] mb-4"
+                                                        : "relative overflow-hidden rounded-xl w-full sm:w-1/3 aspect-[3/4]"
+                                                }
+                                            >
+                                                <img
+                                                    src={
+                                                        product.image_url.startsWith("data:image")
+                                                            ? "/path/to/placeholder.jpg"
+                                                            : product.image_url
+                                                    }
+                                                    srcSet={
+                                                        product.image_url.startsWith("data:image")
+                                                            ? undefined
+                                                            : `${product.image_url}?format=webp&w=300 300w, ${product.image_url}?format=webp&w=600 600w`
+                                                    }
+                                                    sizes="(max-width: 600px) 300px, 600px"
+                                                    alt={product.name}
+                                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                    loading="lazy"
+                                                />
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        openQuickView(product);
+                                                    }}
+                                                    className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white text-purple-600 px-4 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-purple-600 hover:text-white"
+                                                    aria-label={`Quick view ${product.name}`}
+                                                >
+                                                    Quick View
+                                                </button>
+                                            </div>
+                                        </a>
+                                        <div
+                                            className={
+                                                viewMode === "grid" ? "space-y-2" : "flex-1 space-y-2"
+                                            }
+                                        >
+                                            <h2
+                                                className={
+                                                    viewMode === "grid"
+                                                        ? "text-xl font-bold text-gray-900 line-clamp-1"
+                                                        : "text-lg font-bold text-gray-900 line-clamp-2"
+                                                }
+                                            >
+                                                {product.name}
+                                            </h2>
+                                            <div className="flex gap-2 items-center">
+                                                <div className="flex gap-0.5">
+                                                    {renderStars(getAverageRating(product.id))}
+                                                </div>
+                                                <span className="text-gray-500 text-sm">
+                                                    ({reviews.filter((r) => r.product_id === product.id).length} reviews)
+                                                </span>
+                                            </div>
+                                            <p className="text-gray-500 text-sm font-light line-clamp-2 min-h-[48px]">
+                                                {product.description}
+                                            </p>
+                                            <div className="text-xl font-semibold">
+                                                {product.discount_percentage > 0 ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-gray-500 line-through">
+                                                            ₦{Number(product.price).toLocaleString()}
+                                                        </span>
+                                                        <span className="text-green-600">
+                                                            ₦{(
+                                                                product.price *
+                                                                (1 - product.discount_percentage / 100)
+                                                            ).toLocaleString()}
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-purple-700">
+                                                        ₦{Number(product.price).toLocaleString()}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {productVariants.length > 0 && (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {productVariants.map((variant) => (
+                                                        <button
+                                                            key={variant.id}
+                                                            className={`px-3 py-1 border rounded-full ${selectedVariant?.id === variant.id ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-700"} hover:bg-purple-600 hover:text-white transition-colors`}
+                                                            onClick={() => handleVariantSelect(variant)}
+                                                            aria-label={`Select variant ${variant.size} ${variant.color}`}
+                                                        >
+                                                            {variant.size} {variant.color}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            <button
+                                                onClick={() =>
+                                                    addToCart({
+                                                        ...product,
+                                                        quantity: 1,
+                                                        variant: selectedVariant,
+                                                        is_on_sale: product.is_on_sale,
+                                                        discount_percentage: product.discount_percentage,
+                                                        is_out_of_stock: product.is_out_of_stock,
+                                                    })
+                                                }
+                                                disabled={product.is_out_of_stock}
+                                                className={`mt-4 w-full py-3 rounded-full flex items-center justify-center gap-2 font-medium transition-all duration-300 ${product.is_out_of_stock ? "bg-gray-400 cursor-not-allowed text-white" : "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"}`}
+                                                aria-label={`Add ${product.name} to cart`}
+                                            >
+                                                <FaShoppingCart className="w-4 h-4" />
+                                                <span>
+                                                    {product.is_out_of_stock ? "Out of Stock" : "Add to Cart"}
+                                                </span>
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            ))
+                                );
+                            })
                         ) : (
-                            <p className="text-center text-gray-600 col-span-full">
-                                No products match your filters.
+                            <p className="text-center text-gray-600 col-span-full py-8">
+                                No products match your filters. Try adjusting your search or filters.
                             </p>
                         )}
                     </div>
@@ -873,9 +1046,9 @@ export default function Shop() {
 
                 {/* Pagination */}
                 {currentPage < totalPages && (
-                    <div className="mt-8 flex justify-center gap-2 items-center mb-10">
+                    <div className="mt-8 flex justify-center gap-4 items-center mb-10">
                         <button
-                            className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                            className="px-4 py-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors"
                             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                             disabled={currentPage === 1}
                             aria-label="Previous page"
@@ -886,10 +1059,8 @@ export default function Shop() {
                             Page {currentPage} of {totalPages}
                         </span>
                         <button
-                            className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
-                            onClick={() =>
-                                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                            }
+                            className="px-4 py-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                             disabled={currentPage === totalPages}
                             aria-label="Next page"
                         >
@@ -901,33 +1072,30 @@ export default function Shop() {
                 {/* Category Carousels */}
                 {Object.keys(categoryGroups).map((catName) => (
                     <div key={catName} className="mt-12">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                        <h2 className="text-3xl font-extrabold text-gray-900 mb-6">
                             Shop {catName}
                         </h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             {categoryGroups[catName].slice(0, 4).map((product) => (
                                 <div
                                     key={product.id}
-                                    className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-300 relative group"
+                                    className="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-300 relative group"
                                     role="article"
-                                    aria-label={`Product: ${product.name}${product.is_on_sale
-                                            ? `, on sale with ${product.discount_percentage}% off`
-                                            : ""
-                                        }`}
+                                    aria-label={`Product: ${product.name}${product.is_on_sale ? `, on sale with ${product.discount_percentage}% off` : ""}`}
                                 >
                                     <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
                                         {product.is_on_sale && (
-                                            <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-sm">
+                                            <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm">
                                                 Sale {product.discount_percentage}% Off
                                             </span>
                                         )}
                                         {product.is_out_of_stock && (
-                                            <span className="bg-gray-600 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-sm">
+                                            <span className="bg-gray-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm">
                                                 Out of Stock
                                             </span>
                                         )}
                                         {product.is_new && (
-                                            <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-sm">
+                                            <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm">
                                                 New
                                             </span>
                                         )}
@@ -942,7 +1110,7 @@ export default function Shop() {
                                         }
                                     >
                                         {isInWishlist(product.id) ? (
-                                            <FaHeart className="text-red-500 w-5 h-5" />
+                                            <FaHeart className="text-red-500 w-5 h-5 animate-pulse" />
                                         ) : (
                                             <FaRegHeart className="text-gray-400 group-hover:text-red-400 w-5 h-5" />
                                         )}
@@ -970,7 +1138,7 @@ export default function Shop() {
                                                     e.preventDefault();
                                                     openQuickView(product);
                                                 }}
-                                                className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white text-purple-600 px-4 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                                className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white text-purple-600 px-4 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-purple-600 hover:text-white"
                                                 aria-label={`Quick view ${product.name}`}
                                             >
                                                 Quick View
@@ -978,7 +1146,7 @@ export default function Shop() {
                                         </div>
                                     </a>
                                     <div className="space-y-2">
-                                        <h2 className="text-2xl font-bold text-gray-900 line-clamp-1">
+                                        <h2 className="text-xl font-bold text-gray-900 line-clamp-1">
                                             {product.name}
                                         </h2>
                                         <div className="flex gap-2 items-center">
@@ -986,12 +1154,7 @@ export default function Shop() {
                                                 {renderStars(getAverageRating(product.id))}
                                             </div>
                                             <span className="text-gray-500 text-sm">
-                                                (
-                                                {
-                                                    reviews.filter((r) => r.product_id === product.id)
-                                                        .length
-                                                }{" "}
-                                                reviews)
+                                                ({reviews.filter((r) => r.product_id === product.id).length} reviews)
                                             </span>
                                         </div>
                                         <p className="text-gray-500 text-sm font-light line-clamp-2 min-h-[48px]">
@@ -1004,8 +1167,7 @@ export default function Shop() {
                                                         ₦{Number(product.price).toLocaleString()}
                                                     </span>
                                                     <span className="text-green-600">
-                                                        ₦
-                                                        {(
+                                                        ₦{(
                                                             product.price *
                                                             (1 - product.discount_percentage / 100)
                                                         ).toLocaleString()}
@@ -1028,17 +1190,12 @@ export default function Shop() {
                                                 })
                                             }
                                             disabled={product.is_out_of_stock}
-                                            className={`mt-4 w-full py-3 rounded-lg flex items-center justify-center gap-2 font-medium ${product.is_out_of_stock
-                                                    ? "bg-gray-400 cursor-not-allowed text-white"
-                                                    : "bg-purple-600 hover:bg-purple-700 text-white"
-                                                }`}
+                                            className={`mt-4 w-full py-3 rounded-full flex items-center justify-center gap-2 font-medium transition-all duration-300 ${product.is_out_of_stock ? "bg-gray-400 cursor-not-allowed text-white" : "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"}`}
                                             aria-label={`Add ${product.name} to cart`}
                                         >
                                             <FaShoppingCart className="w-4 h-4" />
                                             <span>
-                                                {product.is_out_of_stock
-                                                    ? "Out of Stock"
-                                                    : "Add to Cart"}
+                                                {product.is_out_of_stock ? "Out of Stock" : "Add to Cart"}
                                             </span>
                                         </button>
                                     </div>
@@ -1048,19 +1205,17 @@ export default function Shop() {
                     </div>
                 ))}
 
-                
-
                 {/* Recently Viewed Products */}
                 {recentlyViewed.length > 0 && (
                     <div className="mt-12">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                        <h2 className="text-3xl font-extrabold text-gray-900 mb-6">
                             Recently Viewed
                         </h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             {recentlyViewed.map((product) => (
                                 <div
                                     key={product.id}
-                                    className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-300"
+                                    className="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-300"
                                 >
                                     <a href={`/product/${product.id}`} className="block">
                                         <img
@@ -1070,7 +1225,7 @@ export default function Shop() {
                                                     : product.image_url
                                             }
                                             alt={product.name}
-                                            className="w-full h-48 object-cover rounded-lg mb-4"
+                                            className="w-full h-48 object-cover rounded-lg mb-4 transition-transform duration-300 hover:scale-105"
                                             loading="lazy"
                                         />
                                     </a>
@@ -1089,14 +1244,14 @@ export default function Shop() {
                 {/* Related Products */}
                 {relatedProducts.length > 0 && (
                     <div className="mt-12">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                        <h2 className="text-3xl font-extrabold text-gray-900 mb-6">
                             You May Also Like
                         </h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             {relatedProducts.map((product) => (
                                 <div
                                     key={product.id}
-                                    className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-300"
+                                    className="bg-white p-6 rounded-_news_2xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-300"
                                 >
                                     <a href={`/product/${product.id}`} className="block">
                                         <img
@@ -1106,7 +1261,7 @@ export default function Shop() {
                                                     : product.image_url
                                             }
                                             alt={product.name}
-                                            className="w-full h-48 object-cover rounded-lg mb-4"
+                                            className="w-full h-48 object-cover rounded-lg mb-4 transition-transform duration-300 hover:scale-105"
                                             loading="lazy"
                                         />
                                     </a>
@@ -1125,96 +1280,161 @@ export default function Shop() {
                 {/* Quick View Modal */}
                 {quickViewProduct && (
                     <div
-                        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+                        className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
                         role="dialog"
                         aria-modal="true"
                         tabIndex="-1"
                         ref={modalRef}
                     >
-                        <div className="bg-white p-6 rounded-lg max-w-lg w-full">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                                {quickViewProduct.name}
-                            </h2>
-                            <img
-                                src={
-                                    quickViewProduct.image_url.startsWith("data:image")
-                                        ? "/path/to/placeholder.jpg"
-                                        : quickViewProduct.image_url
-                                }
-                                alt={quickViewProduct.name}
-                                className="w-full h-64 object-cover rounded-lg mb-4"
-                            />
-                            <p className="text-gray-600 mb-4">
-                                {quickViewProduct.description}
-                            </p>
-                            <div className="text-xl font-semibold mb-4">
-                                {quickViewProduct.discount_percentage > 0 ? (
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-gray-500 line-through">
-                                            ₦{Number(quickViewProduct.price).toLocaleString()}
-                                        </span>
-                                        <span className="text-green-600">
-                                            ₦
-                                            {(
-                                                quickViewProduct.price *
-                                                (1 - quickViewProduct.discount_percentage / 100)
-                                            ).toLocaleString()}
-                                        </span>
-                                    </div>
-                                ) : (
-                                    <span className="text-purple-700">
-                                        ₦{Number(quickViewProduct.price).toLocaleString()}
-                                    </span>
-                                )}
-                            </div>
-                            {quickViewProduct.id === "5" && (
-                                <div className="mb-4">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Color
-                                    </label>
-                                    <div className="flex gap-2">
-                                        <button
-                                            className="w-8 h-8 bg-red-800 rounded-full focus:ring-2 focus:ring-purple-600"
-                                            aria-label="Select wine red"
-                                        ></button>
-                                        <button
-                                            className="w-8 h-8 bg-green-800 rounded-full focus:ring-2 focus:ring-purple-600"
-                                            aria-label="Select emerald green"
-                                        ></button>
-                                    </div>
-                                </div>
-                            )}
-                            <button
-                                onClick={() =>
-                                    addToCart({
-                                        ...quickViewProduct, // Fixed: Changed 'product' to 'quickViewProduct'
-                                        quantity: 1,
-                                        is_on_sale: quickViewProduct.is_on_sale,
-                                        discount_percentage: quickViewProduct.discount_percentage,
-                                        is_out_of_stock: quickViewProduct.is_out_of_stock,
-                                    })
-                                }
-                                disabled={quickViewProduct.is_out_of_stock}
-                                className={`w-full py-3 rounded-lg flex items-center justify-center gap-2 font-medium ${quickViewProduct.is_out_of_stock
-                                        ? "bg-gray-400 cursor-not-allowed text-white"
-                                        : "bg-purple-600 hover:bg-purple-700 text-white"
-                                    }`}
-                                aria-label={`Add ${quickViewProduct.name} to cart`}
-                            >
-                                <FaShoppingCart className="w-4 h-4" />
-                                <span>
-                                    {quickViewProduct.is_out_of_stock
-                                        ? "Out of Stock"
-                                        : "Add to Cart"}
-                                </span>
-                            </button>
+                        <div className="bg-white p-6 rounded-2xl max-w-2xl w-full relative">
                             <button
                                 onClick={closeQuickView}
-                                className="mt-2 w-full text-gray-600 hover:text-gray-800"
+                                className="absolute top-4 right-4 text-gray-600 hover:text-gray-800"
                                 aria-label="Close quick view"
                             >
-                                Close
+                                <FaTimes className="w-6 h-6" />
                             </button>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="relative">
+                                    <img
+                                        src={
+                                            quickViewProduct.product_images?.[currentImageIndex]?.image_url ||
+                                            quickViewProduct.image_url.startsWith("data:image")
+                                                ? "/path/to/placeholder.jpg"
+                                                : quickViewProduct.image_url
+                                        }
+                                        alt={quickViewProduct.name}
+                                        className="w-full h-80 object-cover rounded-lg"
+                                    />
+                                    {(quickViewProduct.product_images?.length > 0 || true) && (
+                                        <div className="absolute top-1/2 transform -translate-y-1/2 flex justify-between w-full px-4">
+                                            <button
+                                                onClick={prevImage}
+                                                className="p-2 bg-white/80 rounded-full hover:bg-white transition-colors"
+                                                aria-label="Previous image"
+                                            >
+                                                <FaChevronLeft />
+                                            </button>
+                                            <button
+                                                onClick={nextImage}
+                                                className="p-2 bg-white/80 rounded-full hover:bg-white transition-colors"
+                                                aria-label="Next image"
+                                            >
+                                                <FaChevronRight />
+                                            </button>
+                                        </div>
+                                    )}
+                                    <div className="flex gap-2 mt-2 justify-center">
+                                        {[quickViewProduct.image_url, ...(quickViewProduct.product_images?.map((img) => img.image_url) || [])].map((img, index) => (
+                                            <img
+                                                key={index}
+                                                src={img.startsWith("data:image") ? "/path/to/placeholder.jpg" : img}
+                                                alt={`${quickViewProduct.name} thumbnail ${index + 1}`}
+                                                className={`w-16 h-16 object-cover rounded-lg cursor-pointer ${currentImageIndex === index ? "ring-2 ring-purple-600" : ""}`}
+                                                onClick={() => setCurrentImageIndex(index)}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                                        {quickViewProduct.name}
+                                    </h2>
+                                    <div className="flex gap-2 items-center mb-4">
+                                        <div className="flex gap-0.5">
+                                            {renderStars(getAverageRating(quickViewProduct.id))}
+                                        </div>
+                                        <span className="text-gray-500 text-sm">
+                                            ({reviews.filter((r) => r.product_id === quickViewProduct.id).length} reviews)
+                                        </span>
+                                    </div>
+                                    <p className="text-gray-600 mb-4 line-clamp-3">
+                                        {quickViewProduct.description}
+                                    </p>
+                                    <div className="text-xl font-semibold mb-4">
+                                        {quickViewProduct.discount_percentage > 0 ? (
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-gray-500 line-through">
+                                                    ₦{Number(quickViewProduct.price).toLocaleString()}
+                                                </span>
+                                                <span className="text-green-600">
+                                                    ₦{(
+                                                        quickViewProduct.price *
+                                                        (1 - quickViewProduct.discount_percentage / 100)
+                                                    ).toLocaleString()}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-purple-700">
+                                                ₦{Number(quickViewProduct.price).toLocaleString()}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {variants.filter((v) => v.product_id === quickViewProduct.id).length > 0 && (
+                                        <div className="mb-4">
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Select Variant
+                                            </label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {variants
+                                                    .filter((v) => v.product_id === quickViewProduct.id)
+                                                    .map((variant) => (
+                                                        <button
+                                                            key={variant.id}
+                                                            className={`px-3 py-1 border rounded-full ${selectedVariant?.id === variant.id ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-700"} hover:bg-purple-600 hover:text-white transition-colors`}
+                                                            onClick={() => handleVariantSelect(variant)}
+                                                            aria-label={`Select variant ${variant.size} ${variant.color}`}
+                                                        >
+                                                            {variant.size} {variant.color}
+                                                            {variant.additional_price > 0 && ` (+₦${variant.additional_price})`}
+                                                        </button>
+                                                    ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                    <button
+                                        onClick={() =>
+                                            addToCart({
+                                                ...quickViewProduct,
+                                                quantity: 1,
+                                                variant: selectedVariant,
+                                                is_on_sale: quickViewProduct.is_on_sale,
+                                                discount_percentage: quickViewProduct.discount_percentage,
+                                                is_out_of_stock: quickViewProduct.is_out_of_stock,
+                                            })
+                                        }
+                                        disabled={quickViewProduct.is_out_of_stock}
+                                        className={`w-full py-3 rounded-full flex items-center justify-center gap-2 font-medium transition-all duration-300 ${quickViewProduct.is_out_of_stock ? "bg-gray-400 cursor-not-allowed text-white" : "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"}`}
+                                        aria-label={`Add ${quickViewProduct.name} to cart`}
+                                    >
+                                        <FaShoppingCart className="w-4 h-4" />
+                                        <span>
+                                            {quickViewProduct.is_out_of_stock ? "Out of Stock" : "Add to Cart"}
+                                        </span>
+                                    </button>
+                                    <div className="mt-4">
+                                        <h3 className="text-sm font-medium text-gray-700 mb-2">
+                                            Customer Reviews
+                                        </h3>
+                                        <div className="max-h-40 overflow-y-auto space-y-2">
+                                            {reviews
+                                                .filter((r) => r.product_id === quickViewProduct.id)
+                                                .slice(0, 3)
+                                                .map((review) => (
+                                                    <div key={review.id} className="border-b border-gray-200 pb-2">
+                                                        <div className="flex gap-1">
+                                                            {renderStars(review.rating)}
+                                                        </div>
+                                                        <p className="text-sm text-gray-600">{review.comment}</p>
+                                                        <p className="text-xs text-gray-400">
+                                                            {new Date(review.created_at).toLocaleDateString()}
+                                                        </p>
+                                                    </div>
+                                                ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
