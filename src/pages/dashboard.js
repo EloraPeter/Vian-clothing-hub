@@ -273,7 +273,7 @@ export default function Dashboard() {
 
         <div className="flex">
           {/* Sidebar */}
-          <aside className={`fixed inset-y-0 left-0 w-64 bg-white shadow-lg p-6 transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:static lg:translate-x-0 transition-transform duration-300 z-50`}>
+          <aside className={`fixed inset-y-0 min-h-screen left-0 w-64 bg-white shadow-lg p-6 transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:static lg:translate-x-0 transition-transform duration-300 z-50`}>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-purple-800">Dashboard</h2>
               <button className="lg:hidden text-gray-600" onClick={() => setIsSidebarOpen(false)}>
