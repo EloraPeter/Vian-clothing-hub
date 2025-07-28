@@ -2,15 +2,15 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/router";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/footer";
+import Footer from "@/components/Footer";
 import { useWishlist } from "@/context/WishlistContext";
 import { useCart } from "@/context/CartContext";
 import CartPanel from "@/components/CartPanel";
 import zxcvbn from "zxcvbn";
 import Script from "next/script";
 import DressLoader from "@/components/DressLoader";
-import Link from 'next/link'
-
+import Link from "next/link";
+import { FaUser, FaBox, FaFileInvoice, FaReceipt, FaHeart, FaSignOutAlt } from "react-icons/fa";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -33,6 +33,7 @@ export default function Dashboard() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [activeSection, setActiveSection] = useState("notifications");
 
   const handleNewPasswordChange = (e) => {
     const val = e.target.value;
@@ -72,14 +73,11 @@ export default function Dashboard() {
         if (ordersError) throw ordersError;
         setOrders(ordersData);
 
-        const { data: productOrdersData, error: productOrdersError } =
-          await supabase
-            .from("orders")
-            .select(
-              "*, order_items(product_id, quantity, products(name, image_url, price, product_images(image_url)))"
-            )
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false });
+        const { data: productOrdersData, error: productOrdersError } = await supabase
+          .from("orders")
+          .select("*, order_items(product_id, quantity, products(name, image_url, price, product_images(image_url)))")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
         if (productOrdersError) throw productOrdersError;
         setProductOrders(productOrdersData);
 
@@ -99,12 +97,11 @@ export default function Dashboard() {
         if (receiptsError) throw receiptsError;
         setReceipts(receiptsData);
 
-        const { data: notificationsData, error: notificationsError } =
-          await supabase
-            .from("notifications")
-            .select("*")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false });
+        const { data: notificationsData, error: notificationsError } = await supabase
+          .from("notifications")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
         if (notificationsError) throw notificationsError;
         setNotifications(notificationsData);
       } catch (err) {
@@ -150,9 +147,7 @@ export default function Dashboard() {
       STYLE: invoice.custom_orders.style,
       ADDRESS: invoice.custom_orders.address,
       DEPOSIT: Number(invoice.custom_orders.deposit || 5000).toLocaleString(),
-      BALANCE: Number(
-        invoice.amount - (invoice.custom_orders.deposit || 5000)
-      ).toLocaleString(),
+      BALANCE: Number(invoice.amount - (invoice.custom_orders.deposit || 5000)).toLocaleString(),
       AMOUNT: Number(invoice.amount).toLocaleString(),
       DATE: new Date().toLocaleDateString(),
     };
@@ -181,24 +176,15 @@ export default function Dashboard() {
       currency: "NGN",
       ref: `VIAN_${invoice.id}_${Date.now()}`,
       callback: async (response) => {
-        const { error, data } = await supabase.functions.invoke(
-          "verify-paystack-payment",
-          {
-            body: { reference: response.reference },
-          }
-        );
+        const { error, data } = await supabase.functions.invoke("verify-paystack-payment", {
+          body: { reference: response.reference },
+        });
         if (error || !data.success) {
           alert("Payment verification failed.");
           return;
         }
-        await supabase
-          .from("invoices")
-          .update({ paid: true })
-          .eq("id", invoice.id);
-        const { pdfUrl, receiptId } = await generateReceiptPDF(
-          invoice,
-          response.reference
-        );
+        await supabase.from("invoices").update({ paid: true }).eq("id", invoice.id);
+        const { pdfUrl, receiptId } = await generateReceiptPDF(invoice, response.reference);
         const receiptData = {
           id: receiptId,
           invoice_id: invoice.id,
@@ -215,9 +201,7 @@ export default function Dashboard() {
           .eq("id", invoice.order_id);
         setOrders((prev) =>
           prev.map((order) =>
-            order.id === invoice.order_id
-              ? { ...order, delivery_status: "in_progress" }
-              : order
+            order.id === invoice.order_id ? { ...order, delivery_status: "in_progress" } : order
           )
         );
         const notificationText = `Payment successful for order ID: ${invoice.order_id}. Delivery has started. Check your dashboard for the receipt: [Your App URL]`;
@@ -241,32 +225,22 @@ export default function Dashboard() {
         ]);
         const emailBody = `
           <h2>Payment Confirmation</h2>
-          <p>Your payment for order ID: ${
-            invoice.order_id
-          } has been received.</p>
+          <p>Your payment for order ID: ${invoice.order_id} has been received.</p>
           <p><strong>Receipt</strong></p>
           <p>Order ID: ${invoice.order_id}</p>
           <p>Customer: ${invoice.custom_orders.full_name}</p>
           <p>Fabric: ${invoice.custom_orders.fabric}</p>
           <p>Style: ${invoice.custom_orders.style}</p>
           <p>Delivery Address: ${invoice.custom_orders.address}</p>
-          <p>Deposit: ₦${Number(
-            invoice.custom_orders.deposit || 5000
-          ).toLocaleString()}</p>
-          <p>Balance Paid: ₦${Number(
-            invoice.amount - (invoice.custom_orders.deposit || 5000)
-          ).toLocaleString()}</p>
+          <p>Deposit: ₦${Number(invoice.custom_orders.deposit || 5000).toLocaleString()}</p>
+          <p>Balance Paid: ₦${Number(invoice.amount - (invoice.custom_orders.deposit || 5000)).toLocaleString()}</p>
           <p>Total Amount: ₦${Number(invoice.amount).toLocaleString()}</p>
           <p>Payment Reference: ${response.reference}</p>
           <p>Date: ${new Date().toLocaleDateString()}</p>
           <p><a href="${pdfUrl}">View/Download Receipt</a></p>
           <p>Delivery has started. Please check the app for updates: [Your App URL]</p>
         `;
-        await sendEmailNotification(
-          profile.email,
-          "Payment Receipt",
-          emailBody
-        );
+        await sendEmailNotification(profile.email, "Payment Receipt", emailBody);
         alert("Payment successful! Receipt generated and delivery started.");
       },
       onClose: () => {
@@ -282,36 +256,69 @@ export default function Dashboard() {
   };
 
   if (loading) return <DressLoader />;
-  if (error)
-    return <p className="p-6 text-center text-red-600">Error: {error}</p>;
+  if (error) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
 
   return (
     <>
-      <Script
-        src="https://js.paystack.co/v1/inline.js"
-        strategy="afterInteractive"
-      />
-      <main className="min-h-screen bg-gray-50">
-        <Navbar
-          profile={profile}
-          onCartClick={() => setIsCartOpen(true)}
-          cartItemCount={cart.length}
-          notifications={notifications}
-        />
-        <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
-          <h1 className="text-3xl md:text-4xl font-bold text-purple-800 mb-8 text-center">
-            Customer Dashboard
-          </h1>
+      <Script src="https://js.paystack.co/v1/inline.js" strategy="afterInteractive" />
+      <main className="min-h-screen bg-gray-100 flex">
+        
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column: Notifications and Profile */}
-            <div className="lg:col-span-1 space-y-6">
-              {/* Notifications Section */}
-              <section className="bg-white rounded-2xl shadow-lg p-6">
-                <h2 className="text-xl font-semibold text-purple-800 mb-4">
-                  Notifications
-                </h2>
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col">
+          <Navbar
+            profile={profile}
+            onCartClick={() => setIsCartOpen(true)}
+            cartItemCount={cart.length}
+            notifications={notifications}
+          />
+          <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+          <div className="flex-1 container mx-auto px-4 py-8 max-w-6xl">
+            <h1 className="text-3xl md:text-4xl font-bold text-purple-800 mb-8">
+              Welcome to Your Dashboard
+            </h1>
+
+            {/* Sidebar */}
+        <aside className="w-64 bg-white shadow-lg p-6 fixed h-full lg:static">
+          <h2 className="text-2xl font-bold text-purple-800 mb-6">Dashboard</h2>
+          <nav className="space-y-2">
+            {[
+              { id: "notifications", label: "Notifications", icon: <FaUser /> },
+              { id: "profile", label: "Profile", icon: <FaUser /> },
+              { id: "password", label: "Change Password", icon: <FaUser /> },
+              { id: "invoices", label: "Invoices", icon: <FaFileInvoice /> },
+              { id: "receipts", label: "Receipts", icon: <FaReceipt /> },
+              { id: "wishlist", label: "Wishlist", icon: <FaHeart /> },
+              { id: "custom-orders", label: "Custom Orders", icon: <FaBox /> },
+              { id: "product-orders", label: "Product Orders", icon: <FaBox /> },
+            ].map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveSection(item.id)}
+                className={`w-full flex items-center space-x-2 p-3 rounded-lg text-left transition-colors ${
+                  activeSection === item.id
+                    ? "bg-purple-100 text-purple-800"
+                    : "text-gray-600 hover:bg-purple-50 hover:text-purple-800"
+                }`}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </button>
+            ))}
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center space-x-2 p-3 rounded-lg text-left text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <FaSignOutAlt />
+              <span>Log Out</span>
+            </button>
+          </nav>
+        </aside>
+
+            {/* Notifications Section */}
+            {activeSection === "notifications" && (
+              <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                <h2 className="text-xl font-semibold text-purple-800 mb-4">Notifications</h2>
                 {notifications.length === 0 ? (
                   <p className="text-gray-500">No notifications available.</p>
                 ) : (
@@ -319,11 +326,9 @@ export default function Dashboard() {
                     {notifications.map((notif) => (
                       <li
                         key={notif.id}
-                        className={`p-4 rounded-lg border transition-colors ${
-                          notif.read
-                            ? "bg-gray-100 border-gray-200"
-                            : "bg-purple-50 border-purple-200"
-                        }`}
+                        className={`p-4 rounded-lg border transition-all duration-300 ${
+                          notif.read ? "bg-gray-100 border-gray-200" : "bg-purple-50 border-purple-200"
+                        } hover:shadow-md`}
                       >
                         <p className="text-gray-700">{notif.message}</p>
                         <p className="text-sm text-gray-500 mt-1">
@@ -342,21 +347,21 @@ export default function Dashboard() {
                   </ul>
                 )}
               </section>
+            )}
 
-              {/* Profile Section */}
-              <section className="bg-white rounded-2xl shadow-lg p-6">
-                <h2 className="text-xl font-semibold text-purple-800 mb-4">
-                  Update Profile
-                </h2>
+            {/* Profile Section */}
+            {activeSection === "profile" && (
+              <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                <h2 className="text-xl font-semibold text-purple-800 mb-4">Update Profile</h2>
                 <div className="flex items-center space-x-4 mb-6">
                   {previewUrl || profile?.avatar_url ? (
                     <img
                       src={previewUrl || profile.avatar_url}
                       alt="Avatar"
-                      className="w-16 h-16 rounded-full object-cover border-2 border-purple-200"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-purple-200"
                     />
                   ) : (
-                    <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-medium">
+                    <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-medium">
                       No Pic
                     </div>
                   )}
@@ -389,16 +394,10 @@ export default function Dashboard() {
                         .from("avatars")
                         .update(filePath, avatarFile);
 
-                      if (
-                        uploadError &&
-                        uploadError.message.includes(
-                          "The resource was not found"
-                        )
-                      ) {
-                        const { error: firstUploadError } =
-                          await supabase.storage
-                            .from("avatars")
-                            .upload(filePath, avatarFile);
+                      if (uploadError && uploadError.message.includes("The resource was not found")) {
+                        const { error: firstUploadError } = await supabase.storage
+                          .from("avatars")
+                          .upload(filePath, avatarFile);
                         if (firstUploadError) {
                           alert("Upload failed: " + firstUploadError.message);
                           setUploading(false);
@@ -412,9 +411,7 @@ export default function Dashboard() {
                         return;
                       }
 
-                      const { data } = supabase.storage
-                        .from("avatars")
-                        .getPublicUrl(filePath);
+                      const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
                       avatar_url = data.publicUrl;
                       setUploading(false);
                     }
@@ -436,15 +433,13 @@ export default function Dashboard() {
                 >
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email address
+                      Email Address
                     </label>
                     <input
                       type="email"
                       value={profile?.email || ""}
-                      onChange={(e) =>
-                        setProfile({ ...profile, email: e.target.value })
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                      onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                       required
                     />
                   </div>
@@ -457,22 +452,19 @@ export default function Dashboard() {
                   </button>
                 </form>
               </section>
+            )}
 
-              {/* Password Change Section */}
-              <section className="bg-white rounded-2xl shadow-lg p-6">
-                <h2 className="text-xl font-semibold text-purple-800 mb-4">
-                  Change Password
-                </h2>
+            {/* Password Change Section */}
+            {activeSection === "password" && (
+              <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                <h2 className="text-xl font-semibold text-purple-800 mb-4">Change Password</h2>
                 <form
                   onSubmit={async (e) => {
                     e.preventDefault();
                     const oldPassword = e.target.old_password.value;
                     const newPassword = e.target.new_password.value;
 
-                    const {
-                      data: { session },
-                    } = await supabase.auth.getSession();
-
+                    const { data: { session } } = await supabase.auth.getSession();
                     const email = session?.user?.email;
 
                     if (!email) {
@@ -480,21 +472,19 @@ export default function Dashboard() {
                       return;
                     }
 
-                    const { error: signInError } =
-                      await supabase.auth.signInWithPassword({
-                        email,
-                        password: oldPassword,
-                      });
+                    const { error: signInError } = await supabase.auth.signInWithPassword({
+                      email,
+                      password: oldPassword,
+                    });
 
                     if (signInError) {
                       alert("Old password is incorrect.");
                       return;
                     }
 
-                    const { error: updateError } =
-                      await supabase.auth.updateUser({
-                        password: newPassword,
-                      });
+                    const { error: updateError } = await supabase.auth.updateUser({
+                      password: newPassword,
+                    });
 
                     if (updateError) {
                       alert("Password update failed: " + updateError.message);
@@ -516,7 +506,7 @@ export default function Dashboard() {
                         type={showOldPass ? "text" : "password"}
                         name="old_password"
                         required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                         placeholder="Enter old password"
                       />
                       <button
@@ -540,7 +530,7 @@ export default function Dashboard() {
                         onChange={handleNewPasswordChange}
                         required
                         minLength={6}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                         placeholder="Enter new password"
                       />
                       <button
@@ -552,25 +542,25 @@ export default function Dashboard() {
                       </button>
                     </div>
                     {newPassword && (
-                      <p
-                        className="mt-2 text-sm font-medium"
-                        style={{
-                          color: [
-                            "#ef4444",
-                            "#f97316",
-                            "#facc15",
-                            "#4ade80",
-                            "#22c55e",
-                          ][strengthScore],
-                        }}
-                      >
-                        Password Strength:{" "}
-                        {
-                          ["Very Weak", "Weak", "Fair", "Good", "Strong"][
-                            strengthScore
-                          ]
-                        }
-                      </p>
+                      <div className="mt-2">
+                        <p
+                          className="text-sm font-medium"
+                          style={{
+                            color: ["#ef4444", "#f97316", "#facc15", "#4ade80", "#22c55e"][strengthScore],
+                          }}
+                        >
+                          Password Strength: {["Very Weak", "Weak", "Fair", "Good", "Strong"][strengthScore]}
+                        </p>
+                        <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                          <div
+                            className="h-2 rounded-full transition-all duration-300"
+                            style={{
+                              width: `${(strengthScore + 1) * 20}%`,
+                              backgroundColor: ["#ef4444", "#f97316", "#facc15", "#4ade80", "#22c55e"][strengthScore],
+                            }}
+                          />
+                        </div>
+                      </div>
                     )}
                   </div>
                   <button
@@ -581,65 +571,33 @@ export default function Dashboard() {
                   </button>
                 </form>
               </section>
-            </div>
+            )}
 
-            {/* Right Column: Orders and Invoices */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Invoices Section */}
-              <section className="bg-white rounded-2xl shadow-lg p-6">
-                <h2 className="text-xl font-semibold text-purple-800 mb-4">
-                  Invoices
-                </h2>
+            {/* Invoices Section */}
+            {activeSection === "invoices" && (
+              <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                <h2 className="text-xl font-semibold text-purple-800 mb-4">Invoices</h2>
                 {invoices.length === 0 ? (
                   <p className="text-gray-500">No invoices available.</p>
                 ) : (
                   <ul className="space-y-4">
                     {invoices.map((invoice) => (
-                      <li
-                        key={invoice.id}
-                        className="border border-gray-200 p-4 rounded-lg"
-                      >
+                      <li key={invoice.id} className="border border-gray-200 p-4 rounded-lg hover:shadow-md transition-shadow">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <p className="text-gray-700">
-                              <strong>Order ID:</strong> {invoice.order_id}
-                            </p>
-                            <p className="text-gray-700">
-                              <strong>Fabric:</strong>{" "}
-                              {invoice.custom_orders.fabric}
-                            </p>
-                            <p className="text-gray-700">
-                              <strong>Style:</strong>{" "}
-                              {invoice.custom_orders.style}
-                            </p>
+                            <p className="text-gray-700"><strong>Order ID:</strong> {invoice.order_id}</p>
+                            <p className="text-gray-700"><strong>Fabric:</strong> {invoice.custom_orders.fabric}</p>
+                            <p className="text-gray-700"><strong>Style:</strong> {invoice.custom_orders.style}</p>
                           </div>
                           <div>
-                            <p className="text-gray-700">
-                              <strong>Deposit:</strong> ₦
-                              {Number(
-                                invoice.custom_orders.deposit || 5000
-                              ).toLocaleString()}
-                            </p>
-                            <p className="text-gray-700">
-                              <strong>Balance:</strong> ₦
-                              {Number(
-                                invoice.amount -
-                                  (invoice.custom_orders.deposit || 5000)
-                              ).toLocaleString()}
-                            </p>
-                            <p className="text-gray-700">
-                              <strong>Total Amount:</strong> ₦
-                              {Number(invoice.amount).toLocaleString()}
-                            </p>
-                            <p className="text-gray-700">
-                              <strong>Status:</strong>{" "}
-                              {invoice.paid ? "Paid" : "Pending"}
-                            </p>
+                            <p className="text-gray-700"><strong>Deposit:</strong> ₦{Number(invoice.custom_orders.deposit || 5000).toLocaleString()}</p>
+                            <p className="text-gray-700"><strong>Balance:</strong> ₦{Number(invoice.amount - (invoice.custom_orders.deposit || 5000)).toLocaleString()}</p>
+                            <p className="text-gray-700"><strong>Total Amount:</strong> ₦{Number(invoice.amount).toLocaleString()}</p>
+                            <p className="text-gray-700"><strong>Status:</strong> {invoice.paid ? "Paid" : "Pending"}</p>
                           </div>
                         </div>
                         <p className="text-sm text-gray-500 mt-2">
-                          <strong>Issued:</strong>{" "}
-                          {new Date(invoice.created_at).toLocaleString()}
+                          <strong>Issued:</strong> {new Date(invoice.created_at).toLocaleString()}
                         </p>
                         <div className="mt-4 flex space-x-4">
                           {invoice.pdf_url && (
@@ -666,64 +624,33 @@ export default function Dashboard() {
                   </ul>
                 )}
               </section>
+            )}
 
-              {/* Receipts Section */}
-              <section className="bg-white rounded-2xl shadow-lg p-6">
-                <h2 className="text-xl font-semibold text-purple-800 mb-4">
-                  Receipts
-                </h2>
+            {/* Receipts Section */}
+            {activeSection === "receipts" && (
+              <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                <h2 className="text-xl font-semibold text-purple-800 mb-4">Receipts</h2>
                 {receipts.length === 0 ? (
                   <p className="text-gray-500">No receipts available.</p>
                 ) : (
                   <ul className="space-y-4">
                     {receipts.map((receipt) => (
-                      <li
-                        key={receipt.id}
-                        className="border border-gray-200 p-4 rounded-lg"
-                      >
+                      <li key={receipt.id} className="border border-gray-200 p-4 rounded-lg hover:shadow-md transition-shadow">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <p className="text-gray-700">
-                              <strong>Order ID:</strong>{" "}
-                              {receipt.invoices.custom_orders.id}
-                            </p>
-                            <p className="text-gray-700">
-                              <strong>Fabric:</strong>{" "}
-                              {receipt.invoices.custom_orders.fabric}
-                            </p>
-                            <p className="text-gray-700">
-                              <strong>Style:</strong>{" "}
-                              {receipt.invoices.custom_orders.style}
-                            </p>
+                            <p className="text-gray-700"><strong>Order ID:</strong> {receipt.invoices.custom_orders.id}</p>
+                            <p className="text-gray-700"><strong>Fabric:</strong> {receipt.invoices.custom_orders.fabric}</p>
+                            <p className="text-gray-700"><strong>Style:</strong> {receipt.invoices.custom_orders.style}</p>
                           </div>
                           <div>
-                            <p className="text-gray-700">
-                              <strong>Deposit:</strong> ₦
-                              {Number(
-                                receipt.invoices.custom_orders.deposit || 5000
-                              ).toLocaleString()}
-                            </p>
-                            <p className="text-gray-700">
-                              <strong>Balance Paid:</strong> ₦
-                              {Number(
-                                receipt.amount -
-                                  (receipt.invoices.custom_orders.deposit ||
-                                    5000)
-                              ).toLocaleString()}
-                            </p>
-                            <p className="text-gray-700">
-                              <strong>Total Amount:</strong> ₦
-                              {Number(receipt.amount).toLocaleString()}
-                            </p>
-                            <p className="text-gray-700">
-                              <strong>Payment Reference:</strong>{" "}
-                              {receipt.payment_reference}
-                            </p>
+                            <p className="text-gray-700"><strong>Deposit:</strong> ₦{Number(receipt.invoices.custom_orders.deposit || 5000).toLocaleString()}</p>
+                            <p className="text-gray-700"><strong>Balance Paid:</strong> ₦{Number(receipt.amount - (receipt.invoices.custom_orders.deposit || 5000)).toLocaleString()}</p>
+                            <p className="text-gray-700"><strong>Total Amount:</strong> ₦{Number(receipt.amount).toLocaleString()}</p>
+                            <p className="text-gray-700"><strong>Payment Reference:</strong> {receipt.payment_reference}</p>
                           </div>
                         </div>
                         <p className="text-sm text-gray-500 mt-2">
-                          <strong>Issued:</strong>{" "}
-                          {new Date(receipt.created_at).toLocaleString()}
+                          <strong>Issued:</strong> {new Date(receipt.created_at).toLocaleString()}
                         </p>
                         {receipt.pdf_url && (
                           <a
@@ -740,27 +667,22 @@ export default function Dashboard() {
                   </ul>
                 )}
               </section>
+            )}
 
-              {/* Wishlist Section */}
-              <section className="bg-white rounded-2xl shadow-lg p-6">
-                <h2 className="text-xl font-semibold text-purple-800 mb-4">
-                  Wishlist
-                </h2>
+            {/* Wishlist Section */}
+            {activeSection === "wishlist" && (
+              <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                <h2 className="text-xl font-semibold text-purple-800 mb-4">Wishlist</h2>
                 {wishlist.length === 0 ? (
-                  <p className="text-gray-500">
-                    You have no items in your wishlist.
-                  </p>
+                  <p className="text-gray-500">You have no items in your wishlist.</p>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     {wishlist.map((item) => (
-                      <div
-                        key={item.id}
-                        className="bg-gray-50 p-4 rounded-lg shadow-sm text-center"
-                      >
+                      <div key={item.id} className="bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                         <img
                           src={item.image_url}
                           alt={item.name}
-                          className="h-40 w-full object-cover rounded-lg mb-3"
+                          className="h-48 w-full object-cover rounded-lg mb-3"
                         />
                         <p className="font-medium text-gray-700">{item.name}</p>
                         <p className="text-sm text-gray-600">
@@ -770,17 +692,11 @@ export default function Dashboard() {
                                 ₦{Number(item.price).toLocaleString()}
                               </span>{" "}
                               <span className="text-green-600">
-                                ₦
-                                {(
-                                  item.price *
-                                  (1 - item.discount_percentage / 100)
-                                ).toLocaleString()}
+                                ₦{(item.price * (1 - item.discount_percentage / 100)).toLocaleString()}
                               </span>
                             </span>
                           ) : (
-                            <span className="text-purple-700">
-                              ₦{Number(item.price).toLocaleString()}
-                            </span>
+                            <span className="text-purple-700">₦{Number(item.price).toLocaleString()}</span>
                           )}
                         </p>
                       </div>
@@ -788,122 +704,109 @@ export default function Dashboard() {
                   </div>
                 )}
               </section>
+            )}
 
-              {/* Custom Orders Section */}
-              <section className="bg-white rounded-2xl shadow-lg p-6">
-                <h2 className="text-xl font-semibold text-purple-800 mb-4">
-                  Custom Orders
-                </h2>
+            {/* Custom Orders Section */}
+            {activeSection === "custom-orders" && (
+              <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                <h2 className="text-xl font-semibold text-purple-800 mb-4">Custom Orders</h2>
                 {orders.length === 0 ? (
-                  <p className="text-gray-500">
-                    You have no custom orders yet.
-                  </p>
+                  <p className="text-gray-500">You have no custom orders yet.</p>
                 ) : (
                   <ul className="space-y-4">
                     {orders.map((order) => (
-                      <li
-                        key={order.id}
-                        className="border border-gray-200 p-4 rounded-lg"
-                      >
-                        <p className="text-gray-700">
-                          <strong>Fabric:</strong> {order.fabric}
-                        </p>
-                        <p className="text-gray-700">
-                          <strong>Style:</strong> {order.style}
-                        </p>
-                        <p className="text-gray-700">
-                          <strong>Status:</strong> {order.status}
-                        </p>
-                        <p className="text-gray-700">
-                          <strong>Delivery Status:</strong>{" "}
-                          {order.delivery_status}
-                        </p>
+                      <li key={order.id} className="border border-gray-200 p-4 rounded-lg hover:shadow-md transition-shadow">
+                        <p className="text-gray-700"><strong>Fabric:</strong> {order.fabric}</p>
+                        <p className="text-gray-700"><strong>Style:</strong> {order.style}</p>
+                        <p className="text-gray-700"><strong>Status:</strong> {order.status}</p>
+                        <p className="text-gray-700"><strong>Delivery Status:</strong> {order.delivery_status}</p>
+                        <div className="mt-2">
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className="h-2 rounded-full bg-purple-600"
+                              style={{
+                                width: order.delivery_status === "delivered" ? "100%" : order.delivery_status === "in_progress" ? "50%" : "10%",
+                              }}
+                            />
+                          </div>
+                          <p className="text-sm text-gray-500 mt-1">
+                            {order.delivery_status === "delivered"
+                              ? "Delivered"
+                              : order.delivery_status === "in_progress"
+                              ? "In Progress"
+                              : "Pending"}
+                          </p>
+                        </div>
                         <p className="text-sm text-gray-500 mt-2">
-                          <strong>Ordered on:</strong>{" "}
-                          {new Date(order.created_at).toLocaleString()}
+                          <strong>Ordered on:</strong> {new Date(order.created_at).toLocaleString()}
                         </p>
                       </li>
                     ))}
                   </ul>
                 )}
               </section>
+            )}
 
-              {/* Product Orders Section */}
-              <section className="bg-white rounded-2xl shadow-lg p-6">
-                <h2 className="text-xl font-semibold text-purple-800 mb-4">
-                  Product Orders
-                </h2>
-                <Link
-                  href="/orders"
-                  className="text-gray-600 hover:text-purple-700"
-                >
-                  My Orders
+            {/* Product Orders Section */}
+            {activeSection === "product-orders" && (
+              <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                <h2 className="text-xl font-semibold text-purple-800 mb-4">Product Orders</h2>
+                <Link href="/orders" className="text-purple-600 hover:text-purple-800 mb-4 block">
+                  View All Orders
                 </Link>
-
                 {productOrders.length === 0 ? (
-                  <p className="text-gray-500">
-                    You have no product orders yet.
-                  </p>
+                  <p className="text-gray-500">You have no product orders yet.</p>
                 ) : (
                   <ul className="space-y-4">
                     {productOrders.map((order) => (
-                      <li
-                        key={order.id}
-                        className="border border-gray-200 p-4 rounded-lg"
-                      >
-                        <p className="text-gray-700 font-medium">
-                          Order ID: {order.id}
-                        </p>
+                      <li key={order.id} className="border border-gray-200 p-4 rounded-lg hover:shadow-md transition-shadow">
+                        <p className="text-gray-700 font-medium">Order ID: {order.id}</p>
                         {order.order_items.map((item) => (
-                          <div
-                            key={item.product_id}
-                            className="flex items-center space-x-4 mt-3"
-                          >
+                          <div key={item.product_id} className="flex items-center space-x-4 mt-3">
                             <img
                               src={item.products.image_url}
                               alt={item.products.name}
                               className="w-16 h-16 object-cover rounded-lg border border-gray-200"
                             />
                             <div>
-                              <p className="text-gray-700">
-                                <strong>Product:</strong> {item.products.name}
-                              </p>
-                              <p className="text-gray-700">
-                                <strong>Price:</strong> ₦
-                                {Number(item.products.price).toLocaleString()}
-                              </p>
-                              <p className="text-gray-700">
-                                <strong>Quantity:</strong> {item.quantity}
-                              </p>
+                              <p className="text-gray-700"><strong>Product:</strong> {item.products.name}</p>
+                              <p className="text-gray-700"><strong>Price:</strong> ₦{Number(item.products.price).toLocaleString()}</p>
+                              <p className="text-gray-700"><strong>Quantity:</strong> {item.quantity}</p>
                             </div>
                           </div>
                         ))}
-                        <p className="text-gray-700 mt-2">
-                          <strong>Status:</strong> {order.status}
-                        </p>
+                        <p className="text-gray-700 mt-2"><strong>Status:</strong> {order.status}</p>
+                        <div className="mt-2">
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className="h-2 rounded-full bg-purple-600"
+                              style={{
+                                width: order.status === "delivered" ? "100%" : order.status === "shipped" ? "75%" : order.status === "processing" ? "50%" : "10%",
+                              }}
+                            />
+                          </div>
+                          <p className="text-sm text-gray-500 mt-1">
+                            {order.status === "delivered"
+                              ? "Delivered"
+                              : order.status === "shipped"
+                              ? "Shipped"
+                              : order.status === "processing"
+                              ? "Processing"
+                              : "Pending"}
+                          </p>
+                        </div>
                         <p className="text-sm text-gray-500 mt-2">
-                          <strong>Ordered on:</strong>{" "}
-                          {new Date(order.created_at).toLocaleString()}
+                          <strong>Ordered on:</strong> {new Date(order.created_at).toLocaleString()}
                         </p>
                       </li>
                     ))}
                   </ul>
                 )}
               </section>
-            </div>
+            )}
           </div>
-
-          {/* Logout Button */}
-          <div className="text-center mt-8">
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-red-700 transition-colors"
-            >
-              Log Out
-            </button>
-          </div>
+          <Footer />
         </div>
-        <Footer />
       </main>
     </>
   );
