@@ -279,7 +279,7 @@ export default function Shop() {
                         <img
                             src="/path/to/sale-banner.jpg"
                             alt="Sale Promotion"
-                            className="w-full h-64 object-cover"
+                            className="w-full h-100 object-cover"
                             loading="lazy"
                         />
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -299,12 +299,12 @@ export default function Shop() {
 
                 {/* Search Bar */}
                 <div className="mb-8">
-                    <div className="relative max-w-xl mx-auto">
+                    <div className="relative max-w-3xl mx-auto">
                         <input
                             type="text"
                             placeholder="Search products..."
                             onChange={(e) => debouncedSearch(e.target.value)}
-                            className="w-full p-3 pl-10 text-gray-700 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                            className="w-full p-3 pl-10 text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
                             aria-label="Search products"
                         />
                         <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
