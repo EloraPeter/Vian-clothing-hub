@@ -261,22 +261,25 @@ export default function Dashboard() {
   return (
     <>
       <Script src="https://js.paystack.co/v1/inline.js" strategy="afterInteractive" />
-      <main className="min-h-screen bg-gray-100 flex">
+      <main className="min-h-screen bg-gray-100">
         
-
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col">
-          <Navbar
+        <Navbar
             profile={profile}
             onCartClick={() => setIsCartOpen(true)}
             cartItemCount={cart.length}
             notifications={notifications}
           />
           <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-          <div className="flex-1 container mx-auto px-4 py-8 max-w-6xl">
+
             <h1 className="text-3xl md:text-4xl font-bold text-purple-800 mb-8">
               Welcome to Your Dashboard
             </h1>
+
+        {/* Main Content */}
+        <div className=" flex ">
+          
+          <div className="flex-1 flex container mx-auto px-4 py-8 ">
+            
 
             {/* Sidebar */}
         <aside className="w-64 bg-white shadow-lg p-6 fixed h-full lg:static">
@@ -805,8 +808,9 @@ export default function Dashboard() {
               </section>
             )}
           </div>
-          <Footer />
+          
         </div>
+        <Footer />
       </main>
     </>
   );
