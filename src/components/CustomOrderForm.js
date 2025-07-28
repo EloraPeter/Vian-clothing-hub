@@ -279,7 +279,7 @@ export default function CustomOrderForm({ onSubmit }) {
                   type="number"
                   value={form.measurements.bust}
                   onChange={(e) => setForm({ ...form, measurements: { ...form.measurements, bust: e.target.value } })}
-                  className={`w-full border p-3 rounded-lg ${errors.bust ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
+                  className={`w-full border p-3 rounded-lg ${errors.bust ? 'border-red-500' : 'border-gray-300'} text-gray-600 focus:ring-purple-500 focus:border-purple-500`}
                   required
                 />
                 {errors.bust && <p className="text-red-500 text-sm mt-1">{errors.bust}</p>}
@@ -290,7 +290,7 @@ export default function CustomOrderForm({ onSubmit }) {
                   type="number"
                   value={form.measurements.waist}
                   onChange={(e) => setForm({ ...form, measurements: { ...form.measurements, waist: e.target.value } })}
-                  className={`w-full border p-3 rounded-lg ${errors.waist ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
+                  className={`w-full border p-3 rounded-lg ${errors.waist ? 'border-red-500' : 'border-gray-300'} text-gray-700 focus:ring-purple-500 focus:border-purple-500`}
                   required
                 />
                 {errors.waist && <p className="text-red-500 text-sm mt-1">{errors.waist}</p>}
@@ -301,7 +301,7 @@ export default function CustomOrderForm({ onSubmit }) {
                   type="number"
                   value={form.measurements.hips}
                   onChange={(e) => setForm({ ...form, measurements: { ...form.measurements, hips: e.target.value } })}
-                  className={`w-full border p-3 rounded-lg ${errors.hips ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
+                  className={`w-full border p-3 rounded-lg ${errors.hips ? 'border-red-500' : 'border-gray-300'} text-gray-700 focus:ring-purple-500 focus:border-purple-500`}
                   required
                 />
                 {errors.hips && <p className="text-red-500 text-sm mt-1">{errors.hips}</p>}
@@ -312,7 +312,7 @@ export default function CustomOrderForm({ onSubmit }) {
                   type="number"
                   value={form.measurements.shoulder}
                   onChange={(e) => setForm({ ...form, measurements: { ...form.measurements, shoulder: e.target.value } })}
-                  className="w-full border p-3 rounded-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full border p-3 rounded-lg border-gray-300 text-gray-700 focus:ring-purple-500 focus:border-purple-500"
                 />
               </div>
               <div>
@@ -321,7 +321,7 @@ export default function CustomOrderForm({ onSubmit }) {
                   type="number"
                   value={form.measurements.length}
                   onChange={(e) => setForm({ ...form, measurements: { ...form.measurements, length: e.target.value } })}
-                  className="w-full border p-3 rounded-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full border p-3 rounded-lg border-gray-300 text-gray-700 focus:ring-purple-500 focus:border-purple-500"
                 />
               </div>
             </div>
@@ -331,7 +331,7 @@ export default function CustomOrderForm({ onSubmit }) {
         {step === 4 && (
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold text-purple-800">Review Your Order</h2>
-            <div className="bg-gray-100 p-4 rounded-lg">
+            <div className="bg-gray-100 text-gray-900 p-4 rounded-lg">
               <p><strong>Full Name:</strong> {form.full_name}</p>
               <p><strong>Email:</strong> {form.email}</p>
               <p><strong>Phone:</strong> {form.phone}</p>
