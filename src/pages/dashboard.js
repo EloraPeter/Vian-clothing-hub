@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/router";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import Footer from "@/components/footer";
 import { useWishlist } from "@/context/WishlistContext";
 import { useCart } from "@/context/CartContext";
 import CartPanel from "@/components/CartPanel";
@@ -10,7 +10,7 @@ import zxcvbn from "zxcvbn";
 import Script from "next/script";
 import DressLoader from "@/components/DressLoader";
 import Link from "next/link";
-import { FaUser, FaBox, FaFileInvoice, FaReceipt, FaHeart, FaSignOutAlt } from "react-icons/fa";
+import { FaUser, FaBox, FaFileInvoice, FaReceipt, FaHeart, FaSignOutAlt, FaBars } from "react-icons/fa";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -33,7 +33,8 @@ export default function Dashboard() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [activeSection, setActiveSection] = useState("notifications");
+  const [activeSection, setActiveSection] = useState("overview");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleNewPasswordChange = (e) => {
     const val = e.target.value;
@@ -260,63 +261,95 @@ export default function Dashboard() {
 
   return (
     <>
-      <Script src="https://js.paystack.co/v1/inline.js" strategy="afterInteractive" />
-      <main className="min-h-screen bg-gray-100">
-        
+      {/* <Script src="https://js.paystack.co/v1/inline.js" strategy="afterInteractive" /> */}
+      <main className="min-h-screen bg-gray-50">
         <Navbar
-            profile={profile}
-            onCartClick={() => setIsCartOpen(true)}
-            cartItemCount={cart.length}
-            notifications={notifications}
-          />
-          <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+          profile={profile}
+          onCartClick={() => setIsCartOpen(true)}
+          cartItemCount={cart.length}
+          notifications={notifications}
+        />
+        <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
-            <h1 className="text-3xl md:text-4xl font-bold text-purple-800 mb-8">
-              Welcome to Your Dashboard
-            </h1>
-
-        {/* Main Content */}
-        <div className=" flex ">
-          
-          <div className="flex-1 flex container mx-auto px-4 py-8 ">
-            
-
-            {/* Sidebar */}
-        <aside className="w-64 bg-white shadow-lg p-6 fixed h-full lg:static">
-          <h2 className="text-2xl font-bold text-purple-800 mb-6">Dashboard</h2>
-          <nav className="space-y-2">
-            {[
-              { id: "notifications", label: "Notifications", icon: <FaUser /> },
-              { id: "profile", label: "Profile", icon: <FaUser /> },
-              { id: "password", label: "Change Password", icon: <FaUser /> },
-              { id: "invoices", label: "Invoices", icon: <FaFileInvoice /> },
-              { id: "receipts", label: "Receipts", icon: <FaReceipt /> },
-              { id: "wishlist", label: "Wishlist", icon: <FaHeart /> },
-              { id: "custom-orders", label: "Custom Orders", icon: <FaBox /> },
-              { id: "product-orders", label: "Product Orders", icon: <FaBox /> },
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveSection(item.id)}
-                className={`w-full flex items-center space-x-2 p-3 rounded-lg text-left transition-colors ${
-                  activeSection === item.id
-                    ? "bg-purple-100 text-purple-800"
-                    : "text-gray-600 hover:bg-purple-50 hover:text-purple-800"
-                }`}
-              >
-                {item.icon}
-                <span>{item.label}</span>
+        <div className="flex">
+          {/* Sidebar */}
+          <aside className={`fixed inset-y-0 left-0 w-64 bg-white shadow-lg p-6 transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:static lg:translate-x-0 transition-transform duration-300 z-50`}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-purple-800">Dashboard</h2>
+              <button className="lg:hidden text-gray-600" onClick={() => setIsSidebarOpen(false)}>
+                <FaBars />
               </button>
-            ))}
+            </div>
+            <nav className="space-y-2">
+              {[
+                { id: "overview", label: "Overview", icon: <FaUser /> },
+                { id: "notifications", label: "Notifications", icon: <FaUser /> },
+                { id: "profile", label: "Profile", icon: <FaUser /> },
+                { id: "password", label: "Change Password", icon: <FaUser /> },
+                { id: "invoices", label: "Invoices", icon: <FaFileInvoice /> },
+                { id: "receipts", label: "Receipts", icon: <FaReceipt /> },
+                { id: "wishlist", label: "Wishlist", icon: <FaHeart /> },
+                { id: "custom-orders", label: "Custom Orders", icon: <FaBox /> },
+                { id: "product-orders", label: "Product Orders", icon: <FaBox /> },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveSection(item.id);
+                    setIsSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center space-x-2 p-3 rounded-lg text-left transition-colors ${
+                    activeSection === item.id
+                      ? "bg-purple-100 text-purple-800"
+                      : "text-gray-600 hover:bg-purple-50 hover:text-purple-800"
+                  }`}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </button>
+              ))}
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center space-x-2 p-3 rounded-lg text-left text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <FaSignOutAlt />
+                <span>Log Out</span>
+              </button>
+            </nav>
+          </aside>
+
+          {/* Main Content */}
+          <div className="flex-1 container mx-auto px-4 py-8 max-w-6xl">
             <button
-              onClick={handleLogout}
-              className="w-full flex items-center space-x-2 p-3 rounded-lg text-left text-red-600 hover:bg-red-50 transition-colors"
+              className="lg:hidden mb-4 text-purple-600"
+              onClick={() => setIsSidebarOpen(true)}
             >
-              <FaSignOutAlt />
-              <span>Log Out</span>
+              <FaBars size={24} />
             </button>
-          </nav>
-        </aside>
+
+            {/* Welcome Banner */}
+            {activeSection === "overview" && (
+              <section className="bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-2xl p-6 mb-6 shadow-lg">
+                <h1 className="text-2xl md:text-3xl font-bold">
+                  Welcome, {profile?.email.split("@")[0]}!
+                </h1>
+                <p className="mt-2">Manage your orders, payments, and wishlist with ease.</p>
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="bg-white text-purple-800 p-4 rounded-lg shadow">
+                    <p className="text-lg font-semibold">{orders.length + productOrders.length}</p>
+                    <p className="text-sm">Total Orders</p>
+                  </div>
+                  <div className="bg-white text-purple-800 p-4 rounded-lg shadow">
+                    <p className="text-lg font-semibold">{invoices.filter(i => !i.paid).length}</p>
+                    <p className="text-sm">Pending Invoices</p>
+                  </div>
+                  <div className="bg-white text-purple-800 p-4 rounded-lg shadow">
+                    <p className="text-lg font-semibold">{wishlist.length}</p>
+                    <p className="text-sm">Wishlist Items</p>
+                  </div>
+                </div>
+              </section>
+            )}
 
             {/* Notifications Section */}
             {activeSection === "notifications" && (
@@ -723,10 +756,10 @@ export default function Dashboard() {
                         <p className="text-gray-700"><strong>Style:</strong> {order.style}</p>
                         <p className="text-gray-700"><strong>Status:</strong> {order.status}</p>
                         <p className="text-gray-700"><strong>Delivery Status:</strong> {order.delivery_status}</p>
-                        <div className="mt-2">
+                        <div className="mt-2 relative group">
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div
-                              className="h-2 rounded-full bg-purple-600"
+                              className="h-2 rounded-full bg-purple-600 transition-all duration-300"
                               style={{
                                 width: order.delivery_status === "delivered" ? "100%" : order.delivery_status === "in_progress" ? "50%" : "10%",
                               }}
@@ -739,6 +772,13 @@ export default function Dashboard() {
                               ? "In Progress"
                               : "Pending"}
                           </p>
+                          <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 -top-8 left-1/2 transform -translate-x-1/2">
+                            {order.delivery_status === "delivered"
+                              ? "Order has been delivered"
+                              : order.delivery_status === "in_progress"
+                              ? "Order is being processed"
+                              : "Order is pending"}
+                          </div>
                         </div>
                         <p className="text-sm text-gray-500 mt-2">
                           <strong>Ordered on:</strong> {new Date(order.created_at).toLocaleString()}
@@ -779,10 +819,10 @@ export default function Dashboard() {
                           </div>
                         ))}
                         <p className="text-gray-700 mt-2"><strong>Status:</strong> {order.status}</p>
-                        <div className="mt-2">
+                        <div className="mt-2 relative group">
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div
-                              className="h-2 rounded-full bg-purple-600"
+                              className="h-2 rounded-full bg-purple-600 transition-all duration-300"
                               style={{
                                 width: order.status === "delivered" ? "100%" : order.status === "shipped" ? "75%" : order.status === "processing" ? "50%" : "10%",
                               }}
@@ -797,6 +837,15 @@ export default function Dashboard() {
                               ? "Processing"
                               : "Pending"}
                           </p>
+                          <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 -top-8 left-1/2 transform -translate-x-1/2">
+                            {order.status === "delivered"
+                              ? "Order has been delivered"
+                              : order.status === "shipped"
+                              ? "Order has been shipped"
+                              : order.status === "processing"
+                              ? "Order is being processed"
+                              : "Order is pending"}
+                          </div>
                         </div>
                         <p className="text-sm text-gray-500 mt-2">
                           <strong>Ordered on:</strong> {new Date(order.created_at).toLocaleString()}
@@ -808,7 +857,6 @@ export default function Dashboard() {
               </section>
             )}
           </div>
-          
         </div>
         <Footer />
       </main>
