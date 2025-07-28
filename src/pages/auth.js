@@ -6,7 +6,7 @@ import zxcvbn from "zxcvbn";
 import Spinner from "@/components/Spinner";
 import DressLoader from "@/components/DressLoader";
 import Head from "next/head";
-
+import { FaEye, FaEyeSlash, FaGoogle } from "react-icons/fa";
 
 export default function Auth() {
   const router = useRouter();
@@ -22,6 +22,7 @@ export default function Auth() {
     setMessage("");
     setForm({ email: "", password: "", confirm: "" });
     setMode(mode === "login" ? "signup" : "login");
+    setStrengthScore(0);
   };
 
   const handleSubmit = async (e) => {
@@ -57,8 +58,12 @@ export default function Auth() {
   };
 
   const handleOAuth = async (provider) => {
+    setLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({ provider });
-    if (error) setMessage(error.message);
+    if (error) {
+      setMessage(error.message);
+      setLoading(false);
+    }
   };
 
   const handlePasswordChange = (e) => {
@@ -72,191 +77,214 @@ export default function Auth() {
 
   return (
     <>
-    <Head>
-  <title>{mode === "login" ? "Login - Vian Clothing Hub" : "Sign Up - Vian Clothing Hub"}</title>
-  <meta
-    name="description"
-    content={
-      mode === "login"
-        ? "Login to your Vian Clothing Hub account and access stylish collections, exclusive deals, and order tracking."
-        : "Create your Vian Clothing Hub account to explore bold and authentic African fashion tailored to your vibe."
-    }
-  />
-  <meta name="author" content="Vian Clothing Hub" />
-  <meta name="keywords" content="Vian Clothing Hub, Login, Signup, African fashion, User account" />
-  <meta
-    property="og:title"
-    content={mode === "login" ? "Login - Vian Clothing Hub" : "Sign Up - Vian Clothing Hub"}
-  />
-  <meta
-    property="og:description"
-    content={
-      mode === "login"
-        ? "Access your Vian Clothing Hub account and keep up with the style."
-        : "Join Vian Clothing Hub and step into your fashion era."
-    }
-  />
-</Head>
-    <main className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-rose-50 bg-[url('/african-fabric.jpg')] bg-cover bg-center relative">
-      <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-black/40 z-0"></div>
+      <Head>
+        <title>{mode === "login" ? "Login - Vian Clothing Hub" : "Sign Up - Vian Clothing Hub"}</title>
+        <meta
+          name="description"
+          content={
+            mode === "login"
+              ? "Login to your Vian Clothing Hub account and access stylish collections, exclusive deals, and order tracking."
+              : "Create your Vian Clothing Hub account to explore bold and authentic African fashion tailored to your vibe."
+          }
+        />
+        <meta name="author" content="Vian Clothing Hub" />
+        <meta name="keywords" content="Vian Clothing Hub, Login, Signup, African fashion, User account" />
+        <meta
+          property="og:title"
+          content={mode === "login" ? "Login - Vian Clothing Hub" : "Sign Up - Vian Clothing Hub"}
+        />
+        <meta
+          property="og:description"
+          content={
+            mode === "login"
+              ? "Access your Vian Clothing Hub account and keep up with the style."
+              : "Join Vian Clothing Hub and step into your fashion era."
+          }
+        />
+      </Head>
+      <main className="min-h-screen bg-[url('/african-fabric.jpg')] bg-cover bg-center relative overflow-hidden">
 
-      {loading && <DressLoader />}
-      <Link
-        href="/"
-        className="fixed top-6 left-6 z-50 flex items-center space-x-2"
-      >
-        <img src="/logo.svg" alt="Aunty Nwanne Logo" className="h-20 w-auto invert" />
-      </Link>
-      <div className="min-h-screen flex flex-col-reverse md:flex-row items-center justify-center px-4 md:px-12 md:py-20 py-8 gap-6 md:gap-8">
-        <div className="relative bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md transform transition-all duration-500 hover:scale-105 animate-fade-in">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <h1 className="text-3xl font-extrabold text-center text-purple-800 font-['Playfair_Display']">
-              {mode === "login" ? "Welcome Back" : "Join the Style"}
-            </h1>
+        {loading && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50">
+            <DressLoader />
+          </div>
+        )}
+        <Link
+          href="/"
+          className="fixed top-6 left-6 z-50 flex items-center space-x-2"
+        >
+          <img src="/logo.svg" alt="Vian Clothing Hub Logo" className="h-16 w-auto invert" />
+        </Link>
+        <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 md:py-12 lg:flex-row lg:gap-12 z-10">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 transform transition-all duration-500 hover:shadow-2xl animate-fade-in">
+            <form onSubmit={handleSubmit} className="space-y-6" aria-label={mode === "login" ? "Login form" : "Sign up form"}>
+              <h1 className="text-3xl font-extrabold text-center text-purple-800 font-['Playfair_Display']">
+                {mode === "login" ? "Welcome Back" : "Join the Style"}
+              </h1>
 
-            <button
-              type="button"
-              onClick={() => handleOAuth("google")}
-              className="flex items-center justify-center w-full bg-white border border-gray-300 text-gray-700 px-4 py-3 rounded-lg shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-300"
-            >
-              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                <path
-                  fill="currentColor"
-                  d="M12.24 10.493v2.773h6.533c-.267 1.467-1.067 2.707-2.24 3.573-1.173.867-2.667 1.307-4.293 1.307-3.36 0-6.213-2.28-7.24-5.333-.533-1.6-.533-3.333 0-4.933.533-1.6 1.707-2.987 3.307-3.853 1.6-.867 3.493-.867 5.093 0 .8.4 1.493.987 2.027 1.707l-2.88 2.88c-.533-.533-1.227-.867-2.027-.867-1.333 0-2.507.867-2.933 2.133-.133.4-.2.813-.2 1.227 0 .413.067.827.2 1.227.427 1.267 1.6 2.133 2.933 2.133 1.067 0 2-.533 2.667-1.333.533-.667.8-1.467.933-2.333H12.24z"
-                />
-              </svg>
-              Continue with Google
-            </button>
-
-            <div className="relative">
-              <input
-                className="w-full px-6 py-5 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
-                type="email"
-                placeholder="Email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="relative">
-              <input
-                className="w-full px-6 py-5 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                value={form.password}
-                onChange={handlePasswordChange}
-                required
-                minLength={6}
-              />
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800 text-sm transition-colors"
+                onClick={() => handleOAuth("google")}
+                className="flex items-center justify-center w-full bg-white border border-gray-300 text-gray-700 px-4 py-3 rounded-lg shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-300"
+                aria-label="Sign in with Google"
+                disabled={loading}
               >
-                {showPassword ? "Hide" : "Show"}
+                <FaGoogle className="w-5 h-5 mr-2" />
+                Continue with Google
               </button>
-            </div>
 
-            {mode === "signup" && form.password && (
               <div className="relative">
-                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full transition-all duration-500"
-                    style={{
-                      width: `${(strengthScore + 1) * 20}%`,
-                      backgroundColor: strengthColor[strengthScore],
-                    }}
-                  />
-                </div>
-                <p className="text-sm font-medium text-gray-700 mt-2">
-                  Password Strength: {strengthText[strengthScore]}
-                </p>
-              </div>
-            )}
-
-            {mode === "signup" && (
-              <div className="relative">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address
+                </label>
                 <input
-                  className="w-full px-6 py-5 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
-                  type={showConfirm ? "text" : "password"}
-                  placeholder="Confirm Password"
-                  value={form.confirm}
-                  onChange={(e) =>
-                    setForm({ ...form, confirm: e.target.value })
-                  }
+                  id="email"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
                   required
+                  aria-required="true"
+                />
+              </div>
+
+              <div className="relative">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={form.password}
+                  onChange={handlePasswordChange}
+                  required
+                  minLength={6}
+                  aria-required="true"
+                  aria-describedby="password-strength"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800 text-sm transition-colors"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-10 text-gray-500 hover:text-gray-800 transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showConfirm ? "Hide" : "Show"}
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
               </div>
-            )}
 
-            <button
-              type="submit"
-              className="w-full bg-purple-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-purple-700 shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50 flex items-center justify-center"
-              disabled={loading}
-            >
-              {loading ? (
-                <Spinner size="sm" color="white" />
-              ) : mode === "login" ? (
-                "Log In"
-              ) : (
-                "Sign Up"
+              {mode === "signup" && form.password && (
+                <div className="relative group">
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full transition-all duration-500"
+                      style={{
+                        width: `${(strengthScore + 1) * 20}%`,
+                        backgroundColor: strengthColor[strengthScore],
+                      }}
+                    />
+                  </div>
+                  <p id="password-strength" className="text-sm font-medium text-gray-700 mt-2">
+                    Password Strength: {strengthText[strengthScore]}
+                  </p>
+                  <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 -top-8 left-1/2 transform -translate-x-1/2">
+                    {strengthText[strengthScore]} password
+                  </div>
+                </div>
               )}
-            </button>
 
-            {message && (
-              <p className="text-sm text-center text-red-600 animate-pulse">
-                {message}
-              </p>
-            )}
+              {mode === "signup" && (
+                <div className="relative">
+                  <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-1">
+                    Confirm Password
+                  </label>
+                  <input
+                    id="confirm-password"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
+                    type={showConfirm ? "text" : "password"}
+                    placeholder="Confirm your password"
+                    value={form.confirm}
+                    onChange={(e) => setForm({ ...form, confirm: e.target.value })}
+                    required
+                    aria-required="true"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(!showConfirm)}
+                    className="absolute right-3 top-10 text-gray-500 hover:text-gray-800 transition-colors"
+                    aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
+                  >
+                    {showConfirm ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+              )}
 
-            <p className="text-center text-sm text-gray-600">
-              {mode === "login"
-                ? "Don't have an account? "
-                : "Already have an account? "}
               <button
-                type="button"
-                onClick={toggleMode}
-                className="text-purple-700 font-semibold hover:underline transition-all duration-300"
+                type="submit"
+                className="w-full bg-purple-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-purple-700 shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50 flex items-center justify-center"
+                disabled={loading}
+                aria-label={mode === "login" ? "Log in" : "Sign up"}
               >
-                {mode === "login" ? "Sign Up" : "Log In"}
+                {loading ? (
+                  <Spinner size="sm" color="white" />
+                ) : mode === "login" ? (
+                  "Log In"
+                ) : (
+                  "Sign Up"
+                )}
               </button>
-            </p>
-          </form>
+
+              {message && (
+                <div className="relative bg-red-50 text-red-600 text-sm p-3 rounded-lg flex items-center justify-between animate-pulse">
+                  <span>{message}</span>
+                  <button
+                    onClick={() => setMessage("")}
+                    className="text-red-600 hover:text-red-800"
+                    aria-label="Dismiss error message"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+
+              <p className="text-center text-sm text-gray-600">
+                {mode === "login" ? "Don't have an account? " : "Already have an account? "}
+                <button
+                  type="button"
+                  onClick={toggleMode}
+                  className="text-purple-700 font-semibold hover:underline transition-all duration-300"
+                  aria-label={mode === "login" ? "Switch to sign up" : "Switch to log in"}
+                >
+                  {mode === "login" ? "Sign Up" : "Log In"}
+                </button>
+              </p>
+            </form>
+          </div>
+          <div className="w-full max-w-lg text-left px-6 text-white space-y-4 animate-fade-in mt-8 lg:mt-0 lg:ml-12">
+            {mode === "login" ? (
+              <>
+                <h2 className="text-4xl md:text-6xl font-bold text-purple-300 tracking-wide">
+                  Hey, Fashion Icon!
+                </h2>
+                <p className="text-base md:text-xl text-white leading-relaxed">
+                  Log in to explore a vibrant collection of authentic African fashion, effortlessly track your stylish orders, and unlock exclusive deals crafted just for you.
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-4xl md:text-6xl font-bold text-purple-300 tracking-wide">
+                  Join the Vibe!
+                </h2>
+                <p className="text-base md:text-xl text-white leading-relaxed">
+                  Create your account today and begin your journey into a world of bold, elegant, and timeless African fashion handpicked to celebrate your unique style and story.
+                </p>
+              </>
+            )}
+          </div>
         </div>
-        <div className="relative w-full text-left px-10 text-white space-y-4 animate-tilt md:ml-10">
-          {mode === "login" ? (
-            <>
-              <p className="text-4xl md:text-7xl font-bold text-purple-400 tracking-wide">
-                Hey, Fashion Icon!
-              </p>
-              <p className="text-base md:text-2xl text-white leading-relaxed">
-                Log in to explore a vibrant collection of authentic African
-                fashion, effortlessly track your stylish orders, and unlock
-                exclusive deals crafted just for you.
-              </p>{" "}
-            </>
-          ) : (
-            <>
-              <p className="text-4xl md:text-7xl font-bold text-purple-400 tracking-wide">
-                Join the Vibe!
-              </p>
-              <p className="text-base md:text-2xl text-white leading-relaxed">
-                Create your account today and begin your journey into a world of
-                bold, elegant, and timeless African fashion handpicked to
-                celebrate your unique style and story.
-              </p>
-            </>
-          )}
-        </div>
-      </div>
-    </main></>
+      </main>
+    </>
   );
 }
