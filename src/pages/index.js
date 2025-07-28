@@ -297,65 +297,69 @@ export default function Home() {
           </section>
 
           {/* Flash Sale Section */}
-          {saleProducts.length > 0 && (
-            <section className="mb-12">
-              <h2 className="max-w-7xl mx-auto text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-6">
-                Flash Sale - Limited Time!
-              </h2>
-              <div className="grid grid-cols-1 mx-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
-                {saleProducts.map((product) => (
-                  <div
-                    key={product.id}
-                    className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 relative group"
-                  >
-                    <Link href={`/product/${product.id}`} role="button" aria-label={`View ${product.name} product details`}>
-                      <Image
-                        src={product.image_url}
-                        alt={`Image of ${product.name}`}
-                        loading="lazy"
-                        className="w-full h-40 sm:h-48 object-cover rounded-lg mb-4"
-                      />
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{product.name}</h3>
-                      <p className="text-purple-700 font-semibold text-sm sm:text-base">
-                        <span className="line-through text-red-600">₦{Number(product.price).toLocaleString()}</span>
-                        <span className="ml-2 text-green-600">
-                          ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
-                        </span>
-                      </p>
-                    </Link>
-                    <div className="flex items-center mt-2">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <FaStar key={star} className="text-yellow-400 text-sm" />
-                      ))}
-                    </div>
-                    {product.is_out_of_stock ? (
-                      <span className="text-red-600 text-xs sm:text-sm absolute top-2 right-2 bg-red-100 px-2 py-1 rounded">
-                        Out of Stock
-                      </span>
-                    ) : (
-                      <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => addToCart({ ...product, quantity: 1 })}
-                          className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700"
-                          aria-label={`Add ${product.name} to cart`}
-                        >
-                          <FaShoppingCart />
-                        </button>
-                        <button
-                          onClick={() => toggleWishlist(product.id)}
-                          className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700"
-                          aria-label={isInWishlist(product.id) ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
-                        >
-                          {isInWishlist(product.id) ? <FaHeart /> : <FaRegHeart />}
-                        </button>
-                      </div>
-                    )}
-                    <span className="absolute top-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded">Sale</span>
-                  </div>
-                ))}
-              </div>
-            </section>
+{saleProducts.length > 0 && (
+  <section className="mb-12">
+    <h2 className="max-w-7xl mx-auto text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-6">
+      Flash Sale - Limited Time!
+    </h2>
+    <div className="grid grid-cols-1 mx-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
+      {saleProducts.map((product) => (
+        <div
+          key={product.id}
+          className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 relative group"
+        >
+          <Link href={`/product/${product.id}`} role="button" aria-label={`View ${product.name} product details`}>
+            <div className="relative w-full h-40 sm:h-48 mb-4">
+              <Image
+                src={product.image_url}
+                alt={`Image of ${product.name}`}
+                layout="fill"
+                objectFit="cover"
+                className="rounded-lg"
+                loading="lazy"
+              />
+            </div>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{product.name}</h3>
+            <p className="text-purple-700 font-semibold text-sm sm:text-base">
+              <span className="line-through text-red-600">₦{Number(product.price).toLocaleString()}</span>
+              <span className="ml-2 text-green-600">
+                ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
+              </span>
+            </p>
+          </Link>
+          <div className="flex items-center mt-2">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <FaStar key={star} className="text-yellow-400 text-sm" />
+            ))}
+          </div>
+          {product.is_out_of_stock ? (
+            <span className="text-red-600 text-xs sm:text-sm absolute top-2 right-2 bg-red-100 px-2 py-1 rounded">
+              Out of Stock
+            </span>
+          ) : (
+            <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={() => addToCart({ ...product, quantity: 1 })}
+                className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700"
+                aria-label={`Add ${product.name} to cart`}
+              >
+                <FaShoppingCart />
+              </button>
+              <button
+                onClick={() => toggleWishlist(product.id)}
+                className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700"
+                aria-label={isInWishlist(product.id) ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
+              >
+                {isInWishlist(product.id) ? <FaHeart /> : <FaRegHeart />}
+              </button>
+            </div>
           )}
+          <span className="absolute top-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded">Sale</span>
+        </div>
+      ))}
+    </div>
+  </section>
+)}
 
           {/* Category Tiles */}
           <section className="mb-12">
@@ -391,79 +395,83 @@ export default function Home() {
 
           {/* New Arrivals */}
           <section className="mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-8">
-              New Arrivals
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
-              {newArrivals.map((product) => (
-                <div
-                  key={product.id}
-                  className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 relative group"
-                >
-                  <Link href={`/product/${product.id}`} role="button" aria-label={`View ${product.name} product details`}>
-                    <Image
-                      src={product.image_url}
-                      alt={`Image of ${product.name}`}
-                      loading="lazy"
-                      className="w-full h-40 sm:h-48 object-cover rounded-lg mb-4"
-                    />
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{product.name}</h3>
-                    <p className="text-purple-700 font-semibold text-sm sm:text-base">
-                      {product.is_on_sale ? (
-                        <>
-                          <span className="line-through text-red-600">₦{Number(product.price).toLocaleString()}</span>
-                          <span className="ml-2 text-green-600">
-                            ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
-                          </span>
-                        </>
-                      ) : (
-                        `₦${Number(product.price).toLocaleString()}`
-                      )}
-                    </p>
-                  </Link>
-                  <div className="flex items-center mt-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <FaStar key={star} className="text-yellow-400 text-sm" />
-                    ))}
-                  </div>
-                  {product.is_out_of_stock ? (
-                    <span className="text-red-600 text-xs sm:text-sm absolute top-2 right-2 bg-red-100 px-2 py-1 rounded">
-                      Out of Stock
-                    </span>
-                  ) : (
-                    <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => addToCart({ ...product, quantity: 1 })}
-                        className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700"
-                        aria-label={`Add ${product.name} to cart`}
-                      >
-                        <FaShoppingCart />
-                      </button>
-                      <button
-                        onClick={() => toggleWishlist(product.id)}
-                        className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700"
-                        aria-label={isInWishlist(product.id) ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
-                      >
-                        {isInWishlist(product.id) ? <FaHeart /> : <FaRegHeart />}
-                      </button>
-                    </div>
-                  )}
-                  {product.is_new && (
-                    <span className="absolute top-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded">New</span>
-                  )}
-                </div>
-              ))}
-            </div>
-            {isFetchingMore && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mt-6">
-                {Array(4)
-                  .fill()
-                  .map((_, index) => (
-                    <SkeletonProduct key={index} />
-                  ))}
-              </div>
+  <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-8">
+    New Arrivals
+  </h2>
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
+    {newArrivals.map((product) => (
+      <div
+        key={product.id}
+        className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 relative group"
+      >
+        <Link href={`/product/${product.id}`} role="button" aria-label={`View ${product.name} product details`}>
+          <div className="relative w-full h-40 sm:h-48 mb-4">
+            <Image
+              src={product.image_url}
+              alt={`Image of ${product.name}`}
+              layout="fill"
+              objectFit="cover"
+              className="rounded-lg"
+              loading="lazy"
+            />
+          </div>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{product.name}</h3>
+          <p className="text-purple-700 font-semibold text-sm sm:text-base">
+            {product.is_on_sale ? (
+              <>
+                <span className="line-through text-red-600">₦{Number(product.price).toLocaleString()}</span>
+                <span className="ml-2 text-green-600">
+                  ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
+                </span>
+              </>
+            ) : (
+              `₦${Number(product.price).toLocaleString()}`
             )}
-          </section>
+          </p>
+        </Link>
+        <div className="flex items-center mt-2">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <FaStar key={star} className="text-yellow-400 text-sm" />
+          ))}
+        </div>
+        {product.is_out_of_stock ? (
+          <span className="text-red-600 text-xs sm:text-sm absolute top-2 right-2 bg-red-100 px-2 py-1 rounded">
+            Out of Stock
+          </span>
+        ) : (
+          <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={() => addToCart({ ...product, quantity: 1 })}
+              className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700"
+              aria-label={`Add ${product.name} to cart`}
+            >
+              <FaShoppingCart />
+            </button>
+            <button
+              onClick={() => toggleWishlist(product.id)}
+              className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700"
+              aria-label={isInWishlist(product.id) ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
+            >
+              {isInWishlist(product.id) ? <FaHeart /> : <FaRegHeart />}
+            </button>
+          </div>
+        )}
+        {product.is_new && (
+          <span className="absolute top-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded">New</span>
+        )}
+      </div>
+    ))}
+  </div>
+  {isFetchingMore && (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mt-6">
+      {Array(4)
+        .fill()
+        .map((_, index) => (
+          <SkeletonProduct key={index} />
+        ))}
+    </div>
+  )}
+</section>
 
           {/* Testimonials */}
           <section className="max-w-7xl mx-auto p-6 sm:p-8 mb-12">
