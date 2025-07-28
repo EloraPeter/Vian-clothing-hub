@@ -20,37 +20,42 @@ export default function CustomOrderPage() {
   useEffect(() => {
     async function fetchProfile() {
       setLoading(true);
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        console.error("User fetch error or no user:", userError?.message || "No user");
-        router.push("/auth");
-        return;
-      }
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+          console.error("User fetch error or no user:", userError?.message || "No user");
+          router.push("/auth");
+          return;
+        }
 
-      setUser(user);
-      console.log("Fetching profile for user ID:", user.id);
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("email, avatar_url")
-        .eq("id", user.id)
-        .maybeSingle();
+        setUser(user);
+        console.log("Fetching profile for user ID:", user.id);
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("email, avatar_url")
+          .eq("id", user.id)
+          .maybeSingle();
 
-      if (profileError) {
-        console.error("Profile fetch error:", profileError.message);
-        setError(profileError.message);
-        setProfile(null);
-      } else {
-        console.log("Profile data:", profileData);
-        setProfile(profileData || { email: user.email, avatar_url: null });
+        if (profileError) {
+          console.error("Profile fetch error:", profileError.message);
+          setError(profileError.message);
+          setProfile(null);
+        } else {
+          console.log("Profile data:", profileData);
+          setProfile(profileData || { email: user.email, avatar_url: null });
+        }
+      } catch (err) {
+        setError("Failed to load profile: " + err.message);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     fetchProfile();
   }, [router]);
 
   const initiatePayment = async (formData, callback) => {
     if (!window.PaystackPop) {
-      setError('Paystack SDK not loaded.');
+      setError('Paystack SDK not loaded. Please try again later.');
       return;
     }
 
@@ -66,7 +71,7 @@ export default function CustomOrderPage() {
             body: { reference: response.reference },
           });
           if (error || !data.success) {
-            setError('Payment verification failed.');
+            setError('Payment verification failed. Please contact support.');
             return;
           }
           await callback(response.reference);
@@ -75,7 +80,7 @@ export default function CustomOrderPage() {
         }
       },
       onClose: () => {
-        setError('Payment cancelled.');
+        setError('Payment cancelled. You can try again or contact support.');
       },
     });
     handler.openIframe();
@@ -107,10 +112,10 @@ export default function CustomOrderPage() {
           },
         ]);
         if (error) throw error;
-        alert('Payment successful! Custom order placed.');
+        alert('Payment successful! Custom order placed successfully.');
         router.push('/dashboard');
       } catch (err) {
-        setError('Order failed: ' + err.message);
+        setError('Order submission failed: ' + err.message);
       }
     };
 
@@ -118,7 +123,17 @@ export default function CustomOrderPage() {
   };
 
   if (loading) return <DressLoader />;
-  if (error) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
+  if (error) return (
+    <div className="p-6 text-center text-red-600 bg-red-100 rounded-lg mx-auto max-w-2xl my-10">
+      <p>Error: {error}</p>
+      <button
+        onClick={() => router.push('/auth')}
+        className="mt-4 bg-purple-700 text-white py-2 px-4 rounded hover:bg-purple-800"
+      >
+        Go to Login
+      </button>
+    </div>
+  );
 
   return (
     <>
@@ -134,14 +149,13 @@ export default function CustomOrderPage() {
         <meta property="og:title" content="Custom Order - Vian Clothing Hub" />
         <meta property="og:description" content="Submit your custom clothing order with Vian Clothing Hub and bring your fashion vision to life." />
       </Head>
-      <main className="min-h-screen mb-0 bg-gray-100 pb-0">
+      <main className="min-h-screen bg-gray-50">
         <Navbar profile={profile} />
-        <div className="">
-          <h1 className="text-3xl font-bold pt-4 text-center mb-6 text-purple-700">
-            Custom Order Form
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-4xl font-bold text-center mb-8 text-purple-800">
+            Design Your Dream Outfit
           </h1>
           <CustomOrderForm onSubmit={handleFormSubmit} />
-          {error && <p className="text-red-600 text-center mt-4">{error}</p>}
         </div>
         <Footer />
       </main>
