@@ -249,6 +249,7 @@ export default function Home() {
                   <Image
                     src={slide.image}
                     alt={slide.title}
+                    fill
                     className="w-full h-full object-cover"
                     loading="lazy"
                   />
