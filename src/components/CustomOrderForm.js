@@ -141,10 +141,7 @@ export default function CustomOrderForm({ user, profile }) {
           return;
         }
         try {
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5`,
-            { headers: { 'User-Agent': 'VianClothingHub/1.0 (https://vianclothinghub.com)' } }
-          );
+          const response = await fetch(`/api/geocode?query=${encodeURIComponent(query)}`);
           if (!response.ok) throw new Error('Search failed');
           const data = await response.json();
           setSearchResults(data);
@@ -188,6 +185,7 @@ export default function CustomOrderForm({ user, profile }) {
           console.error('Search error:', err);
           setSearchResults([]);
           searchResultsDiv.style.display = 'none';
+          setMessage('Failed to search address. Please try again.');
         }
       }, 500);
 
@@ -211,14 +209,11 @@ export default function CustomOrderForm({ user, profile }) {
           }
         }
         try {
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-            { headers: { 'User-Agent': 'VianClothingHub/1.0 (https://vianclothinghub.com)' } }
-          );
+          const response = await fetch(`/api/reverse-geocode?lat=${lat}&lng=${lng}`);
           if (!response.ok) throw new Error('Reverse geocoding failed');
           const data = await response.json();
           if (data.display_name) {
-            setForm((prev) => ({ ...prev, address: data.display_name, lat: parseFloat(lat), lng: parseFloat(lon) }));
+            setForm((prev) => ({ ...prev, address: data.display_name, lat: parseFloat(lat), lng: parseFloat(lng) }));
             setSelectedAddressId('');
             setIsEditingAddress(false);
             setEditAddressId(null);
@@ -315,10 +310,7 @@ export default function CustomOrderForm({ user, profile }) {
       return;
     }
     try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(form.address)}&format=json&limit=1`,
-        { headers: { 'User-Agent': 'VianClothingHub/1.0 (https://vianclothinghub.com)' } }
-      );
+      const response = await fetch(`/api/geocode?query=${encodeURIComponent(form.address)}`);
       const data = await response.json();
       if (!data[0]) {
         setMessage('Invalid address. Please enter a valid address.');
@@ -456,22 +448,28 @@ export default function CustomOrderForm({ user, profile }) {
     if (!window.PaystackPop) {
       setMessage('Paystack SDK not loaded. Please try again later.');
       setLoading(false);
-      return false;
+      return null;
+    }
+
+    if (!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY) {
+      setMessage('Payment configuration error. Please contact support.');
+      setLoading(false);
+      return null;
     }
 
     return new Promise((resolve, reject) => {
       const handler = window.PaystackPop.setup({
-        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
+        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
         email: form.email,
         amount: 5000 * 100, // ₦5,000 in kobo
         currency: 'NGN',
         ref: `VIAN_CUSTOM_${Date.now()}`,
         callback: async (response) => {
           try {
-            const { error, data } = await supabase.functions.invoke('verify-paystack-payment', {
+            const { data, error } = await supabase.functions.invoke('verify-paystack-payment', {
               body: { reference: response.reference },
             });
-            if (error || !data.success) {
+            if (error || !data?.success) {
               setMessage('Payment verification failed. Please contact support.');
               setLoading(false);
               reject(new Error('Payment verification failed'));
@@ -910,7 +908,7 @@ export default function CustomOrderForm({ user, profile }) {
         <div className="mt-4 space-y-4">
           <div>
             <p className="font-medium text-gray-700">How long does it take to process a custom order?</p>
-            <p className="text-gray-600">Custom orders typically take 2-4 weeks to process, depending on design complexity and fabric availability.</p>
+            <p className="text-gray-600">Custom orders typically take 2-4 weeks to process, depending on complexity and fabric availability.</p>
           </div>
           <div>
             <p className="font-medium text-gray-700">Is the deposit refundable?</p>
