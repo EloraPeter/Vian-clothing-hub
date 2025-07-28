@@ -272,7 +272,7 @@ export default function Shop() {
                 cartItemCount={cart.length}
             />
             <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className=" mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Promotional Banner */}
                 {products.some(p => p.is_on_sale) && (
                     <div className="mb-12 relative rounded-xl overflow-hidden">
