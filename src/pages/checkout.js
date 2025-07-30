@@ -464,34 +464,60 @@ export default function CheckoutPage() {
       }
       const { lat, lon } = data[0];
 
-      const placeOrder = async (paymentReference) => {
-        const { error } = await supabase.from('orders').insert([
-          {
-            user_id: user.id,
-            items: cart.map((item) => ({
-              id: item.product_id || item.id.split('-')[0],
-              name: item.name,
-              price: item.price,
-              quantity: item.quantity,
-              size: item.size,
-              color: item.color,
-              image_url: item.image_url,
-              discount_percentage: item.discount_percentage || 0,
-            })),
-            address,
-            lat: parseFloat(lat),
-            lng: parseFloat(lon),
-            status: 'processing',
-            total: totalPrice,
-            created_at: new Date().toISOString(),
-            payment_reference: paymentReference,
-          },
-        ]);
-        if (error) throw error;
-        clearCart();
-        router.push('/orders');
-        alert('Payment successful! Order placed.');
-      };
+     const placeOrder = async (paymentReference) => {
+  console.log('Saving order to Supabase with:', {
+    user_id: user.id,
+    items: cart.map((item) => ({
+      id: item.product_id || item.id.split('-')[0],
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      size: item.size,
+      color: item.color,
+      image_url: item.image_url,
+      discount_percentage: item.discount_percentage || 0,
+    })),
+    address,
+    lat: parseFloat(lat),
+    lng: parseFloat(lon),
+    status: 'processing',
+    total: totalPrice,
+    created_at: new Date().toISOString(),
+    payment_reference: paymentReference,
+  });
+
+  const { error } = await supabase.from('orders').insert([
+    {
+      user_id: user.id,
+      items: cart.map((item) => ({
+        id: item.product_id || item.id.split('-')[0],
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        size: item.size,
+        color: item.color,
+        image_url: item.image_url,
+        discount_percentage: item.discount_percentage || 0,
+      })),
+      address,
+      lat: parseFloat(lat),
+      lng: parseFloat(lon),
+      status: 'processing',
+      total: totalPrice,
+      created_at: new Date().toISOString(),
+      payment_reference: paymentReference,
+    },
+  ]);
+
+  if (error) {
+    console.error('Supabase insert error:', error.message, error.details, error.hint);
+    throw error;
+  }
+  console.log('Order saved successfully');
+  clearCart();
+  router.push('/orders');
+  toast.success('Payment successful! Order placed.');
+};
 
       const success = await initiatePayment({
         email: profile?.email || user.email,
