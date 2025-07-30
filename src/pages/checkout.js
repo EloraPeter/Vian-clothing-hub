@@ -451,74 +451,81 @@ export default function CheckoutPage() {
       const { lat, lon } = data[0];
 
       const placeOrder = async (paymentReference) => {
-  console.log('Saving order to Supabase with:', {
-    user_id: user.id,
-    items: cart.map((item) => {
-      // Validate item.id and item.product_id
-      if (!item.product_id && (!item.id || typeof item.id !== 'number')) {
-        console.error('Invalid cart item:', item);
-        throw new Error(`Invalid cart item: missing or invalid id for item ${item.name || 'unknown'}`);
-      }
+        console.log('Saving order to Supabase with:', {
+          user_id: user.id,
+          items: cart.map((item) => {
+            // Validate item.id and item.product_id
+            let itemId;
+            if (item.product_id) {
+              itemId = item.product_id.toString();
+            } else if (typeof item.id === 'string') {
+              itemId = item.id.split('-')[0];
+            } else if (typeof item.id === 'number') {
+              itemId = item.id.toString();
+            } else {
+              console.error('Invalid cart item ID:', item);
+              throw new Error(`Invalid cart item ID: ${item.name || 'unknown'}`);
+            }
 
-      return {
-        id: item.product_id.toString() || item.id.split('-')[0],
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        size: item.size,
-        color: item.color,
-        image_url: item.image_url,
-        discount_percentage: item.discount_percentage || 0,
-      };
-    }),
-    address,
-    lat: parseFloat(lat),
-    lng: parseFloat(lon),
-    status: 'processing',
-    total: totalPrice,
-    created_at: new Date().toISOString(),
-    payment_reference: paymentReference,
-  });
+            return {
+              id: item.product_id.toString() || item.id.split('-')[0],
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity,
+              size: item.size,
+              color: item.color,
+              image_url: item.image_url,
+              discount_percentage: item.discount_percentage || 0,
+            };
+          }),
+          address,
+          lat: parseFloat(lat),
+          lng: parseFloat(lon),
+          status: 'processing',
+          total: totalPrice,
+          created_at: new Date().toISOString(),
+          payment_reference: paymentReference,
+        });
 
-  const { error } = await supabase.from('orders').insert([
-    {
-      user_id: user.id,
-      items: cart.map((item) => {
-        if (!item.product_id && (!item.id || typeof item.id !== 'string')) {
-          console.error('Invalid cart item:', item);
-          throw new Error(`Invalid cart item: missing or invalid id for item ${item.name || 'unknown'}`);
+        const { error } = await supabase.from('orders').insert([
+          {
+            user_id: user.id,
+            items: cart.map((item) => {
+              if (!item.product_id && (!item.id || typeof item.id !== 'string')) {
+                console.error('Invalid cart item:', item);
+                throw new Error(`Invalid cart item: missing or invalid id for item ${item.name || 'unknown'}`);
+              }
+
+              return {
+                id: item.product_id || item.id.split('-')[0],
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                size: item.size,
+                color: item.color,
+                image_url: item.image_url,
+                discount_percentage: item.discount_percentage || 0,
+              };
+            }),
+            address,
+            lat: parseFloat(lat),
+            lng: parseFloat(lon),
+            status: 'processing',
+            total: totalPrice,
+            created_at: new Date().toISOString(),
+            payment_reference: paymentReference,
+          },
+        ]);
+
+        if (error) {
+          console.error('Supabase insert error:', error.message, error.details, error.hint);
+          throw error;
         }
-
-        return {
-          id: item.product_id || item.id.split('-')[0],
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          size: item.size,
-          color: item.color,
-          image_url: item.image_url,
-          discount_percentage: item.discount_percentage || 0,
-        };
-      }),
-      address,
-      lat: parseFloat(lat),
-      lng: parseFloat(lon),
-      status: 'processing',
-      total: totalPrice,
-      created_at: new Date().toISOString(),
-      payment_reference: paymentReference,
-    },
-  ]);
-
-  if (error) {
-    console.error('Supabase insert error:', error.message, error.details, error.hint);
-    throw error;
-  }
-  console.log('Order saved successfully');
-  clearCart();
-  router.push('/orders');
-  toast.success('Payment successful! Order placed.');
-};
+        console.log('Order saved successfully');
+        clearCart();
+        router.push('/orders');
+        toast.success('Payment successful! Order placed.');
+      };
 
       const success = await initiatePayment({
         email: profile?.email || user.email,
