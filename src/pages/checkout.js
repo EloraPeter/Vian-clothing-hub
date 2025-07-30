@@ -154,12 +154,8 @@ export default function CheckoutPage() {
         return;
       }
       try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5`,
-          {
-            headers: { 'User-Agent': 'VianClothingHub/1.0 (https://vianclothinghub.com)' },
-          }
-        );
+       const response = await fetch(`/api/geocode?query=${encodeURIComponent(query)}`);
+
         if (!response.ok) throw new Error('Search failed');
         const data = await response.json();
         setSearchResults(data);
@@ -308,12 +304,8 @@ export default function CheckoutPage() {
       return;
     }
     try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
-        {
-          headers: { 'User-Agent': 'VianClothingHub/1.0 (https://vianclothinghub.com)' },
-        }
-      );
+     const response = await fetch(`/api/geocode?query=${encodeURIComponent(address)}`);
+
       const data = await response.json();
       if (!data[0]) {
         setError('Invalid address. Please enter a valid address.');
@@ -446,12 +438,8 @@ export default function CheckoutPage() {
     }
 
     try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
-        {
-          headers: { 'User-Agent': 'VianClothingHub/1.0 (https://vianclothinghub.com)' },
-        }
-      );
+      const response = await fetch(`/api/geocode?query=${encodeURIComponent(address)}`);
+
       const data = await response.json();
       if (!data[0]) {
         setError('Invalid delivery address. Please select a valid address.');
