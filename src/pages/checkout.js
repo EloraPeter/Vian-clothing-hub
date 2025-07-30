@@ -431,6 +431,8 @@ export default function CheckoutPage() {
     setIsPaying(true);
     setError(null);
 
+    console.log('Cart contents:', cart);
+
     if (!address) {
       setError('Please enter or select a delivery address.');
       setIsPaying(false);
