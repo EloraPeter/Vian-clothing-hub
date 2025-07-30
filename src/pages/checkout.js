@@ -426,131 +426,131 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleOrder = async (e) => {
-    e.preventDefault();
-    setIsPaying(true);
-    setError(null);
-
-    console.log('Cart contents:', cart);
-
-    if (!address) {
-      setError('Please enter or select a delivery address.');
-      setIsPaying(false);
-      return;
+  const mapCartItems = (cart) => {
+  return cart.map((item) => {
+    let itemId;
+    if (item.product_id) {
+      itemId = item.product_id.toString();
+    } else if (typeof item.id === 'string') {
+      itemId = item.id.split('-')[0];
+    } else if (typeof item.id === 'number') {
+      itemId = item.id.toString();
+    } else {
+      console.error('Invalid cart item:', item);
+      throw new Error(`Invalid cart item ID: ${item.name || 'unknown'}`);
     }
+    return {
+      id: itemId,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      size: item.size,
+      color: item.color,
+      image_url: item.image_url,
+      discount_percentage: item.discount_percentage || 0,
+    };
+  });
+};
 
-    try {
-      const response = await fetch(`/api/geocode?query=${encodeURIComponent(address)}`);
+const handleOrder = async (e) => {
+  e.preventDefault();
+  setIsPaying(true);
+  setError(null);
 
-      const data = await response.json();
+  if (!address) {
+    setError('Please enter or select a delivery address.');
+    setIsPaying(false);
+    return;
+  }
+
+  try {
+    let lat, lng;
+    if (addressCoords.lat && addressCoords.lng) {
+      ({ lat, lng } = addressCoords);
+    } else {
+      const response = await axios.get(`/api/geocode?query=${encodeURIComponent(address)}`);
+      const data = response.data;
       if (!data[0]) {
         setError('Invalid delivery address. Please select a valid address.');
         setIsPaying(false);
         return;
       }
-      const { lat, lon } = data[0];
+      ({ lat, lon: lng } = data[0]);
+      setAddressCoords({ lat: parseFloat(lat), lng: parseFloat(lng) });
+    }
 
-      const placeOrder = async (paymentReference) => {
-        console.log('Saving order to Supabase with:', {
+    const placeOrder = async (paymentReference) => {
+      if (!paymentReference || typeof paymentReference !== 'string') {
+        throw new Error('Invalid payment reference');
+      }
+
+      const items = mapCartItems(cart);
+      console.log('Saving order to Supabase with:', {
+        user_id: user.id,
+        items,
+        address,
+        lat: parseFloat(lat),
+        lng: parseFloat(lng),
+        status: 'processing',
+        total: totalPrice,
+        created_at: new Date().toISOString(),
+        payment_reference: paymentReference,
+      });
+
+      const { error } = await supabase.from('orders').insert([
+        {
           user_id: user.id,
-          items: cart.map((item) => {
-            // Validate item.id and item.product_id
-            let itemId;
-            if (item.product_id) {
-              itemId = item.product_id.toString();
-            } else if (typeof item.id === 'string') {
-              itemId = item.id.split('-')[0];
-            } else if (typeof item.id === 'number') {
-              itemId = item.id.toString();
-            } else {
-              console.error('Invalid cart item ID:', item);
-              throw new Error(`Invalid cart item ID: ${item.name || 'unknown'}`);
-            }
-
-            return {
-              id: item.product_id || item.id.split('-')[0],
-              name: item.name,
-              price: item.price,
-              quantity: item.quantity,
-              size: item.size,
-              color: item.color,
-              image_url: item.image_url,
-              discount_percentage: item.discount_percentage || 0,
-            };
-          }),
+          items,
           address,
           lat: parseFloat(lat),
-          lng: parseFloat(lon),
+          lng: parseFloat(lng),
           status: 'processing',
           total: totalPrice,
           created_at: new Date().toISOString(),
           payment_reference: paymentReference,
-        });
+        },
+      ]);
 
-        const { error } = await supabase.from('orders').insert([
-          {
-            user_id: user.id,
-            items: cart.map((item) => {
-              if (!item.product_id && (!item.id || typeof item.id !== 'string')) {
-                console.error('Invalid cart item:', item);
-                throw new Error(`Invalid cart item: missing or invalid id for item ${item.name || 'unknown'}`);
-              }
-
-              return {
-                id: item.product_id || item.id.split('-')[0],
-                name: item.name,
-                price: item.price,
-                quantity: item.quantity,
-                size: item.size,
-                color: item.color,
-                image_url: item.image_url,
-                discount_percentage: item.discount_percentage || 0,
-              };
-            }),
-            address,
-            lat: parseFloat(lat),
-            lng: parseFloat(lon),
-            status: 'processing',
-            total: totalPrice,
-            created_at: new Date().toISOString(),
-            payment_reference: paymentReference,
-          },
-        ]);
-
-        if (error) {
-          console.error('Supabase insert error:', error.message, error.details, error.hint);
-          throw error;
-        }
-        console.log('Order saved successfully');
-        clearCart();
-        router.push('/orders');
-        toast.success('Payment successful! Order placed.');
-      };
-
-      const success = await initiatePayment({
-        email: profile?.email || user.email,
-        totalPrice,
-        setError,
-        setIsPaying,
-        orderCallback: placeOrder,
-        useApiFallback: true,
-      });
-
-      if (!success) {
-        throw new Error('Payment initiation failed');
+      if (error) {
+        console.error('Supabase insert error:', error.message, error.details, error.hint);
+        throw new Error('Failed to save order');
       }
-    } catch (err) {
-      console.error('Order error:', err.message);
-      setError('Order failed: ' + err.message);
-      setIsPaying(false);
+
+      console.log('Order saved successfully');
+      clearCart();
+      router.push('/orders');
+      toast.success('Payment successful! Order placed.');
+    };
+
+    const success = await initiatePayment({
+      email: profile?.email || user.email,
+      totalPrice,
+      setError,
+      setIsPaying,
+      orderCallback: placeOrder,
+      useApiFallback: true,
+    });
+
+    if (!success) {
+      throw new Error('Payment initiation failed');
     }
-  };
+  } catch (err) {
+    console.error('Order error:', err);
+    const errorMessage = err.message.includes('Supabase')
+      ? 'Failed to save order. Please try again.'
+      : err.message.includes('Payment')
+      ? 'Payment processing failed. Please check your payment details.'
+      : 'An unexpected error occurred. Please try again.';
+    setError(errorMessage);
+    setIsPaying(false);
+  }
+};
 
   if (loading) return <DressLoader />;
   if (error && !isPaying) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
   if (cart.length === 0) return (
     <main className="p-6 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-blue-600 text-center">Checkout</h1>
+      <h1 className="text-3xl font-bold bg-gray-100 mb-6 text-blue-600 text-center">Checkout</h1>
       <p className="text-gray-600">
         Your cart is empty.{' '}
         <Link href="/" className="text-blue-600 hover:underline">
