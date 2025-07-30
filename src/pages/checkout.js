@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
 import Navbar from '@/components/Navbar';
-import Footer from '@/components/footer';
+import Footer from '@/components/Footer';
 import CartPanel from '@/components/CartPanel';
 import Link from 'next/link';
 import Script from 'next/script';
@@ -16,8 +16,6 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
-
 
 export default function CheckoutPage() {
   const { cart, totalPrice, clearCart } = useCart();
@@ -120,17 +118,17 @@ export default function CheckoutPage() {
           type="text"
           id="searchInput"
           placeholder="Search for an address"
-          class="flex-1 px-4 py-2 border border-gray-600 rounded-xl py-4 px-4 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:border-blue-400 dark:focus:ring-blue-400 transition-colors"
+          class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:focus:ring-blue-400 transition-colors"
         />
         <button
           id="clearSearch"
-          class="bg-gray-200 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors"
+          class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors"
         >
           Clear
         </button>
         <div
           id="searchResults"
-          class="hidden bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg mt-1 max-h-48 overflow-y-auto z-[1000]"
+          class="hidden bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto z-[1000]"
         ></div>
       `;
       L.DomEvent.disableClickPropagation(div);
@@ -159,7 +157,6 @@ export default function CheckoutPage() {
       }
       try {
         const response = await fetch(`/api/geocode?query=${encodeURIComponent(query)}`);
-
         if (!response.ok) throw new Error('Search failed');
         const data = await response.json();
         setSearchResults(data);
@@ -227,7 +224,6 @@ export default function CheckoutPage() {
       }
       try {
         const response = await fetch(`/api/reverse-geocode?lat=${lat}&lng=${lng}`);
-
         if (!response.ok) throw new Error('Reverse geocoding failed');
         const data = await response.json();
         if (data.display_name) {
@@ -253,7 +249,6 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (!mapRef.current || !marker) return;
-
     try {
       mapRef.current.setView(mapCenter, 14);
       marker.setLatLng(mapCenter);
@@ -309,7 +304,6 @@ export default function CheckoutPage() {
     }
     try {
       const response = await fetch(`/api/geocode?query=${encodeURIComponent(address)}`);
-
       const data = await response.json();
       if (!data[0]) {
         setError('Invalid address. Please enter a valid address.');
@@ -328,7 +322,7 @@ export default function CheckoutPage() {
           .eq('id', editAddressId)
           .eq('user_id', user.id);
         if (error) throw error;
-        alert('Address updated successfully!');
+        toast.success('Address updated successfully!');
       } else {
         const { error } = await supabase.from('addresses').insert([
           {
@@ -339,7 +333,7 @@ export default function CheckoutPage() {
           },
         ]);
         if (error) throw error;
-        alert('Address saved successfully!');
+        toast.success('Address saved successfully!');
       }
 
       const { data: newAddresses } = await supabase
@@ -424,125 +418,119 @@ export default function CheckoutPage() {
           setMarker(null);
         }
       }
-      alert('Address deleted successfully!');
+      toast.success('Address deleted successfully!');
     } catch (err) {
       setError('Failed to delete address: ' + err.message);
     }
   };
 
-  // Helper function to validate and map cart items
-const mapCartItems = (cart) => {
-  return cart.map((item) => {
-    let itemId;
+  const mapCartItems = (cart) => {
+    return cart.map((item) => {
+      let itemId;
+      if (item.product_id) {
+        itemId = item.product_id.toString();
+      } else if (typeof item.id === 'string') {
+        itemId = item.id.split('-')[0];
+      } else if (typeof item.id === 'number') {
+        itemId = item.id.toString();
+      } else {
+        console.error('Invalid cart item ID:', item);
+        throw new Error(`Invalid cart item ID: ${item.name || 'unknown'}`);
+      }
+      return {
+        id: itemId,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        size: item.size,
+        color: item.color,
+        image_url: item.image_url,
+        discount_percentage: item.discount_percentage || 0,
+      };
+    });
+  };
 
-    if (item.product_id) {
-      itemId = item.product_id.toString();
-    } else if (typeof item.id === 'string') {
-      itemId = item.id.split('-')[0];
-    } else if (typeof item.id === 'number') {
-      itemId = item.id.toString();
-    } else {
-      console.error('Invalid cart item ID:', item);
-      throw new Error(`Invalid cart item ID: ${item.name || 'unknown'}`);
-    }
+  const handleOrder = async (e) => {
+    e.preventDefault();
+    setIsPaying(true);
+    setError(null);
 
-    return {
-      id: itemId,
-      name: item.name,
-      price: item.price,
-      quantity: item.quantity,
-      size: item.size,
-      color: item.color,
-      image_url: item.image_url,
-      discount_percentage: item.discount_percentage || 0,
-    };
-  });
-};
-
-const handleOrder = async (e) => {
-  e.preventDefault();
-  setIsPaying(true);
-  setError(null);
-
-  console.log('Cart contents:', cart);
-
-  if (!address) {
-    setError('Please enter or select a delivery address.');
-    setIsPaying(false);
-    return;
-  }
-
-  try {
-    const response = await fetch(`/api/geocode?query=${encodeURIComponent(address)}`);
-    const data = await response.json();
-
-    if (!data[0]) {
-      setError('Invalid delivery address. Please select a valid address.');
+    if (!address) {
+      setError('Please enter or select a delivery address.');
       setIsPaying(false);
       return;
     }
 
-    const { lat, lon } = data[0];
-
-    const placeOrder = async (paymentReference) => {
-      const items = mapCartItems(cart);
-
-      const { error } = await supabase.from('orders').insert([
-        {
-          user_id: user.id,
-          items,
-          address,
-          lat: parseFloat(lat),
-          lng: parseFloat(lon),
-          status: 'processing',
-          total: totalPrice,
-          created_at: new Date().toISOString(),
-          payment_reference: paymentReference,
-        },
-      ]);
-
-      if (error) {
-        console.error('Supabase insert error:', error.message, error.details, error.hint);
-        throw error;
+    try {
+      const response = await fetch(`/api/geocode?query=${encodeURIComponent(address)}`);
+      const data = await response.json();
+      if (!data[0]) {
+        setError('Invalid delivery address. Please select a valid address.');
+        setIsPaying(false);
+        return;
       }
+      const { lat, lon } = data[0];
 
-      console.log('Order saved successfully');
-      clearCart();
-      router.push('/orders');
-      toast.success('Payment successful! Order placed.');
-    };
+      const placeOrder = async (paymentReference) => {
+        const items = mapCartItems(cart);
+        const { error } = await supabase.from('orders').insert([
+          {
+            user_id: user.id,
+            items,
+            address,
+            lat: parseFloat(lat),
+            lng: parseFloat(lon),
+            status: 'processing',
+            total: totalPrice,
+            created_at: new Date().toISOString(),
+            payment_reference: paymentReference,
+          },
+        ]);
+        if (error) {
+          console.error('Supabase insert error:', error.message, error.details, error.hint);
+          throw error;
+        }
+        clearCart();
+        router.push('/orders');
+        toast.success('Payment successful! Order placed.');
+      };
 
-    const success = await initiatePayment({
-      email: profile?.email || user.email,
-      totalPrice,
-      setError,
-      setIsPaying,
-      orderCallback: placeOrder,
-      useApiFallback: true,
-    });
+      const success = await initiatePayment({
+        email: profile?.email || user.email,
+        totalPrice,
+        setError,
+        setIsPaying,
+        orderCallback: placeOrder,
+        useApiFallback: true,
+      });
 
-    if (!success) {
-      throw new Error('Payment initiation failed');
+      if (!success) {
+        throw new Error('Payment initiation failed');
+      }
+    } catch (err) {
+      console.error('Order error:', err.message);
+      setError('Order failed: ' + err.message);
+      setIsPaying(false);
     }
-  } catch (err) {
-    console.error('Order error:', err.message);
-    setError('Order failed: ' + err.message);
-    setIsPaying(false);
-  }
-};
-
+  };
 
   if (loading) return <DressLoader />;
-  if (error && !isPaying) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
+  if (error && !isPaying) return (
+    <main className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <p className="p-6 text-center text-red-600 text-lg font-semibold">Error: {error}</p>
+    </main>
+  );
   if (cart.length === 0) return (
-    <main className="p-6 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-bold bg-gray-100 mb-6 text-blue-600 text-center">Checkout</h1>
-      <p className="text-gray-600">
-        Your cart is empty.{' '}
-        <Link href="/" className="text-blue-600 hover:underline">
-          Continue shopping
-        </Link>.
-      </p>
+    <main className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="max-w-5xl mx-auto p-6 text-center">
+        <h1 className="text-4xl font-bold text-blue-600 mb-6">Checkout</h1>
+        <p className="text-gray-600 text-lg">
+          Your cart is empty.{' '}
+          <Link href="/" className="text-blue-600 hover:underline font-semibold">
+            Continue shopping
+          </Link>.
+        </p>
+      </div>
     </main>
   );
 
@@ -552,140 +540,162 @@ const handleOrder = async (e) => {
         src="https://js.paystack.co/v2/inline.js"
         strategy="afterInteractive"
         onError={(e) => console.error('Paystack script failed to load:', e)}
-      />      <main className="min-h-screen bg-gray-100">
+      />
+      <ToastContainer position="top-right" autoClose={3000} />
+      <main className="min-h-screen bg-gray-50">
         <Navbar
           profile={profile}
           onCartClick={() => setIsCartOpen(true)}
           cartItemCount={cart.length}
         />
         <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-
-        <form onSubmit={handleOrder} className="max-w-5xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-6 text-blue-600 dark:text-blue-400 text-center">Checkout</h1>
-
-          <section className="mb-8 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-            <h2 className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-4">Cart Summary</h2>
-            <ul className="space-y-4">
-              {cart.map((item) => (
-                <li
-                  key={`${item.id}-${item.size || ''}-${item.color || ''}`}
-                  className="flex items-center space-x-4 border-b border-gray-300 dark:border-gray-600 pb-4"
-                >
-                  <img
-                    src={item.image_url}
-                    alt={item.name}
-                    className="w-16 h-16 object-cover rounded-lg border border-gray-300 dark:border-gray-600"
-                    loading="lazy"
-                  />
-                  <div className="flex-1">
-                    <p className="text-gray-700 dark:text-gray-200 font-medium">
-                      {item.name}
-                      {item.size && ` (${item.size}${item.color ? `, ${item.color}` : ''})`}
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      {item.discount_percentage > 0 ? (
-                        <span>
-                          <span className="text-red-600 dark:text-red-400 line-through">
-                            ₦{Number(item.price).toLocaleString()}
-                          </span>{' '}
-                          <span className="text-green-600 dark:text-green-400">
-                            ₦{(item.price * (1 - item.discount_percentage / 100)).toLocaleString()}
-                          </span>
-                        </span>
-                      ) : (
-                        <span className="text-blue-600 dark:text-blue-400">
-                          ₦{Number(item.price).toLocaleString()}
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-400">Quantity: {item.quantity}</p>
-                    {item.is_out_of_stock && <p className="text-red-600 dark:text-red-400 text-sm">Out of Stock</p>}
-                  </div>
-                  <p className="text-gray-700 dark:text-gray-200 font-medium">
-                    Total: ₦{(
-                      (item.discount_percentage > 0
-                        ? item.price * (1 - item.discount_percentage / 100)
-                        : item.price) * item.quantity
-                    ).toLocaleString()}
-                  </p>
-                </li>
-              ))}
-            </ul>
-            <p className="text-xl font-bold text-blue-600 dark:text-blue-400 mt-4">
-              Subtotal: ₦{totalPrice.toLocaleString()}
-            </p>
-          </section>
-
-          <section className="mb-8 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-            <h2 className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-4">Delivery Address</h2>
-            {savedAddresses.length > 0 && (
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                  Select Saved Address
-                </label>
-                <select
-                  value={selectedAddressId}
-                  onChange={handleSavedAddressChange}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:text-gray-200 dark:hover:border-blue-400 dark:focus:ring-blue-400"
-                >
-                  <option value="">Select an address</option>
-                  {savedAddresses.map((addr) => (
-                    <option key={addr.id} value={addr.id}>{addr.address}</option>
-                  ))}
-                </select>
-                <div className="mt-4 grid grid-cols-1 gap-4">
-                  {savedAddresses.map((addr) => (
-                    <div key={addr.id} className="flex justify-between items-center border-b border-gray-200 dark:border-gray-600 pb-2">
-                      <span className="text-gray-700 dark:text-gray-200">{addr.address}</span>
-                      <div>
-                        <button
-                          onClick={() => handleEditAddress(addr)}
-                          className="text-blue-600 dark:text-blue-400 hover:underline mr-4"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteAddress(addr.id)}
-                          className="text-red-600 dark:text-red-400 hover:underline"
-                        >
-                          Delete
-                        </button>
-                      </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">Checkout</h1>
+          <form onSubmit={handleOrder} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column: Address and Payment */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Delivery Address Section */}
+              <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                <h2 className="text-2xl font-semibold text-gray-900 mb-4">Delivery Address</h2>
+                {savedAddresses.length > 0 && (
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Select Saved Address
+                    </label>
+                    <select
+                      value={selectedAddressId}
+                      onChange={handleSavedAddressChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                    >
+                      <option value="">Select an address</option>
+                      {savedAddresses.map((addr) => (
+                        <option key={addr.id} value={addr.id}>{addr.address}</option>
+                      ))}
+                    </select>
+                    <div className="mt-4 space-y-3">
+                      {savedAddresses.map((addr) => (
+                        <div key={addr.id} className="flex justify-between items-center border-b border-gray-200 py-2">
+                          <span className="text-gray-700">{addr.address}</span>
+                          <div className="flex space-x-4">
+                            <button
+                              type="button"
+                              onClick={() => handleEditAddress(addr)}
+                              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteAddress(addr.id)}
+                              className="text-red-600 hover:text-red-800 text-sm font-medium"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+                )}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {isEditingAddress ? 'Edit Address' : 'Enter or Search Address'}
+                  </label>
+                  <input
+                    type="text"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Enter delivery address"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                  />
                 </div>
-              </div>
-            )}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                {isEditingAddress ? 'Edit Address' : 'Enter or Search Address'}
-              </label>
-              <input
-                type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Enter delivery address"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:text-gray-200 dark:hover:border-blue-400 dark:focus:ring-blue-400"
-              />
+                <button
+                  type="button"
+                  onClick={handleSaveAddress}
+                  className="w-full sm:w-auto bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                >
+                  {isEditingAddress ? 'Update Address' : 'Save Address'}
+                </button>
+                <div className="mt-6 h-96 w-full rounded-lg overflow-hidden border border-gray-200" ref={mapContainerRef}></div>
+                {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
+              </section>
             </div>
-            <button
-              onClick={handleSaveAddress}
-              className="mb-4 bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-            >
-              {isEditingAddress ? 'Update Address' : 'Save Address'}
-            </button>
-            <div className="h-64 w-full" ref={mapContainerRef}></div>
-            {error && <p className="text-red-600 dark:text-red-400 mt-2">{error}</p>}
-          </section>
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 dark:bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 font-semibold disabled:bg-gray-400 dark:disabled:bg-gray-600"
-            disabled={!address || isPaying}
-          >
-            {isPaying ? 'Processing...' : 'Confirm & Pay'}
-          </button>
-        </form>
+            {/* Right Column: Cart Summary and Payment */}
+            <div className="lg:col-span-1">
+              <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200 sticky top-4">
+                <h2 className="text-2xl font-semibold text-gray-900 mb-4">Order Summary</h2>
+                <ul className="space-y-4 mb-6">
+                  {cart.map((item) => (
+                    <li
+                      key={`${item.id}-${item.size || ''}-${item.color || ''}`}
+                      className="flex items-center space-x-4 border-b border-gray-200 pb-4"
+                    >
+                      <img
+                        src={item.image_url}
+                        alt={item.name}
+                        className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                        loading="lazy"
+                      />
+                      <div className="flex-1">
+                        <p className="text-gray-900 font-medium">{item.name}</p>
+                        <p className="text-gray-600 text-sm">
+                          {item.size && `Size: ${item.size}${item.color ? `, Color: ${item.color}` : ''}`}
+                        </p>
+                        <p className="text-gray-600 text-sm">
+                          {item.discount_percentage > 0 ? (
+                            <span>
+                              <span className="text-red-600 line-through">
+                                ₦{Number(item.price).toLocaleString()}
+                              </span>{' '}
+                              <span className="text-green-600">
+                                ₦{(item.price * (1 - item.discount_percentage / 100)).toLocaleString()}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="text-blue-600">
+                              ₦{Number(item.price).toLocaleString()}
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-gray-600 text-sm">Quantity: {item.quantity}</p>
+                        {item.is_out_of_stock && <p className="text-red-600 text-sm font-medium">Out of Stock</p>}
+                      </div>
+                      <p className="text-gray-900 font-medium">
+                        ₦{(
+                          (item.discount_percentage > 0
+                            ? item.price * (1 - item.discount_percentage / 100)
+                            : item.price) * item.quantity
+                        ).toLocaleString()}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+                <div className="border-t border-gray-200 pt-4">
+                  <div className="flex justify-between text-gray-900 font-medium mb-2">
+                    <span>Subtotal</span>
+                    <span>₦{totalPrice.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-600 text-sm mb-2">
+                    <span>Shipping</span>
+                    <span>TBD</span>
+                  </div>
+                  <div className="flex justify-between text-gray-900 font-bold text-lg">
+                    <span>Total</span>
+                    <span>₦{totalPrice.toLocaleString()}</span>
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  className="w-full mt-6 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  disabled={!address || isPaying}
+                >
+                  {isPaying ? 'Processing...' : 'Confirm & Pay'}
+                </button>
+              </section>
+            </div>
+          </form>
+        </div>
         <Footer />
       </main>
     </>
