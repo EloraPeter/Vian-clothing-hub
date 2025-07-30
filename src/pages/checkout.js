@@ -14,6 +14,8 @@ import DressLoader from '@/components/DressLoader';
 import 'leaflet/dist/leaflet.css';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import { toast } from 'react-toastify';
+
 
 export default function CheckoutPage() {
   const { cart, totalPrice, clearCart } = useCart();
