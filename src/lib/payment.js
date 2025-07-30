@@ -16,9 +16,9 @@ const verifyPayment = async ({ reference, setError, setIsPaying, orderCallback, 
       console.log('Paystack verification response:', json);
 
       console.log("Check condition values:", {
-  status: json.status,
-  dataStatus: json.data?.status
-});
+        status: json.status,
+        dataStatus: json.data?.status
+      });
 
 
       // ✅ Check if payment is truly successful
@@ -41,7 +41,14 @@ const verifyPayment = async ({ reference, setError, setIsPaying, orderCallback, 
     }
 
     // ✅ Proceed to place the order
-    await orderCallback(reference);
+    try {
+      await orderCallback(reference);
+    } catch (err) {
+      console.error('Order callback failed:', err?.message || err);
+      setError('Order placement failed. Please contact support.');
+      setIsPaying(false);
+      return false;
+    }
     setIsPaying(false);
     return true;
 
@@ -56,100 +63,100 @@ const verifyPayment = async ({ reference, setError, setIsPaying, orderCallback, 
 
 
 
-  export const initiatePayment = ({
-    email,
-    totalPrice,
-    setError,
-    setIsPaying,
-    orderCallback,
-    useApiFallback = false,
-  }) => {
-    return new Promise((resolve, reject) => {
-      if (typeof window === 'undefined') {
-        setError('Payment cannot be initiated on the server.');
-        setIsPaying(false);
-        reject(new Error('Server-side execution'));
-        return;
-      }
+export const initiatePayment = ({
+  email,
+  totalPrice,
+  setError,
+  setIsPaying,
+  orderCallback,
+  useApiFallback = false,
+}) => {
+  return new Promise((resolve, reject) => {
+    if (typeof window === 'undefined') {
+      setError('Payment cannot be initiated on the server.');
+      setIsPaying(false);
+      reject(new Error('Server-side execution'));
+      return;
+    }
 
-      if (!window.PaystackPop) {
-        setError('Paystack SDK not loaded. Please try again.');
-        setIsPaying(false);
-        reject(new Error('Paystack SDK not loaded'));
-        return;
-      }
+    if (!window.PaystackPop) {
+      setError('Paystack SDK not loaded. Please try again.');
+      setIsPaying(false);
+      reject(new Error('Paystack SDK not loaded'));
+      return;
+    }
 
-      if (!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY) {
-        setError('Paystack public key is missing.');
-        setIsPaying(false);
-        reject(new Error('Paystack public key missing'));
-        return;
-      }
+    if (!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY) {
+      setError('Paystack public key is missing.');
+      setIsPaying(false);
+      reject(new Error('Paystack public key missing'));
+      return;
+    }
 
-      if (!email) {
-        setError('No valid email found for payment.');
-        setIsPaying(false);
-        reject(new Error('No valid email'));
-        return;
-      }
+    if (!email) {
+      setError('No valid email found for payment.');
+      setIsPaying(false);
+      reject(new Error('No valid email'));
+      return;
+    }
 
-      if (totalPrice <= 0) {
-        setError('Invalid order amount.');
-        setIsPaying(false);
-        reject(new Error('Invalid order amount'));
-        return;
-      }
+    if (totalPrice <= 0) {
+      setError('Invalid order amount.');
+      setIsPaying(false);
+      reject(new Error('Invalid order amount'));
+      return;
+    }
 
-      if (typeof orderCallback !== 'function') {
-        setError('Invalid callback function provided.');
-        setIsPaying(false);
-        reject(new Error('Invalid callback function'));
-        return;
-      }
+    if (typeof orderCallback !== 'function') {
+      setError('Invalid callback function provided.');
+      setIsPaying(false);
+      reject(new Error('Invalid callback function'));
+      return;
+    }
 
-      // Store parameters for callback
-      const callbackParams = { setError, setIsPaying, orderCallback, useApiFallback };
+    // Store parameters for callback
+    const callbackParams = { setError, setIsPaying, orderCallback, useApiFallback };
 
-      // Define a simple, serializable callback function
-      function paystackCallback(response) {
-        verifyPayment({ reference: response.reference, ...callbackParams })
-          .then((success) => resolve(success))
-          .catch((err) => reject(err));
-      }
+    // Define a simple, serializable callback function
+    function paystackCallback(response) {
+      verifyPayment({ reference: response.reference, ...callbackParams })
+        .then((success) => resolve(success))
+        .catch((err) => reject(err));
+    }
 
-      try {
-        const reference = `VIAN_ORDER_${Date.now()}`;
-        console.log('Initiating Paystack payment with:', {
-          key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY.slice(0, 10) + '...',
-          email,
-          amount: totalPrice * 100,
-          reference,
-        });
+    try {
+      const reference = `VIAN_ORDER_${Date.now()}`;
+      console.log('Initiating Paystack payment with:', {
+        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY.slice(0, 10) + '...',
+        email,
+        amount: totalPrice * 100,
+        reference,
+      });
 
-        const paystack = new window.PaystackPop();
-        paystack.newTransaction({
-          key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-          email,
-          amount: totalPrice * 100,
-          currency: 'NGN',
-          reference,
-          callback: (response) => {
-            verifyPayment({ reference: response.reference, setError, setIsPaying, orderCallback, useApiFallback })
-              .then((success) => resolve(success))
-              .catch((err) => reject(err));
-          },
-          onCancel: () => {
-            setError('Payment cancelled.');
-            setIsPaying(false);
-            reject(new Error('Payment cancelled'));
-          },
-        });
+      const paystack = new window.PaystackPop();
+      paystack.newTransaction({
+        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
+        email,
+        amount: totalPrice * 100,
+        currency: 'NGN',
+        reference,
+        callback: (response) => {
+          verifyPayment({ reference: response.reference, setError, setIsPaying, orderCallback, useApiFallback })
+            .then((success) => resolve(success))
+            .catch((err) => reject(err));
+        },
+        onCancel: () => {
+          setError('Payment cancelled.');
+          setIsPaying(false);
+          reject(new Error('Payment cancelled'));
+        },
+      });
 
-      } catch (err) {
-        console.error('Paystack error:', err.message);
-        setError('Failed to initialize payment: ' + err.message);
-        setIsPaying(false);
-        reject(err);
-      }
-    });
-  };
+    } catch (err) {
+      console.error('Paystack error:', err.message);
+      setError('Failed to initialize payment: ' + err.message);
+      setIsPaying(false);
+      reject(err);
+    }
+  });
+};
