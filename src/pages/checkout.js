@@ -46,10 +46,21 @@ export default function CheckoutPage() {
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push('/auth');
-      } else {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          setError('Failed to fetch session: ' + sessionError.message);
+          setLoading(false);
+          return;
+        }
+        if (!session) {
+          // Only redirect to /auth if not already on /auth
+          if (router.pathname !== '/auth') {
+            router.push('/auth');
+          }
+          setLoading(false);
+          return;
+        }
         setUser(session.user);
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
@@ -57,7 +68,7 @@ export default function CheckoutPage() {
           .eq('id', session.user.id)
           .maybeSingle();
         if (profileError) {
-          setError(profileError.message);
+          setError('Failed to fetch profile: ' + profileError.message);
         } else {
           setProfile(profileData || { email: session.user.email, avatar_url: null });
         }
@@ -66,7 +77,7 @@ export default function CheckoutPage() {
           .select('id, address, lat, lng')
           .eq('user_id', session.user.id);
         if (addressError) {
-          setError(addressError.message);
+          setError('Failed to fetch addresses: ' + addressError.message);
         } else {
           setSavedAddresses(addresses || []);
           if (addresses.length > 0) {
@@ -79,12 +90,18 @@ export default function CheckoutPage() {
           .from('shipping_fees')
           .select('state, fee');
         if (shippingError) {
-          setError(shippingError.message);
+          console.error('Shipping fees fetch error:', shippingError);
+          setError('Failed to fetch shipping fees. Using default fee.');
+          setStates([]); // Fallback to empty state list
         } else {
           setStates(shippingData || []);
         }
+      } catch (err) {
+        console.error('Fetch data error:', err);
+        setError('Unexpected error occurred: ' + err.message);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     fetchData();
   }, [router]);
@@ -496,6 +513,7 @@ export default function CheckoutPage() {
 
       const placeOrder = async (paymentReference) => {
         const items = mapCartItems(cart);
+        console.log('Placing order with items:', items); // Debug log
         const { error } = await supabase.from('orders').insert([
           {
             user_id: user.id,
