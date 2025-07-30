@@ -24,7 +24,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [mapCenter, setMapCenter] = useState([9.0820, 8.6753]);
-  const [marker, setEdit] = useState(null);
+  const [marker, setMarker] = useState(null);
   const mapRef = useRef();
   const mapContainerRef = useRef();
   const router = useRouter();
@@ -528,8 +528,11 @@ export default function CheckoutPage() {
 
   return (
     <>
-      <Script src="https://js.paystack.co/v2/inline.js" strategy="afterInteractive" />
-      <main className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      <Script
+        src="https://js.paystack.co/v2/inline.js"
+        strategy="afterInteractive"
+        onError={(e) => console.error('Paystack script failed to load:', e)}
+      />      <main className="min-h-screen bg-gray-100 dark:bg-gray-900">
         <Navbar
           profile={profile}
           onCartClick={() => setIsCartOpen(true)}
