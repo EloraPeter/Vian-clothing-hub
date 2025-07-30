@@ -1,3 +1,4 @@
+// src/pages/checkout.js
 "use client";
 
 import { useCart } from '@/context/CartContext';
@@ -36,6 +37,11 @@ export default function CheckoutPage() {
   const [editAddressId, setEditAddressId] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [isPaying, setIsPaying] = useState(false);
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [shippingState, setShippingState] = useState('');
+  const [shippingFee, setShippingFee] = useState(0);
+  const [states, setStates] = useState([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -68,6 +74,14 @@ export default function CheckoutPage() {
             setAddress(addresses[0].address);
             setMapCenter([addresses[0].lat || 9.0820, addresses[0].lng || 8.6753]);
           }
+        }
+        const { data: shippingData, error: shippingError } = await supabase
+          .from('shipping_fees')
+          .select('state, fee');
+        if (shippingError) {
+          setError(shippingError.message);
+        } else {
+          setStates(shippingData || []);
         }
       }
       setLoading(false);
@@ -257,6 +271,11 @@ export default function CheckoutPage() {
       setMarker(null);
     }
   }, [mapCenter, marker]);
+
+  useEffect(() => {
+    const selectedState = states.find((s) => s.state === shippingState);
+    setShippingFee(selectedState?.fee || 3500.00); // Default to 'Others' fee
+  }, [shippingState, states]);
 
   const handleSavedAddressChange = (e) => {
     const addressId = e.target.value;
@@ -450,13 +469,17 @@ export default function CheckoutPage() {
     });
   };
 
+  const calculateTotal = () => {
+    return (totalPrice + shippingFee).toFixed(2);
+  };
+
   const handleOrder = async (e) => {
     e.preventDefault();
     setIsPaying(true);
     setError(null);
 
-    if (!address) {
-      setError('Please enter or select a delivery address.');
+    if (!address || !customerName || !customerPhone || !shippingState) {
+      setError('Please fill in all required fields: name, phone, state, and address.');
       setIsPaying(false);
       return;
     }
@@ -481,9 +504,12 @@ export default function CheckoutPage() {
             lat: parseFloat(lat),
             lng: parseFloat(lon),
             status: 'processing',
-            total: totalPrice,
+            total: parseFloat(calculateTotal()),
             created_at: new Date().toISOString(),
             payment_reference: paymentReference,
+            customer_name: customerName,
+            customer_phone: customerPhone,
+            shipping_fee: shippingFee,
           },
         ]);
         if (error) {
@@ -497,7 +523,7 @@ export default function CheckoutPage() {
 
       const success = await initiatePayment({
         email: profile?.email || user.email,
-        totalPrice,
+        totalPrice: parseFloat(calculateTotal()),
         setError,
         setIsPaying,
         orderCallback: placeOrder,
@@ -552,8 +578,52 @@ export default function CheckoutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">Checkout</h1>
           <form onSubmit={handleOrder} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column: Address and Payment */}
+            {/* Left Column: Customer Info and Address */}
             <div className="lg:col-span-2 space-y-8">
+              {/* Customer Information */}
+              <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                <h2 className="text-2xl font-semibold text-gray-900 mb-4">Customer Information</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                    <input
+                      type="text"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder="Enter your full name"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                    <input
+                      type="tel"
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      placeholder="Enter your phone number"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Shipping State</label>
+                  <select
+                    value={shippingState}
+                    onChange={(e) => setShippingState(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                    required
+                  >
+                    <option value="">Select State</option>
+                    {states.map((state) => (
+                      <option key={state.state} value={state.state}>
+                        {state.state} (₦{state.fee.toFixed(2)})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </section>
               {/* Delivery Address Section */}
               <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">Delivery Address</h2>
@@ -621,7 +691,7 @@ export default function CheckoutPage() {
               </section>
             </div>
 
-            {/* Right Column: Cart Summary and Payment */}
+            {/* Right Column: Order Summary */}
             <div className="lg:col-span-1">
               <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200 sticky top-4">
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">Order Summary</h2>
@@ -676,19 +746,19 @@ export default function CheckoutPage() {
                     <span>Subtotal</span>
                     <span>₦{totalPrice.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between text-gray-600 text-sm mb-2">
-                    <span>Shipping</span>
-                    <span>TBD</span>
+                  <div className="flex justify-between text-gray-900 font-medium mb-2">
+                    <span>Shipping Fee</span>
+                    <span>₦{shippingFee.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-gray-900 font-bold text-lg">
                     <span>Total</span>
-                    <span>₦{totalPrice.toLocaleString()}</span>
+                    <span>₦{calculateTotal()}</span>
                   </div>
                 </div>
                 <button
                   type="submit"
                   className="w-full mt-6 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
-                  disabled={!address || isPaying}
+                  disabled={!address || !customerName || !customerPhone || !shippingState || isPaying}
                 >
                   {isPaying ? 'Processing...' : 'Confirm & Pay'}
                 </button>
