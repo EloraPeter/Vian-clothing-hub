@@ -226,12 +226,8 @@ export default function CheckoutPage() {
         }
       }
       try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-          {
-            headers: { 'User-Agent': 'VianClothingHub/1.0 (https://vianclothinghub.com)' },
-          }
-        );
+        const response = await fetch(`/api/reverse-geocode?lat=${lat}&lng=${lng}`);
+
         if (!response.ok) throw new Error('Reverse geocoding failed');
         const data = await response.json();
         if (data.display_name) {
