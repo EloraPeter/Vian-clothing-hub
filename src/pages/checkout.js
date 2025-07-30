@@ -10,6 +10,8 @@ import CartPanel from '@/components/CartPanel';
 import Link from 'next/link';
 import Script from 'next/script';
 import { initiatePayment } from '@/lib/payment';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import DressLoader from '@/components/DressLoader';
 import 'leaflet/dist/leaflet.css';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -50,6 +52,7 @@ export default function CheckoutPage() {
           .maybeSingle();
         if (profileError) {
           setError(profileError.message);
+          toast.error('Failed to fetch profile: ' + profileError.message);
         } else {
           setProfile(profileData || { email: session.user.email, avatar_url: null });
         }
@@ -59,6 +62,7 @@ export default function CheckoutPage() {
           .eq('user_id', session.user.id);
         if (addressError) {
           setError(addressError.message);
+          toast.error('Failed to fetch addresses: ' + addressError.message);
         } else {
           setSavedAddresses(addresses || []);
           if (addresses.length > 0) {
@@ -81,6 +85,7 @@ export default function CheckoutPage() {
       L = require('leaflet');
     } catch (err) {
       setError('Failed to load map library. Please try again later.');
+      toast.error('Failed to load map library. Please try again later.');
       console.error('Map library error:', err);
       return;
     }
@@ -203,6 +208,7 @@ export default function CheckoutPage() {
         console.error('Search error:', err);
         setSearchResults([]);
         searchResultsDiv.style.display = 'none';
+        toast.error('Failed to search address. Please try again.');
       }
     }, 500);
 
@@ -242,6 +248,7 @@ export default function CheckoutPage() {
         }
       } catch (err) {
         setError('Failed to fetch address. Please try again.');
+        toast.error('Failed to fetch address. Please try again.');
         console.error('Reverse geocode error:', err);
       }
     });
@@ -309,6 +316,7 @@ export default function CheckoutPage() {
   const handleSaveAddress = async () => {
     if (!address) {
       setError('Please enter a valid address.');
+      toast.error('Please enter a valid address.');
       return;
     }
     try {
@@ -321,6 +329,7 @@ export default function CheckoutPage() {
       const data = await response.json();
       if (!data[0]) {
         setError('Invalid address. Please enter a valid address.');
+        toast.error('Invalid address. Please enter a valid address.');
         return;
       }
       const { lat, lon } = data[0];
@@ -336,7 +345,7 @@ export default function CheckoutPage() {
           .eq('id', editAddressId)
           .eq('user_id', user.id);
         if (error) throw error;
-        alert('Address updated successfully!');
+        toast.success('Address updated successfully!');
       } else {
         const { error } = await supabase.from('addresses').insert([
           {
@@ -347,7 +356,7 @@ export default function CheckoutPage() {
           },
         ]);
         if (error) throw error;
-        alert('Address saved successfully!');
+        toast.success('Address saved successfully!');
       }
 
       const { data: newAddresses } = await supabase
@@ -361,28 +370,7 @@ export default function CheckoutPage() {
       setError(null);
     } catch (err) {
       setError('Failed to save address: ' + err.message);
-    }
-  };
-
-  const handleEditAddress = (addr) => {
-    setIsEditingAddress(true);
-    setEditAddressId(addr.id);
-    setAddress(addr.address);
-    setMapCenter([addr.lat || 9.0820, addr.lng || 8.6753]);
-    if (mapRef.current) {
-      mapRef.current.setView([addr.lat || 9.0820, addr.lng || 8.6753], 14);
-      try {
-        if (marker) {
-          marker.setLatLng([addr.lat, addr.lng]);
-        } else {
-          const L = require('leaflet');
-          const newMarker = L.marker([addr.lat, addr.lng]).addTo(mapRef.current);
-          setMarker(newMarker);
-        }
-      } catch (err) {
-        console.error('Marker edit error:', err);
-        setMarker(null);
-      }
+      toast.error('Failed to save address: ' + err.message);
     }
   };
 
@@ -432,9 +420,10 @@ export default function CheckoutPage() {
           setMarker(null);
         }
       }
-      alert('Address deleted successfully!');
+      toast.success('Address deleted successfully!');
     } catch (err) {
       setError('Failed to delete address: ' + err.message);
+      toast.error('Failed to delete address: ' + err.message);
     }
   };
 
@@ -442,14 +431,38 @@ export default function CheckoutPage() {
     e.preventDefault();
     setIsPaying(true);
     setError(null);
+    console.log('Starting order process with:', {
+      address,
+      totalPrice,
+      userId: user?.id,
+      email: profile?.email || user?.email,
+      cart,
+    });
 
     if (!address) {
       setError('Please enter or select a delivery address.');
+      toast.error('Please enter or select a delivery address.');
       setIsPaying(false);
       return;
     }
 
+    if (!user?.id) {
+      setError('User not authenticated. Please log in.');
+      toast.error('User not authenticated. Please log in.');
+      setIsPaying(false);
+      return;
+    }
+
+    if (!cart?.length) {
+      setError('Cart is empty.');
+      toast.error('Cart is empty.');
+      setIsPaying(false);
+      return;
+    }
+
+    let lat = 9.0820, lon = 8.6753; // Default coordinates
     try {
+      console.log('Fetching address coordinates from Nominatim');
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
         {
@@ -457,68 +470,115 @@ export default function CheckoutPage() {
         }
       );
       const data = await response.json();
-      if (!data[0]) {
-        setError('Invalid delivery address. Please select a valid address.');
-        setIsPaying(false);
-        return;
+      console.log('Nominatim response:', data);
+      if (data[0]) {
+        lat = parseFloat(data[0].lat);
+        lon = parseFloat(data[0].lon);
+      } else {
+        console.warn('Nominatim returned no results, using default coordinates');
+        toast.warn('Address validation failed, using default coordinates.');
       }
-      const { lat, lon } = data[0];
+    } catch (err) {
+      console.error('Nominatim error:', err);
+      toast.error('Address validation failed, proceeding with default coordinates.');
+    }
 
-     const placeOrder = async (paymentReference) => {
-  console.log('Saving order to Supabase with:', {
-    user_id: user.id,
-    items: cart.map((item) => ({
-      id: item.product_id || item.id.split('-')[0],
-      name: item.name,
-      price: item.price,
-      quantity: item.quantity,
-      size: item.size,
-      color: item.color,
-      image_url: item.image_url,
-      discount_percentage: item.discount_percentage || 0,
-    })),
-    address,
-    lat: parseFloat(lat),
-    lng: parseFloat(lon),
-    status: 'processing',
-    total: totalPrice,
-    created_at: new Date().toISOString(),
-    payment_reference: paymentReference,
-  });
+    const placeOrder = async (paymentReference) => {
+      console.log('Saving order to Supabase with:', {
+        user_id: user.id,
+        items: cart.map((item) => ({
+          id: item.product_id || item.id?.split('-')[0],
+          name: item.name,
+          price: Number(item.price),
+          quantity: Number(item.quantity),
+          size: item.size || null,
+          color: item.color || null,
+          image_url: item.image_url || null,
+          discount_percentage: Number(item.discount_percentage) || 0,
+        })),
+        address,
+        lat,
+        lng: lon,
+        status: 'processing',
+        total: Number(totalPrice),
+        created_at: new Date().toISOString(),
+        payment_reference: paymentReference,
+      });
 
-  const { error } = await supabase.from('orders').insert([
-    {
-      user_id: user.id,
-      items: cart.map((item) => ({
-        id: item.product_id || item.id.split('-')[0],
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        size: item.size,
-        color: item.color,
-        image_url: item.image_url,
-        discount_percentage: item.discount_percentage || 0,
-      })),
-      address,
-      lat: parseFloat(lat),
-      lng: parseFloat(lon),
-      status: 'processing',
-      total: totalPrice,
-      created_at: new Date().toISOString(),
-      payment_reference: paymentReference,
-    },
-  ]);
+      // Validate data before insertion
+      const orderData = {
+        user_id: user.id,
+        items: cart.map((item) => ({
+          id: item.product_id || item.id?.split('-')[0],
+          name: item.name,
+          price: Number(item.price),
+          quantity: Number(item.quantity),
+          size: item.size || null,
+          color: item.color || null,
+          image_url: item.image_url || null,
+          discount_percentage: Number(item.discount_percentage) || 0,
+        })),
+        address,
+        lat,
+        lng: lon,
+        status: 'processing',
+        total: Number(totalPrice),
+        created_at: new Date().toISOString(),
+        payment_reference: paymentReference,
+      };
 
-  if (error) {
-    console.error('Supabase insert error:', error.message, error.details, error.hint);
-    throw error;
-  }
-  console.log('Order saved successfully');
-  clearCart();
-  router.push('/orders');
-  toast.success('Payment successful! Order placed.');
-};
+      if (!orderData.user_id) {
+        throw new Error('Invalid user_id');
+      }
+      if (!orderData.items.length) {
+        throw new Error('No items in cart');
+      }
+      for (const item of orderData.items) {
+        if (!item.id || !item.name || isNaN(item.price) || isNaN(item.quantity)) {
+          throw new Error(`Invalid item data: ${JSON.stringify(item)}`);
+        }
+      }
+      if (!orderData.address) {
+        throw new Error('Invalid address');
+      }
+      if (isNaN(orderData.lat) || isNaN(orderData.lng)) {
+        throw new Error('Invalid coordinates');
+      }
+      if (isNaN(orderData.total)) {
+        throw new Error('Invalid total price');
+      }
+      if (!orderData.payment_reference) {
+        throw new Error('Invalid payment reference');
+      }
 
+      try {
+        const { error } = await supabase.from('orders').insert([orderData]);
+        if (error) {
+          console.error('Supabase insert error:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code,
+          });
+          throw error;
+        }
+        console.log('Order saved successfully');
+        clearCart();
+        router.push('/orders');
+        toast.success('Payment successful! Order placed.');
+      } catch (error) {
+        console.error('Error placing order:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+        });
+        throw error;
+      }
+    };
+
+    try {
+      console.log('Initiating payment');
       const success = await initiatePayment({
         email: profile?.email || user.email,
         totalPrice,
@@ -527,13 +587,14 @@ export default function CheckoutPage() {
         orderCallback: placeOrder,
         useApiFallback: true,
       });
-
+      console.log('Payment initiation result:', success);
       if (!success) {
         throw new Error('Payment initiation failed');
       }
     } catch (err) {
-      console.error('Order error:', err.message);
+      console.error('Order error:', err);
       setError('Order failed: ' + err.message);
+      toast.error('Order failed: ' + err.message);
       setIsPaying(false);
     }
   };
@@ -558,7 +619,9 @@ export default function CheckoutPage() {
         src="https://js.paystack.co/v2/inline.js"
         strategy="afterInteractive"
         onError={(e) => console.error('Paystack script failed to load:', e)}
-      />      <main className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      />
+      <ToastContainer />
+      <main className="min-h-screen bg-gray-100 dark:bg-gray-900">
         <Navbar
           profile={profile}
           onCartClick={() => setIsCartOpen(true)}
