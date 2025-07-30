@@ -29,19 +29,19 @@ export default async function handler(req, res) {
     const result = await response.json();
     console.log('Paystack verification response:', result);
 
-   if (!response.ok || result.status !== true || result.data?.status !== 'success') {
-  console.error('VERIFICATION FAILURE:', {
-    httpOk: response.ok,
-    paystackStatus: result.status,
-    txStatus: result.data?.status,
-    raw: result,
-  });
-  return res.status(400).json({
-    success: false,
-    error: result.message || 'Payment verification failed',
-    txStatus: result.data?.status,
-  });
-}
+    if (!response.ok || result.status !== true || result.data?.status !== 'success') {
+      console.error('VERIFICATION FAILURE:', {
+        httpOk: response.ok,
+        paystackStatus: result.status,
+        txStatus: result.data?.status,
+        raw: result,
+      });
+      return res.status(400).json({
+        success: false,
+        error: result.message || 'Payment verification failed',
+        txStatus: result.data?.status,
+      });
+    }
 
 
     return res.status(200).json({ success: true, data: result.data });
