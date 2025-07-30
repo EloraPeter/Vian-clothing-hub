@@ -109,20 +109,25 @@ export const initiatePayment = ({
         reference,
       });
 
-      const handler = new window.PaystackPop();
-      handler.open({
+      const paystack = new window.PaystackPop();
+      paystack.newTransaction({
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
         email,
         amount: totalPrice * 100,
         currency: 'NGN',
         reference,
-        callback: paystackCallback,
-        onClose: () => {
+        callback: (response) => {
+          verifyPayment({ reference: response.reference, setError, setIsPaying, orderCallback, useApiFallback })
+            .then((success) => resolve(success))
+            .catch((err) => reject(err));
+        },
+        onCancel: () => {
           setError('Payment cancelled.');
           setIsPaying(false);
           reject(new Error('Payment cancelled'));
         },
       });
+
     } catch (err) {
       console.error('Paystack error:', err.message);
       setError('Failed to initialize payment: ' + err.message);
