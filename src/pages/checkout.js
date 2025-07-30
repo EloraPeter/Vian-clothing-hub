@@ -455,7 +455,7 @@ export default function CheckoutPage() {
     user_id: user.id,
     items: cart.map((item) => {
       // Validate item.id and item.product_id
-      if (!item.product_id && (!item.id || typeof item.id !== 'string')) {
+      if (!item.product_id && (!item.id || typeof item.id !== 'number')) {
         console.error('Invalid cart item:', item);
         throw new Error(`Invalid cart item: missing or invalid id for item ${item.name || 'unknown'}`);
       }
