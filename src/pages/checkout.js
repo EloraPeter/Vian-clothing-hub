@@ -461,7 +461,7 @@ export default function CheckoutPage() {
       }
 
       return {
-        id: item.product_id || item.id.split('-')[0],
+        id: item.product_id.toString() || item.id.split('-')[0],
         name: item.name,
         price: item.price,
         quantity: item.quantity,
