@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabaseClient';
 // Utility function to verify payment
 const verifyPayment = async ({ reference, setError, setIsPaying, orderCallback, useApiFallback }) => {
   try {
-    let data;
+    let paymentData;
 
     if (useApiFallback) {
       const apiResponse = await fetch('/api/verify-payment', {
@@ -15,38 +15,44 @@ const verifyPayment = async ({ reference, setError, setIsPaying, orderCallback, 
       const json = await apiResponse.json();
       console.log('Paystack verification response:', json);
 
-      // ✅ This is the proper condition
-      if (!json.status || json.data?.status !== 'success') {
-        throw new Error('Payment not successful');
+      console.log("Check condition values:", {
+  status: json.status,
+  dataStatus: json.data?.status
+});
+
+
+      // ✅ Check if payment is truly successful
+      if (!json || json.status !== true || json.data?.status !== 'success') {
+        throw new Error('Payment not successful (fallback)');
       }
 
-      data = json.data;
+      paymentData = json.data;
     } else {
-      const { data: supaData, error } = await supabase.functions.invoke('verify-paystack-payment', {
+      const { data, error } = await supabase.functions.invoke('verify-paystack-payment', {
         body: { reference },
         headers: { 'Content-Type': 'application/json' },
       });
 
-      if (error || supaData?.status !== 'success') {
-        throw new Error(error?.message || 'Payment not successful');
+      if (error || data?.status !== 'success') {
+        throw new Error(error?.message || 'Payment not successful (supabase)');
       }
 
-      data = supaData;
+      paymentData = data;
     }
 
-    // 🧠 If verification passed, now place the order
+    // ✅ Proceed to place the order
     await orderCallback(reference);
-
     setIsPaying(false);
     return true;
 
   } catch (err) {
-    console.error('Payment verification error:', err.message || err);
-    setError('Payment verification failed: ' + (err.message || 'Unknown error'));
+    console.error('Payment verification error:', err?.message || err);
+    setError('Payment verification failed: ' + (err?.message || 'Unknown error'));
     setIsPaying(false);
     return false;
   }
 };
+
 
 
 
