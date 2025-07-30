@@ -12,17 +12,24 @@ const verifyPayment = async ({ reference, setError, setIsPaying, orderCallback, 
         body: JSON.stringify({ reference }),
       });
 
-      const json = await apiResponse.json();
-      console.log('Paystack verification response:', json);
+      let json;
+      try {
+        json = await apiResponse.json();
+      } catch (error) {
+        console.error('JSON parsing error:', error);
+        throw new Error('Failed to parse payment verification response');
+      }
 
-      console.log("Check condition values:", {
+      console.log('Paystack verification response:', json);
+      console.log('Check condition values:', {
         status: json.status,
-        dataStatus: json.data?.status
+        statusType: typeof json.status,
+        dataStatus: json.data?.status,
+        dataStatusType: typeof json.data?.status
       });
 
-
-      // ✅ Check if payment is truly successful
-      if (!json || json.status !== true || json.data?.status !== 'success') {
+      if (!json || !json.data || (json.status !== true && json.status !== 'true') || json.data.status !== 'success') {
+        console.error('Verification failed:', { json });
         throw new Error('Payment not successful (fallback)');
       }
 
@@ -40,7 +47,6 @@ const verifyPayment = async ({ reference, setError, setIsPaying, orderCallback, 
       paymentData = data;
     }
 
-    // ✅ Proceed to place the order
     try {
       await orderCallback(reference);
     } catch (err) {
@@ -51,7 +57,6 @@ const verifyPayment = async ({ reference, setError, setIsPaying, orderCallback, 
     }
     setIsPaying(false);
     return true;
-
   } catch (err) {
     console.error('Payment verification error:', err?.message || err);
     setError('Payment verification failed: ' + (err?.message || 'Unknown error'));
