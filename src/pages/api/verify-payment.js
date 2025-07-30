@@ -9,12 +9,12 @@ export default async function handler(req, res) {
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, error: 'Method not allowed' });
+    return res.status(405).json({ status: false, error: 'Method not allowed' });
   }
 
   const { reference } = req.body;
   if (!reference || typeof reference !== 'string') {
-    return res.status(400).json({ success: false, error: 'Valid reference is required' });
+    return res.status(400).json({ status: false, error: 'Valid reference is required' });
   }
 
   try {
@@ -26,7 +26,14 @@ export default async function handler(req, res) {
       },
     });
 
-    const result = await response.json();
+    let result;
+    try {
+      result = await response.json();
+    } catch (error) {
+      console.error('JSON parsing error:', error);
+      return res.status(500).json({ status: false, error: 'Failed to parse Paystack response' });
+    }
+
     console.log('Paystack verification response:', result);
 
     if (!response.ok || result.status !== true || result.data?.status !== 'success') {
@@ -37,16 +44,15 @@ export default async function handler(req, res) {
         raw: result,
       });
       return res.status(400).json({
-        success: false,
+        status: false,
         error: result.message || 'Payment verification failed',
         txStatus: result.data?.status,
       });
     }
 
-
-    return res.status(200).json({ success: true, data: result.data });
+    return res.status(200).json({ status: true, data: result.data });
   } catch (error) {
     console.error('API error:', error.message);
-    return res.status(500).json({ success: false, error: `Server error: ${error.message}` });
+    return res.status(500).json({ status: false, error: `Server error: ${error.message}` });
   }
 }
