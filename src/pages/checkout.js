@@ -14,7 +14,9 @@ import DressLoader from '@/components/DressLoader';
 import 'leaflet/dist/leaflet.css';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 
 export default function CheckoutPage() {
@@ -550,7 +552,7 @@ const handleOrder = async (e) => {
         src="https://js.paystack.co/v2/inline.js"
         strategy="afterInteractive"
         onError={(e) => console.error('Paystack script failed to load:', e)}
-      />      <main className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      />      <main className="min-h-screen bg-gray-100">
         <Navbar
           profile={profile}
           onCartClick={() => setIsCartOpen(true)}
