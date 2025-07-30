@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
 import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+import Footer from '@/components/footer';
 import CartPanel from '@/components/CartPanel';
 import Link from 'next/link';
 import Script from 'next/script';
