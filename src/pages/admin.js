@@ -45,6 +45,11 @@ export default function AdminPage() {
   const [orderPrices, setOrderPrices] = useState({});
   const [categories, setCategories] = useState([]);
   const [discountInputs, setDiscountInputs] = useState({});
+  const [shippingFees, setShippingFees] = useState([]);
+  const [shippingFeeData, setShippingFeeData] = useState({ state: '', fee: '' });
+  const [editShippingFeeData, setEditShippingFeeData] = useState(null);
+  const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
+
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((_, session) => {
@@ -555,13 +560,13 @@ export default function AdminPage() {
         prev.map((product) =>
           product.id === editProductData.id
             ? {
-                ...product,
-                name: editProductData.name,
-                price: parseFloat(editProductData.price),
-                description: editProductData.description,
-                category_id: categoryId,
-                categories: categories.find((c) => c.id === categoryId) || null,
-              }
+              ...product,
+              name: editProductData.name,
+              price: parseFloat(editProductData.price),
+              description: editProductData.description,
+              category_id: categoryId,
+              categories: categories.find((c) => c.id === categoryId) || null,
+            }
             : product
         )
       );
@@ -667,10 +672,10 @@ export default function AdminPage() {
           [editVariantData.product_id]: prev[editVariantData.product_id].map((variant) =>
             variant.id === editVariantData.id
               ? {
-                  ...variant,
-                  stock_quantity: parseInt(editVariantData.stock_quantity),
-                  additional_price: parseFloat(editVariantData.additional_price) || 0,
-                }
+                ...variant,
+                stock_quantity: parseInt(editVariantData.stock_quantity),
+                additional_price: parseFloat(editVariantData.additional_price) || 0,
+              }
               : variant
           ),
         }));
@@ -706,12 +711,12 @@ export default function AdminPage() {
           [editVariantData.product_id]: prev[editVariantData.product_id].map((variant) =>
             variant.id === editVariantData.id
               ? {
-                  ...variant,
-                  size: size,
-                  color: color,
-                  stock_quantity: parseInt(editVariantData.stock_quantity),
-                  additional_price: parseFloat(editVariantData.additional_price) || 0,
-                }
+                ...variant,
+                size: size,
+                color: color,
+                stock_quantity: parseInt(editVariantData.stock_quantity),
+                additional_price: parseFloat(editVariantData.additional_price) || 0,
+              }
               : variant
           ),
         }));
