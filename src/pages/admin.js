@@ -122,6 +122,10 @@ export default function AdminPage() {
           setVariants(variantsByProduct);
         }
 
+        if (shippingFeesError) setError(shippingFeesError.message);
+        else setShippingFees(shippingFeesData || []); // Set shipping fees
+
+
         setLoading(false);
       } catch (err) {
         setError(err.message);
@@ -733,6 +737,128 @@ export default function AdminPage() {
     }
   };
 
+  const handleShippingFeeChange = (e) => {
+    const { name, value } = e.target;
+    setShippingFeeData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditShippingFeeChange = (e) => {
+    const { name, value } = e.target;
+    setEditShippingFeeData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleShippingFeeSubmit = async (e) => {
+    e.preventDefault();
+    if (!shippingFeeData.state || !shippingFeeData.fee) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    try {
+      const { data: existingFees, error: checkError } = await supabase
+        .from('shipping_fees')
+        .select('id')
+        .eq('state', shippingFeeData.state.trim().toLowerCase());
+
+      if (checkError) throw new Error('Error checking shipping fee: ' + checkError.message);
+      if (existingFees.length > 0) {
+        alert('A shipping fee for this state already exists.');
+        return;
+      }
+
+      const { data: feeInsert, error: insertError } = await supabase
+        .from('shipping_fees')
+        .insert({
+          state: shippingFeeData.state.trim().toLowerCase(),
+          fee: parseFloat(shippingFeeData.fee),
+        })
+        .select()
+        .single();
+
+      if (insertError) throw new Error('Insert failed: ' + insertError.message);
+
+      setShippingFees((prev) => [...prev, feeInsert]);
+      setShippingFeeData({ state: '', fee: '' });
+      setIsShippingFeeModalOpen(false);
+      alert('Shipping fee added successfully!');
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const handleEditShippingFeeSubmit = async (e) => {
+    e.preventDefault();
+    if (!editShippingFeeData.state || !editShippingFeeData.fee) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    try {
+      const { data: originalFee } = await supabase
+        .from('shipping_fees')
+        .select('state')
+        .eq('id', editShippingFeeData.id)
+        .single();
+
+      if (originalFee.state !== editShippingFeeData.state.trim().toLowerCase()) {
+        const { data: existingFees, error: checkError } = await supabase
+          .from('shipping_fees')
+          .select('id')
+          .eq('state', editShippingFeeData.state.trim().toLowerCase())
+          .neq('id', editShippingFeeData.id);
+
+        if (checkError) throw new Error('Error checking shipping fee: ' + checkError.message);
+        if (existingFees.length > 0) {
+          alert('A shipping fee for this state already exists.');
+          return;
+        }
+      }
+
+      const { error } = await supabase
+        .from('shipping_fees')
+        .update({
+          state: editShippingFeeData.state.trim().toLowerCase(),
+          fee: parseFloat(editShippingFeeData.fee),
+        })
+        .eq('id', editShippingFeeData.id);
+
+      if (error) throw new Error('Update failed: ' + error.message);
+
+      setShippingFees((prev) =>
+        prev.map((fee) =>
+          fee.id === editShippingFeeData.id
+            ? { ...fee, state: editShippingFeeData.state.trim().toLowerCase(), fee: parseFloat(editShippingFeeData.fee) }
+            : fee
+        )
+      );
+      setIsShippingFeeModalOpen(false);
+      setEditShippingFeeData(null);
+      alert('Shipping fee updated successfully!');
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const handleDeleteShippingFee = async (id) => {
+    if (!confirm(`Are you sure you want to delete the shipping fee with ID ${id}?`)) return;
+
+    try {
+      const { error } = await supabase.from('shipping_fees').delete().eq('id', id);
+      if (error) throw new Error('Delete failed: ' + error.message);
+
+      setShippingFees((prev) => prev.filter((fee) => fee.id !== id));
+      alert('Shipping fee deleted successfully!');
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const openEditShippingFeeModal = (fee) => {
+    setEditShippingFeeData({ ...fee });
+    setIsShippingFeeModalOpen(true);
+  };
+
+
   const handleDeleteVariant = async (productId, variantId) => {
     if (!confirm(`Are you sure you want to delete variant ID ${variantId}?`)) return;
 
@@ -896,6 +1022,7 @@ export default function AdminPage() {
                 </button>
               </div>
             </section>
+            
 
             <section className="bg-white rounded-2xl shadow-lg p-6">
               <h2 className="text-xl font-semibold text-purple-800 font-playfair-display mb-4">Add New Product</h2>
