@@ -88,12 +88,14 @@ export default function AdminPage() {
           { data: productData, error: productError },
           { data: categoryData, error: categoryError },
           { data: variantsData, error: variantsError },
+          { data: shippingFeesData, error: shippingFeesError },
         ] = await Promise.all([
           supabase.from('custom_orders').select('*').order('created_at', { ascending: false }),
           supabase.from('orders').select('*, items').order('created_at', { ascending: false }),
           supabase.from('products').select('*, categories(name)').order('created_at', { ascending: false }),
           supabase.from('categories').select('id, name, slug'),
           supabase.from('product_variants').select('id, product_id, size, color, stock_quantity, additional_price'),
+          supabase.from('shipping_fees').select('id, state, fee'),
         ]);
 
         if (customOrderError) setError(customOrderError.message);
