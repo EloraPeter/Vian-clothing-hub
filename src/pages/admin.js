@@ -1022,8 +1022,8 @@ export default function AdminPage() {
                 </button>
               </div>
             </section>
-            
 
+            {/* add product */}
             <section className="bg-white rounded-2xl shadow-lg p-6">
               <h2 className="text-xl font-semibold text-purple-800 font-playfair-display mb-4">Add New Product</h2>
               <form onSubmit={handleProductSubmit} className="space-y-4">
@@ -1118,6 +1118,58 @@ export default function AdminPage() {
                   {productUploading ? 'Uploading...' : 'Add Product'}
                 </button>
               </form>
+            </section>
+
+            {/* shipping */}
+            <section className="bg-white rounded-2xl shadow-lg p-6">
+              <h2 className="text-xl font-semibold text-purple-800 font-playfair-display mb-4">Manage Shipping Fees</h2>
+              <button
+                onClick={() => {
+                  setShippingFeeData({ state: '', fee: '' });
+                  setEditShippingFeeData(null);
+                  setIsShippingFeeModalOpen(true);
+                }}
+                className="mb-4 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 font-semibold"
+              >
+                Add Shipping Fee
+              </button>
+              {shippingFees.length === 0 ? (
+                <p className="text-gray-500">No shipping fees available.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-gray-700">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="px-3 py-2 text-left">State</th>
+                        <th className="px-3 py-2 text-left">Fee (₦)</th>
+                        <th className="px-3 py-2 text-left">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {shippingFees.map((fee) => (
+                        <tr key={fee.id} className="border-b border-gray-200">
+                          <td className="px-3 py-2">{fee.state.charAt(0).toUpperCase() + fee.state.slice(1)}</td>
+                          <td className="px-3 py-2">{Number(fee.fee).toLocaleString()}</td>
+                          <td className="px-3 py-2 flex gap-2">
+                            <button
+                              onClick={() => openEditShippingFeeModal(fee)}
+                              className="px-2 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteShippingFee(fee.id)}
+                              className="px-2 py-1 bg-red-600 text-white rounded-md text-sm hover:bg-red-700"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </section>
           </div>
 
@@ -1702,6 +1754,73 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {isShippingFeeModalOpen && (
+  <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+    <div className="bg-white rounded-2xl p-6 w-full max-w-md relative">
+      <button
+        onClick={() => {
+          setIsShippingFeeModalOpen(false);
+          setEditShippingFeeData(null);
+        }}
+        className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+        aria-label="Close shipping fee modal"
+      >
+        ✕
+      </button>
+      <h2 className="text-xl font-semibold text-purple-800 mb-4">
+        {editShippingFeeData ? 'Edit Shipping Fee' : 'Add Shipping Fee'}
+      </h2>
+      <form onSubmit={editShippingFeeData ? handleEditShippingFeeSubmit : handleShippingFeeSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+          <input
+            type="text"
+            name="state"
+            value={editShippingFeeData ? editShippingFeeData.state : shippingFeeData.state}
+            onChange={editShippingFeeData ? handleEditShippingFeeChange : handleShippingFeeChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+            placeholder="e.g., Delta"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Fee (₦)</label>
+          <input
+            type="number"
+            name="fee"
+            value={editShippingFeeData ? editShippingFeeData.fee : shippingFeeData.fee}
+            onChange={editShippingFeeData ? handleEditShippingFeeChange : handleShippingFeeChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+            placeholder="Enter shipping fee"
+            min="0"
+            step="0.01"
+            required
+          />
+        </div>
+        <div className="flex justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setIsShippingFeeModalOpen(false);
+              setEditShippingFeeData(null);
+            }}
+            className="w-full py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 font-semibold"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="w-full py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 font-semibold"
+            aria-label={editShippingFeeData ? 'Update shipping fee' : 'Add shipping fee'}
+          >
+            {editShippingFeeData ? 'Update Shipping Fee' : 'Add Shipping Fee'}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
 
         <div className="text-center mt-8">
           <button
