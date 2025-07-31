@@ -868,7 +868,7 @@ supabase.from('shipping_fees').select('id, state_name, shipping_fee'),        ])
 
   const handleShippingFeeSubmit = async (e) => {
     e.preventDefault();
-    if (!shippingFeeData.state_name || !shippingFeeData.fee) {
+    if (!shippingFeeData.state_name || !shippingFeeData.shipping_fee) {
       alert("Please fill in all required fields.");
       return;
     }
@@ -898,7 +898,7 @@ supabase.from('shipping_fees').select('id, state_name, shipping_fee'),        ])
       if (insertError) throw new Error("Insert failed: " + insertError.message);
 
       setShippingFees((prev) => [...prev, feeInsert]);
-      setShippingFeeData({ state: "", fee: "" });
+      setShippingFeeData({ state_name: "", shipping_fee: "" });
       setIsShippingFeeModalOpen(false);
       alert("Shipping fee added successfully!");
     } catch (error) {
