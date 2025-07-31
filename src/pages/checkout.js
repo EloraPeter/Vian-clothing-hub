@@ -36,6 +36,8 @@ export default function CheckoutPage() {
   const [editAddressId, setEditAddressId] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [isPaying, setIsPaying] = useState(false);
+  const [shippingFee, setShippingFee] = useState(0);
+  const [shippingFees, setShippingFees] = useState({});
 
   useEffect(() => {
     async function fetchData() {
@@ -69,11 +71,53 @@ export default function CheckoutPage() {
             setMapCenter([addresses[0].lat || 9.0820, addresses[0].lng || 8.6753]);
           }
         }
+        // Fetch shipping fees
+        const { data: shippingData, error: shippingError } = await supabase
+          .from('shipping_fees')
+          .select('state_name, shipping_fee');
+        if (shippingError) {
+          setError(shippingError.message);
+        } else {
+          const feesMap = shippingData.reduce((acc, { state_name, shipping_fee }) => ({
+            ...acc,
+            [state_name.toLowerCase()]: shipping_fee
+          }), {});
+          setShippingFees(feesMap);
+        }
       }
       setLoading(false);
     }
     fetchData();
   }, [router]);
+
+  // Function to extract state from address
+  const extractStateFromAddress = (address) => {
+    if (!address) return null;
+    const addressParts = address.split(',').map(part => part.trim().toLowerCase());
+    const nigerianStates = [
+      'abuja', 'lagos', 'delta', 'rivers', 'kano', 'kaduna', 'oyo', 'anambra', 'enugu', 'akwa ibom',
+      'adamawa', 'bauchi', 'bayelsa', 'benue', 'borno', 'cross river', 'ebonyi', 'edo', 'ekiti',
+      'gombe', 'imo', 'jigawa', 'kebbi', 'kogi', 'kwara', 'nassarawa', 'niger', 'ondo', 'osun',
+      'plateau', 'sokoto', 'taraba', 'yobe', 'zamfara'
+    ];
+    for (const part of addressParts) {
+      for (const state of nigerianStates) {
+        if (part.includes(state)) {
+          return state.charAt(0).toUpperCase() + state.slice(1);
+        }
+      }
+    }
+    return null;
+  };
+
+  // Update shipping fee when address changes
+  useEffect(() => {
+    const state = extractStateFromAddress(address);
+    const fee = state && shippingFees[state.toLowerCase()]
+      ? shippingFees[state.toLowerCase()]
+      : shippingFees['default'] || 5000;
+    setShippingFee(fee);
+  }, [address, shippingFees]);
 
   useEffect(() => {
     if (!mapContainerRef.current || typeof window === 'undefined') return;
@@ -461,6 +505,13 @@ export default function CheckoutPage() {
       return;
     }
 
+    const state = extractStateFromAddress(address);
+    if (!state && !shippingFees['default']) {
+      setError('Unable to determine shipping fee for this address. Please ensure the address includes a valid Nigerian state.');
+      setIsPaying(false);
+      return;
+    }
+
     try {
       const response = await fetch(`/api/geocode?query=${encodeURIComponent(address)}`);
       const data = await response.json();
@@ -481,7 +532,8 @@ export default function CheckoutPage() {
             lat: parseFloat(lat),
             lng: parseFloat(lon),
             status: 'processing',
-            total: totalPrice,
+            total: totalPrice + shippingFee,
+            shipping_fee: shippingFee,
             created_at: new Date().toISOString(),
             payment_reference: paymentReference,
           },
@@ -497,7 +549,7 @@ export default function CheckoutPage() {
 
       const success = await initiatePayment({
         email: profile?.email || user.email,
-        totalPrice,
+        totalPrice: totalPrice + shippingFee,
         setError,
         setIsPaying,
         orderCallback: placeOrder,
@@ -676,13 +728,13 @@ export default function CheckoutPage() {
                     <span>Subtotal</span>
                     <span>₦{totalPrice.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between text-gray-600 text-sm mb-2">
+                  <div className="flex justify-between text-gray-900 font-medium mb-2">
                     <span>Shipping</span>
-                    <span>TBD</span>
+                    <span>₦{shippingFee.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-gray-900 font-bold text-lg">
                     <span>Total</span>
-                    <span>₦{totalPrice.toLocaleString()}</span>
+                    <span>₦{(totalPrice + shippingFee).toLocaleString()}</span>
                   </div>
                 </div>
                 <button
