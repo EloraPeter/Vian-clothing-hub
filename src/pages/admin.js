@@ -112,7 +112,7 @@ export default function AdminPage() {
             .select(
               "id, product_id, size, color, stock_quantity, additional_price"
             ),
-          supabase.from("shipping_fees").select("id, state, fee"),
+          supabase.from("shipping_fees").select("id, state_name, fee"),
         ]);
 
         if (customOrderError) setError(customOrderError.message);
