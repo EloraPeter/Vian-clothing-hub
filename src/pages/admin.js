@@ -45,13 +45,11 @@ export default function AdminPage() {
   const [orderPrices, setOrderPrices] = useState({});
   const [categories, setCategories] = useState([]);
   const [discountInputs, setDiscountInputs] = useState({});
-  const [shippingFees, setShippingFees] = useState([]);
-  const [shippingFeeData, setShippingFeeData] = useState({
-    state: "",
-    fee: "",
-  });
-  const [editShippingFeeData, setEditShippingFeeData] = useState(null);
-  const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
+ const [shippingFees, setShippingFees] = useState([]);
+const [shippingFeeData, setShippingFeeData] = useState({ state_name: '', shipping_fee: '' }); // Updated to shipping_fee
+const [editShippingFeeData, setEditShippingFeeData] = useState(null);
+const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
+
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
@@ -112,8 +110,7 @@ export default function AdminPage() {
             .select(
               "id, product_id, size, color, stock_quantity, additional_price"
             ),
-          supabase.from("shipping_fees").select("id, state_name, fee"),
-        ]);
+supabase.from('shipping_fees').select('id, state_name, shipping_fee'),        ]);
 
         if (customOrderError) setError(customOrderError.message);
         else setOrders(customOrderData || []);
