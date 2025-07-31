@@ -201,7 +201,11 @@ export default function CheckoutPage() {
       }
       try {
         const response = await fetch(`/api/geocode?query=${encodeURIComponent(query)}`);
-        if (!response.ok) throw new Error('Search failed');
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Search failed:', response.status, errorText);
+          throw new Error(`Search failed with status ${response.status}`);
+        }
         const data = await response.json();
         setSearchResults(data);
         searchResultsDiv.style.display = data.length ? 'block' : 'none';
