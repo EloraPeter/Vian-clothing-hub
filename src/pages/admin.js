@@ -880,7 +880,7 @@ export default function AdminPage() {
       const { data: existingFees, error: checkError } = await supabase
         .from("shipping_fees")
         .select("id")
-        .eq("state", shippingFeeData.state.trim().toLowerCase());
+        .eq("state", shippingFeeData.state_name.trim().toLowerCase());
 
       if (checkError)
         throw new Error("Error checking shipping fee: " + checkError.message);
@@ -892,7 +892,7 @@ export default function AdminPage() {
       const { data: feeInsert, error: insertError } = await supabase
         .from("shipping_fees")
         .insert({
-          state: shippingFeeData.state.trim().toLowerCase(),
+          state: shippingFeeData.state_name.trim().toLowerCase(),
           fee: parseFloat(shippingFeeData.fee),
         })
         .select()
@@ -911,7 +911,7 @@ export default function AdminPage() {
 
   const handleEditShippingFeeSubmit = async (e) => {
     e.preventDefault();
-    if (!editShippingFeeData.state || !editShippingFeeData.fee) {
+    if (!editShippingFeeData.state_name || !editShippingFeeData.fee) {
       alert("Please fill in all required fields.");
       return;
     }
@@ -919,17 +919,17 @@ export default function AdminPage() {
     try {
       const { data: originalFee } = await supabase
         .from("shipping_fees")
-        .select("state")
+        .select("state_name")
         .eq("id", editShippingFeeData.id)
         .single();
 
       if (
-        originalFee.state !== editShippingFeeData.state.trim().toLowerCase()
+        originalFee.state_name !== editShippingFeeData.state_name.trim().toLowerCase()
       ) {
         const { data: existingFees, error: checkError } = await supabase
           .from("shipping_fees")
           .select("id")
-          .eq("state", editShippingFeeData.state.trim().toLowerCase())
+          .eq("state_name", editShippingFeeData.state.trim().toLowerCase())
           .neq("id", editShippingFeeData.id);
 
         if (checkError)
@@ -943,7 +943,7 @@ export default function AdminPage() {
       const { error } = await supabase
         .from("shipping_fees")
         .update({
-          state: editShippingFeeData.state.trim().toLowerCase(),
+          state: editShippingFeeData.state_name.trim().toLowerCase(),
           fee: parseFloat(editShippingFeeData.fee),
         })
         .eq("id", editShippingFeeData.id);
@@ -955,7 +955,7 @@ export default function AdminPage() {
           fee.id === editShippingFeeData.id
             ? {
               ...fee,
-              state: editShippingFeeData.state.trim().toLowerCase(),
+              state: editShippingFeeData.state_name.trim().toLowerCase(),
               fee: parseFloat(editShippingFeeData.fee),
             }
             : fee
@@ -2241,7 +2241,7 @@ export default function AdminPage() {
                     name="state"
                     value={
                       editShippingFeeData
-                        ? editShippingFeeData.state
+                        ? editShippingFeeData.state_name
                         : shippingFeeData.state
                     }
                     onChange={
