@@ -2242,7 +2242,7 @@ export default function AdminPage() {
                     value={
                       editShippingFeeData
                         ? editShippingFeeData.state_name
-                        : shippingFeeData.state
+                        : shippingFeeData.state_name
                     }
                     onChange={
                       editShippingFeeData
