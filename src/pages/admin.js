@@ -940,8 +940,8 @@ supabase.from('shipping_fees').select('id, state_name, shipping_fee'),        ])
       const { error } = await supabase
         .from("shipping_fees")
         .update({
-          state: editShippingFeeData.state_name.trim().toLowerCase(),
-          fee: parseFloat(editShippingFeeData.fee),
+          state_name: editShippingFeeData.state_name.trim().toLowerCase(),
+          shipping_fee: parseFloat(editShippingFeeData.shipping_fee),
         })
         .eq("id", editShippingFeeData.id);
 
@@ -952,8 +952,8 @@ supabase.from('shipping_fees').select('id, state_name, shipping_fee'),        ])
           fee.id === editShippingFeeData.id
             ? {
               ...fee,
-              state: editShippingFeeData.state_name.trim().toLowerCase(),
-              fee: parseFloat(editShippingFeeData.fee),
+              state_name: editShippingFeeData.state_name.trim().toLowerCase(),
+              shipping_fee: parseFloat(editShippingFeeData.shipping_fee),
             }
             : fee
         )
@@ -1342,7 +1342,7 @@ supabase.from('shipping_fees').select('id, state_name, shipping_fee'),        ])
               </h2>
               <button
                 onClick={() => {
-                  setShippingFeeData({ state: "", fee: "" });
+                  setShippingFeeData({ state_name: "", shipping_fee: "" });
                   setEditShippingFeeData(null);
                   setIsShippingFeeModalOpen(true);
                 }}
