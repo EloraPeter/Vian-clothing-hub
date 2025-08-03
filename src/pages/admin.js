@@ -2195,11 +2195,7 @@ export default function AdminPage() {
                 {editShippingFeeData ? "Edit Shipping Fee" : "Add Shipping Fee"}
               </h2>
               <form
-                onSubmit={
-                  editShippingFeeData
-                    ? handleEditShippingFeeSubmit
-                    : handleShippingFeeSubmit
-                }
+                onSubmit={editShippingFeeData ? handleEditShippingFeeSubmit : handleShippingFeeSubmit}
                 className="space-y-4"
               >
                 <div>
@@ -2208,17 +2204,9 @@ export default function AdminPage() {
                   </label>
                   <input
                     type="text"
-                    name="state"
-                    value={
-                      editShippingFeeData
-                        ? editShippingFeeData.state_name
-                        : shippingFeeData.state_name
-                    }
-                    onChange={
-                      editShippingFeeData
-                        ? handleEditShippingFeeChange
-                        : handleShippingFeeChange
-                    }
+                    name="state_name" // Updated to state_name
+                    value={editShippingFeeData ? editShippingFeeData.state_name : shippingFeeData.state_name}
+                    onChange={editShippingFeeData ? handleEditShippingFeeChange : handleShippingFeeChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
                     placeholder="e.g., Delta"
                     required
@@ -2230,17 +2218,9 @@ export default function AdminPage() {
                   </label>
                   <input
                     type="number"
-                    name="fee"
-                    value={
-                      editShippingFeeData
-                        ? editShippingFeeData.shipping_fee
-                        : shippingFeeData.shipping_fee
-                    }
-                    onChange={
-                      editShippingFeeData
-                        ? handleEditShippingFeeChange
-                        : handleShippingFeeChange
-                    }
+                    name="shipping_fee" // Updated to shipping_fee
+                    value={editShippingFeeData ? editShippingFeeData.shipping_fee : shippingFeeData.shipping_fee}
+                    onChange={editShippingFeeData ? handleEditShippingFeeChange : handleShippingFeeChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
                     placeholder="Enter shipping fee"
                     min="0"
@@ -2262,21 +2242,16 @@ export default function AdminPage() {
                   <button
                     type="submit"
                     className="w-full py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 font-semibold"
-                    aria-label={
-                      editShippingFeeData
-                        ? "Update shipping fee"
-                        : "Add shipping fee"
-                    }
+                    aria-label={editShippingFeeData ? "Update shipping fee" : "Add shipping fee"}
                   >
-                    {editShippingFeeData
-                      ? "Update Shipping Fee"
-                      : "Add Shipping Fee"}
+                    {editShippingFeeData ? "Update Shipping Fee" : "Add Shipping Fee"}
                   </button>
                 </div>
               </form>
             </div>
           </div>
         )}
+
 
         <div className="text-center mt-8">
           <button
