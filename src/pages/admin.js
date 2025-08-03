@@ -45,10 +45,10 @@ export default function AdminPage() {
   const [orderPrices, setOrderPrices] = useState({});
   const [categories, setCategories] = useState([]);
   const [discountInputs, setDiscountInputs] = useState({});
- const [shippingFees, setShippingFees] = useState([]);
-const [shippingFeeData, setShippingFeeData] = useState({ state_name: '', shipping_fee: '' });
-const [editShippingFeeData, setEditShippingFeeData] = useState(null);
-const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
+  const [shippingFees, setShippingFees] = useState([]);
+  const [shippingFeeData, setShippingFeeData] = useState({ state_name: '', shipping_fee: '' });
+  const [editShippingFeeData, setEditShippingFeeData] = useState(null);
+  const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
@@ -80,57 +80,57 @@ const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
       }
     }
 
-   async function fetchData() {
-  setLoading(true);
-  try {
-    const [
-      { data: customOrderData, error: customOrderError },
-      { data: productOrderData, error: productOrderError },
-      { data: productData, error: productError },
-      { data: categoryData, error: categoryError },
-      { data: variantsData, error: variantsError },
-      { data: shippingFeesData, error: shippingFeesError },
-    ] = await Promise.all([
-      supabase.from("custom_orders").select("*").order("created_at", { ascending: false }),
-      supabase.from("orders").select("*, items").order("created_at", { ascending: false }),
-      supabase.from("products").select("*, categories(name)").order("created_at", { ascending: false }),
-      supabase.from("categories").select("id, name, slug"),
-      supabase.from("product_variants").select("id, product_id, size, color, stock_quantity, additional_price"),
-      supabase.from("shipping_fees").select("id, state_name, shipping_fee"), // Updated to state_name, shipping_fee
-    ]);
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const [
+          { data: customOrderData, error: customOrderError },
+          { data: productOrderData, error: productOrderError },
+          { data: productData, error: productError },
+          { data: categoryData, error: categoryError },
+          { data: variantsData, error: variantsError },
+          { data: shippingFeesData, error: shippingFeesError },
+        ] = await Promise.all([
+          supabase.from("custom_orders").select("*").order("created_at", { ascending: false }),
+          supabase.from("orders").select("*, items").order("created_at", { ascending: false }),
+          supabase.from("products").select("*, categories(name)").order("created_at", { ascending: false }),
+          supabase.from("categories").select("id, name, slug"),
+          supabase.from("product_variants").select("id, product_id, size, color, stock_quantity, additional_price"),
+          supabase.from("shipping_fees").select("id, state_name, shipping_fee"), // Updated to state_name, shipping_fee
+        ]);
 
-    if (customOrderError) setError(customOrderError.message);
-    else setOrders(customOrderData || []);
+        if (customOrderError) setError(customOrderError.message);
+        else setOrders(customOrderData || []);
 
-    if (productOrderError) setError(productOrderError.message);
-    else setProductOrders(productOrderData || []);
+        if (productOrderError) setError(productOrderError.message);
+        else setProductOrders(productOrderData || []);
 
-    if (productError) setError(productError.message);
-    else setProducts(productData || []);
+        if (productError) setError(productError.message);
+        else setProducts(productData || []);
 
-    if (categoryError) setError(categoryError.message);
-    else setCategories(categoryData || []);
+        if (categoryError) setError(categoryError.message);
+        else setCategories(categoryData || []);
 
-    if (variantsError) setError(variantsError.message);
-    else {
-      const variantsByProduct = {};
-      variantsData.forEach((variant) => {
-        if (!variantsByProduct[variant.product_id]) {
-          variantsByProduct[variant.product_id] = [];
+        if (variantsError) setError(variantsError.message);
+        else {
+          const variantsByProduct = {};
+          variantsData.forEach((variant) => {
+            if (!variantsByProduct[variant.product_id]) {
+              variantsByProduct[variant.product_id] = [];
+            }
+            variantsByProduct[variant.product_id].push(variant);
+          });
+          setVariants(variantsByProduct);
         }
-        variantsByProduct[variant.product_id].push(variant);
-      });
-      setVariants(variantsByProduct);
+
+        if (shippingFeesError) setError(shippingFeesError.message);
+        else setShippingFees(shippingFeesData || []);
+
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+      }
     }
-
-    if (shippingFeesError) setError(shippingFeesError.message);
-    else setShippingFees(shippingFeesData || []);
-
-    setLoading(false);
-  } catch (err) {
-    setError(err.message);
-  }
-}
 
     fetchProfile();
     fetchData();
@@ -864,10 +864,9 @@ const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
       const { data: existingFees, error: checkError } = await supabase
         .from("shipping_fees")
         .select("id")
-        .eq("state", shippingFeeData.state_name.trim().toLowerCase());
+        .eq("state_name", shippingFeeData.state_name.trim().toLowerCase()); // Updated to state_name
 
-      if (checkError)
-        throw new Error("Error checking shipping fee: " + checkError.message);
+      if (checkError) throw new Error("Error checking shipping fee: " + checkError.message);
       if (existingFees.length > 0) {
         alert("A shipping fee for this state already exists.");
         return;
@@ -876,8 +875,8 @@ const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
       const { data: feeInsert, error: insertError } = await supabase
         .from("shipping_fees")
         .insert({
-          state: shippingFeeData.state_name.trim().toLowerCase(),
-          fee: parseFloat(shippingFeeData.fee),
+          state_name: shippingFeeData.state_name.trim().toLowerCase(), // Updated to state_name
+          shipping_fee: parseFloat(shippingFeeData.shipping_fee), // Updated to shipping_fee
         })
         .select()
         .single();
@@ -885,7 +884,7 @@ const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
       if (insertError) throw new Error("Insert failed: " + insertError.message);
 
       setShippingFees((prev) => [...prev, feeInsert]);
-      setShippingFeeData({ state_name: "", shipping_fee: "" });
+      setShippingFeeData({ state_name: "", shipping_fee: "" }); // Updated to state_name, shipping_fee
       setIsShippingFeeModalOpen(false);
       alert("Shipping fee added successfully!");
     } catch (error) {
@@ -895,7 +894,7 @@ const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
 
   const handleEditShippingFeeSubmit = async (e) => {
     e.preventDefault();
-    if (!editShippingFeeData.state_name || !editShippingFeeData.fee) {
+    if (!editShippingFeeData.state_name || !editShippingFeeData.shipping_fee) {
       alert("Please fill in all required fields.");
       return;
     }
@@ -907,17 +906,14 @@ const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
         .eq("id", editShippingFeeData.id)
         .single();
 
-      if (
-        originalFee.state_name !== editShippingFeeData.state_name.trim().toLowerCase()
-      ) {
+      if (originalFee.state_name !== editShippingFeeData.state_name.trim().toLowerCase()) {
         const { data: existingFees, error: checkError } = await supabase
           .from("shipping_fees")
           .select("id")
-          .eq("state_name", editShippingFeeData.state.trim().toLowerCase())
+          .eq("state_name", editShippingFeeData.state_name.trim().toLowerCase()) // Updated to state_name
           .neq("id", editShippingFeeData.id);
 
-        if (checkError)
-          throw new Error("Error checking shipping fee: " + checkError.message);
+        if (checkError) throw new Error("Error checking shipping fee: " + checkError.message);
         if (existingFees.length > 0) {
           alert("A shipping fee for this state already exists.");
           return;
@@ -927,8 +923,8 @@ const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
       const { error } = await supabase
         .from("shipping_fees")
         .update({
-          state_name: editShippingFeeData.state_name.trim().toLowerCase(),
-          shipping_fee: parseFloat(editShippingFeeData.shipping_fee),
+          state_name: editShippingFeeData.state_name.trim().toLowerCase(), // Updated to state_name
+          shipping_fee: parseFloat(editShippingFeeData.shipping_fee), // Updated to shipping_fee
         })
         .eq("id", editShippingFeeData.id);
 
@@ -939,8 +935,8 @@ const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
           fee.id === editShippingFeeData.id
             ? {
               ...fee,
-              state_name: editShippingFeeData.state_name.trim().toLowerCase(),
-              shipping_fee: parseFloat(editShippingFeeData.shipping_fee),
+              state_name: editShippingFeeData.state_name.trim().toLowerCase(), // Updated to state_name
+              shipping_fee: parseFloat(editShippingFeeData.shipping_fee), // Updated to shipping_fee
             }
             : fee
         )
@@ -954,18 +950,10 @@ const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
   };
 
   const handleDeleteShippingFee = async (id) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete the shipping fee with ID ${id}?`
-      )
-    )
-      return;
+    if (!confirm(`Are you sure you want to delete the shipping fee with ID ${id}?`)) return;
 
     try {
-      const { error } = await supabase
-        .from("shipping_fees")
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase.from("shipping_fees").delete().eq("id", id);
       if (error) throw new Error("Delete failed: " + error.message);
 
       setShippingFees((prev) => prev.filter((fee) => fee.id !== id));
@@ -1199,8 +1187,8 @@ const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
                   onClick={handleAvatarChange}
                   disabled={uploading || !avatarFile}
                   className={`w-full py-2 rounded-md font-semibold text-white transition-colors ${uploading || !avatarFile
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-purple-600 hover:bg-purple-700"
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-purple-600 hover:bg-purple-700"
                     }`}
                 >
                   {uploading ? "Uploading..." : "Update Picture"}
@@ -1313,8 +1301,8 @@ const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
                   type="submit"
                   disabled={productUploading}
                   className={`w-full py-2 rounded-md font-semibold text-white transition-colors ${productUploading
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-purple-600 hover:bg-purple-700"
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-purple-600 hover:bg-purple-700"
                     }`}
                 >
                   {productUploading ? "Uploading..." : "Add Product"}
@@ -1445,8 +1433,8 @@ const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
                                   })
                                 }
                                 className={`px-3 py-1 rounded-md text-sm font-medium ${product.is_on_sale
-                                    ? "bg-red-600 text-white"
-                                    : "bg-purple-600 text-white hover:bg-purple-700"
+                                  ? "bg-red-600 text-white"
+                                  : "bg-purple-600 text-white hover:bg-purple-700"
                                   }`}
                               >
                                 {product.is_on_sale
@@ -1460,8 +1448,8 @@ const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
                                   })
                                 }
                                 className={`px-3 py-1 rounded-md text-sm font-medium ${product.is_out_of_stock
-                                    ? "bg-red-600 text-white"
-                                    : "bg-purple-600 text-white hover:bg-purple-700"
+                                  ? "bg-red-600 text-white"
+                                  : "bg-purple-600 text-white hover:bg-purple-700"
                                   }`}
                               >
                                 {product.is_out_of_stock
@@ -1475,8 +1463,8 @@ const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
                                   })
                                 }
                                 className={`px-3 py-1 rounded-md text-sm font-medium ${product.is_new
-                                    ? "bg-red-600 text-white"
-                                    : "bg-purple-600 text-white hover:bg-purple-700"
+                                  ? "bg-red-600 text-white"
+                                  : "bg-purple-600 text-white hover:bg-purple-700"
                                   }`}
                               >
                                 {product.is_new ? "Remove New" : "Mark as New"}
@@ -2033,8 +2021,8 @@ const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
                     type="submit"
                     disabled={productUploading}
                     className={`w-full py-2 rounded-md font-semibold text-white transition-colors ${productUploading
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-purple-600 hover:bg-purple-700"
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-purple-600 hover:bg-purple-700"
                       }`}
                     aria-label="Update product"
                   >
