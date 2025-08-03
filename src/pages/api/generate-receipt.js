@@ -9,7 +9,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   // Set CORS headers for all responses
   res.setHeader('Access-Control-Allow-Origin', process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://vianclothinghub.com.ng');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
