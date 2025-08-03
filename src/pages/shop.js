@@ -513,7 +513,7 @@ export default function Shop() {
         "@type": "Product",
         name: product.name,
         image: product.image_url.startsWith("data:image")
-            ? "placeholder.jpg"
+            ? "/placeholder.jpg"
             : [
                 product.image_url,
                 ...(product.product_images?.map((img) => img.image_url) || []),
@@ -929,7 +929,7 @@ export default function Shop() {
                                                 <img
                                                     src={
                                                         product.image_url.startsWith("data:image")
-                                                            ? "/path/to/placeholder.jpg"
+                                                            ? "/placeholder.jpg"
                                                             : product.image_url
                                                     }
                                                     srcSet={
@@ -1120,7 +1120,7 @@ export default function Shop() {
                                             <img
                                                 src={
                                                     product.image_url.startsWith("data:image")
-                                                        ? "placeholder.jpg"
+                                                        ? "/placeholder.jpg"
                                                         : product.image_url
                                                 }
                                                 srcSet={
@@ -1221,7 +1221,7 @@ export default function Shop() {
                                         <img
                                             src={
                                                 product.image_url.startsWith("data:image")
-                                                    ? "placeholder.jpg"
+                                                    ? "/placeholder.jpg"
                                                     : product.image_url
                                             }
                                             alt={product.name}
@@ -1257,7 +1257,7 @@ export default function Shop() {
                                         <img
                                             src={
                                                 product.image_url.startsWith("data:image")
-                                                    ? "/path/to/placeholder.jpg"
+                                                    ? "/placeholder.jpg"
                                                     : product.image_url
                                             }
                                             alt={product.name}
@@ -1300,7 +1300,7 @@ export default function Shop() {
                                         src={
                                             quickViewProduct.product_images?.[currentImageIndex]?.image_url ||
                                             quickViewProduct.image_url.startsWith("data:image")
-                                                ? "/path/to/placeholder.jpg"
+                                                ? "/placeholder.jpg"
                                                 : quickViewProduct.image_url
                                         }
                                         alt={quickViewProduct.name}
@@ -1328,7 +1328,7 @@ export default function Shop() {
                                         {[quickViewProduct.image_url, ...(quickViewProduct.product_images?.map((img) => img.image_url) || [])].map((img, index) => (
                                             <img
                                                 key={index}
-                                                src={img.startsWith("data:image") ? "/path/to/placeholder.jpg" : img}
+                                                src={img.startsWith("data:image") ? "/placeholder.jpg" : img}
                                                 alt={`${quickViewProduct.name} thumbnail ${index + 1}`}
                                                 className={`w-16 h-16 object-cover rounded-lg cursor-pointer ${currentImageIndex === index ? "ring-2 ring-purple-600" : ""}`}
                                                 onClick={() => setCurrentImageIndex(index)}
