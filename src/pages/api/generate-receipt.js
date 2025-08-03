@@ -10,14 +10,13 @@ const supabase = createClient(
 );
 
 module.exports = async (req, res) => {
+  // Set CORS headers for all responses
+  res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins (restrict to 'http://localhost:3000' in dev if needed)
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
   if (req.method === 'OPTIONS') {
-    return res.status(200).json({}, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    });
+    return res.status(200).json({});
   }
 
   if (req.method !== 'POST') {
@@ -55,6 +54,10 @@ module.exports = async (req, res) => {
       const { data: urlData } = supabase.storage
         .from('documents')
         .getPublicUrl(`receipts/${order.id}.pdf`);
+
+      if (!urlData.publicUrl) {
+        throw new Error('Failed to generate public URL for receipt');
+      }
 
       res.status(200).json({ url: urlData.publicUrl });
     });
