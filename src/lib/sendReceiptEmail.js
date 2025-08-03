@@ -1,22 +1,54 @@
 const { Resend } = require('resend');
-const { generateReceiptHtml } = require('./generateReceiptHtml');
 
 const sendReceiptEmail = async ({ email, order, receiptUrl }) => {
-  const resend = new Resend(process.env.RESEND_API_KEY);
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (!resendApiKey) {
+    console.error('RESEND_API_KEY is not set in environment variables');
+    throw new Error('Email service configuration is missing');
+  }
+
+  const resend = new Resend(resendApiKey);
 
   try {
+    const emailContent = `
+      <h1>Vian Clothing Hub - Order Receipt</h1>
+      <p>Thank you for your purchase!</p>
+      <h2>Order #${order.id}</h2>
+      <p><strong>Customer:</strong> ${email}</p>
+      <p><strong>Delivery Address:</strong> ${order.address}</p>
+      <h3>Items</h3>
+      <ul>
+        ${order.items
+          .map(
+            (item) => `
+              <li>
+                ${item.name} (${item.quantity}x) - ₦${(
+              (item.discount_percentage > 0
+                ? item.price * (1 - item.discount_percentage / 100)
+                : item.price) * item.quantity
+            ).toLocaleString()}
+              </li>
+            `
+          )
+          .join('')}
+      </ul>
+      <p><strong>Subtotal:</strong> ₦${(order.total - order.shipping_fee).toLocaleString()}</p>
+      <p><strong>Shipping:</strong> ₦${order.shipping_fee.toLocaleString()}</p>
+      <p><strong>Total:</strong> ₦${order.total.toLocaleString()}</p>
+      ${receiptUrl ? `<p><a href="${receiptUrl}">Download Receipt PDF</a></p>` : ''}
+      <p>Contact us at: info@vianclothinghub.com | +234 808 752 2801</p>
+    `;
+
     await resend.emails.send({
-      from: 'Vian Clothing Hub <no-reply@vianclothinghub.com>',
+      from: 'Vian Clothing Hub <info@vianclothinghub.com>',
       to: email,
-      subject: `Your Vian Clothing Hub Receipt #${order.id}`,
-      html: generateReceiptHtml({ order: { ...order, receipt_url: receiptUrl }, user: { email } }),
-      text: `Your order #${order.id} receipt is available. View details at your order page or download the PDF at ${receiptUrl}.`,
+      subject: `Order #${order.id} Receipt`,
+      html: emailContent,
     });
-    console.log(`Receipt email sent to ${email}`);
   } catch (error) {
-    console.error('Error sending receipt email:', error);
-    throw new Error('Failed to send receipt email');
+    console.error('Error sending email:', error);
+    throw new Error(`Failed to send email: ${error.message}`);
   }
 };
 
-module.exports = { sendReceiptEmail };
+module.exports = sendReceiptEmail;
