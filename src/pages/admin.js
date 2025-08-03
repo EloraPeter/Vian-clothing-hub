@@ -1366,8 +1366,8 @@ supabase.from('shipping_fees').select('id, state_name, shipping_fee'),        ])
                       {shippingFees.map((fee) => (
                         <tr key={fee.id} className="border-b border-gray-200">
                           <td className="px-3 py-2">
-                            {fee.state.charAt(0).toUpperCase() +
-                              fee.state.slice(1)}
+                            {fee.state_name.charAt(0).toUpperCase() +
+                              fee.state_name.slice(1)}
                           </td>
                           <td className="px-3 py-2">
                             {Number(fee.fee).toLocaleString()}
