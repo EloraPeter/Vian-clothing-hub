@@ -46,10 +46,9 @@ export default function AdminPage() {
   const [categories, setCategories] = useState([]);
   const [discountInputs, setDiscountInputs] = useState({});
  const [shippingFees, setShippingFees] = useState([]);
-const [shippingFeeData, setShippingFeeData] = useState({ state_name: '', shipping_fee: '' }); // Updated to shipping_fee
+const [shippingFeeData, setShippingFeeData] = useState({ state_name: '', shipping_fee: '' });
 const [editShippingFeeData, setEditShippingFeeData] = useState(null);
 const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
-
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
@@ -81,69 +80,57 @@ const [isShippingFeeModalOpen, setIsShippingFeeModalOpen] = useState(false);
       }
     }
 
-    async function fetchData() {
-      setLoading(true);
-      try {
-        const [
-          { data: customOrderData, error: customOrderError },
-          { data: productOrderData, error: productOrderError },
-          { data: productData, error: productError },
-          { data: categoryData, error: categoryError },
-          { data: variantsData, error: variantsError },
-          { data: shippingFeesData, error: shippingFeesError },
-        ] = await Promise.all([
-          supabase
-            .from("custom_orders")
-            .select("*")
-            .order("created_at", { ascending: false }),
-          supabase
-            .from("orders")
-            .select("*, items")
-            .order("created_at", { ascending: false }),
-          supabase
-            .from("products")
-            .select("*, categories(name)")
-            .order("created_at", { ascending: false }),
-          supabase.from("categories").select("id, name, slug"),
-          supabase
-            .from("product_variants")
-            .select(
-              "id, product_id, size, color, stock_quantity, additional_price"
-            ),
-supabase.from('shipping_fees').select('id, state_name, shipping_fee'),        ]);
+   async function fetchData() {
+  setLoading(true);
+  try {
+    const [
+      { data: customOrderData, error: customOrderError },
+      { data: productOrderData, error: productOrderError },
+      { data: productData, error: productError },
+      { data: categoryData, error: categoryError },
+      { data: variantsData, error: variantsError },
+      { data: shippingFeesData, error: shippingFeesError },
+    ] = await Promise.all([
+      supabase.from("custom_orders").select("*").order("created_at", { ascending: false }),
+      supabase.from("orders").select("*, items").order("created_at", { ascending: false }),
+      supabase.from("products").select("*, categories(name)").order("created_at", { ascending: false }),
+      supabase.from("categories").select("id, name, slug"),
+      supabase.from("product_variants").select("id, product_id, size, color, stock_quantity, additional_price"),
+      supabase.from("shipping_fees").select("id, state_name, shipping_fee"), // Updated to state_name, shipping_fee
+    ]);
 
-        if (customOrderError) setError(customOrderError.message);
-        else setOrders(customOrderData || []);
+    if (customOrderError) setError(customOrderError.message);
+    else setOrders(customOrderData || []);
 
-        if (productOrderError) setError(productOrderError.message);
-        else setProductOrders(productOrderData || []);
+    if (productOrderError) setError(productOrderError.message);
+    else setProductOrders(productOrderData || []);
 
-        if (productError) setError(productError.message);
-        else setProducts(productData || []);
+    if (productError) setError(productError.message);
+    else setProducts(productData || []);
 
-        if (categoryError) setError(categoryError.message);
-        else setCategories(categoryData || []);
+    if (categoryError) setError(categoryError.message);
+    else setCategories(categoryData || []);
 
-        if (variantsError) setError(variantsError.message);
-        else {
-          const variantsByProduct = {};
-          variantsData.forEach((variant) => {
-            if (!variantsByProduct[variant.product_id]) {
-              variantsByProduct[variant.product_id] = [];
-            }
-            variantsByProduct[variant.product_id].push(variant);
-          });
-          setVariants(variantsByProduct);
+    if (variantsError) setError(variantsError.message);
+    else {
+      const variantsByProduct = {};
+      variantsData.forEach((variant) => {
+        if (!variantsByProduct[variant.product_id]) {
+          variantsByProduct[variant.product_id] = [];
         }
-
-        if (shippingFeesError) setError(shippingFeesError.message);
-        else setShippingFees(shippingFeesData || []); // Set shipping fees
-
-        setLoading(false);
-      } catch (err) {
-        setError(err.message);
-      }
+        variantsByProduct[variant.product_id].push(variant);
+      });
+      setVariants(variantsByProduct);
     }
+
+    if (shippingFeesError) setError(shippingFeesError.message);
+    else setShippingFees(shippingFeesData || []);
+
+    setLoading(false);
+  } catch (err) {
+    setError(err.message);
+  }
+}
 
     fetchProfile();
     fetchData();
