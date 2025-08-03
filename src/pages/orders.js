@@ -121,6 +121,7 @@ export default function OrderTrackingPage() {
         <meta property="og:description" content="Monitor your order status and delivery details with Vian Clothing Hub." />
       </Head>
       <main className="min-h-screen bg-gray-50">
+        <ToastContainer position="top-right" autoClose={3000} />
         <Navbar profile={profile} />
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">Your Orders</h1>
