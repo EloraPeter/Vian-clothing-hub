@@ -10,6 +10,8 @@ import { TruckIcon, ClockIcon, CheckCircleIcon, DocumentArrowDownIcon } from '@h
 import 'leaflet/dist/leaflet.css';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function OrderDetailPage() {
   const [order, setOrder] = useState(null);
@@ -166,6 +168,7 @@ export default function OrderDetailPage() {
         <meta property="og:description" content={`Track and view details for order #${order.id} with Vian Clothing Hub.`} />
       </Head>
       <main className="min-h-screen bg-gray-50">
+        <ToastContainer position="top-right" autoClose={3000} />
         <Navbar profile={profile} />
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex items-center justify-between mb-8">
@@ -291,6 +294,7 @@ export default function OrderDetailPage() {
               </button>
               {order.status === 'shipped' && (
                 <button
+                  onClick={() => toast.info('Shipment tracking will be available soon.')}
                   className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                 >
                   <TruckIcon className="w-5 h-5 mr-2" />
