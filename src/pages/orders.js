@@ -7,6 +7,8 @@ import DressLoader from '@/components/DressLoader';
 import Head from 'next/head';
 import Link from 'next/link';
 import { ChevronDownIcon, ChevronUpIcon, TruckIcon, ClockIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function OrderTrackingPage() {
   const [orders, setOrders] = useState([]);
@@ -251,8 +253,10 @@ export default function OrderTrackingPage() {
                             </Link>
                             {order.status === 'shipped' && (
                               <button
+                                onClick={() => toast.info('Shipment tracking will be available soon.')}
                                 className="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition-colors"
                               >
+                                <TruckIcon className="w-5 h-5 mr-2" />
                                 Track Shipment
                               </button>
                             )}
