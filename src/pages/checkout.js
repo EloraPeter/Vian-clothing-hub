@@ -552,7 +552,7 @@ export default function CheckoutPage() {
         }
 
         // Generate PDF receipt for storage
-        const receiptResponse = await fetch('https://vian-clothing-hub.vercel.app/api/generate-receipt', {
+        const receiptResponse = await fetch('/api/generate-receipt', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ order: orderData, user: { email: profile?.email || user.email } }),
