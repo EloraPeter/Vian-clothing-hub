@@ -16,6 +16,8 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { sendReceiptEmail } from '@/lib/sendReceiptEmail';
+import { generateReceiptHtml } from '@/lib/generateReceiptHtml';
 
 export default function CheckoutPage() {
   const { cart, totalPrice, clearCart } = useCart();
@@ -71,7 +73,6 @@ export default function CheckoutPage() {
             setMapCenter([addresses[0].lat || 9.0820, addresses[0].lng || 8.6753]);
           }
         }
-        // Fetch shipping fees
         const { data: shippingData, error: shippingError } = await supabase
           .from('shipping_fees')
           .select('state_name, shipping_fee');
@@ -90,7 +91,6 @@ export default function CheckoutPage() {
     fetchData();
   }, [router]);
 
-  // Function to extract state from address
   const extractStateFromAddress = (address) => {
     if (!address) return null;
     const addressParts = address.split(',').map(part => part.trim().toLowerCase());
@@ -110,7 +110,6 @@ export default function CheckoutPage() {
     return null;
   };
 
-  // Update shipping fee when address changes
   useEffect(() => {
     const state = extractStateFromAddress(address);
     const fee = state && shippingFees[state.toLowerCase()]
@@ -143,8 +142,8 @@ export default function CheckoutPage() {
 
     if (!mapRef.current) {
       mapRef.current = L.map(mapContainerRef.current).setView(mapCenter, 10);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, © <a href="https://carto.com/attributions">CARTO</a>',
+      L.tileLayer(`https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=${process.env.NEXT_PUBLIC_MAPTILER_API_KEY}`, {
+        attribution: '© <a href="https://www.maptiler.com/copyright/">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       }).addTo(mapRef.current);
 
       if (savedAddresses.length > 0 && savedAddresses[0].lat && savedAddresses[0].lng) {
@@ -494,6 +493,7 @@ export default function CheckoutPage() {
         color: item.color,
         image_url: item.image_url,
         discount_percentage: item.discount_percentage || 0,
+        category: item.category || 'N/A',
       };
     });
   };
@@ -528,27 +528,68 @@ export default function CheckoutPage() {
 
       const placeOrder = async (paymentReference) => {
         const items = mapCartItems(cart);
-        const { error } = await supabase.from('orders').insert([
+        const orderData = {
+          user_id: user.id,
+          items,
+          address,
+          lat: parseFloat(lat),
+          lng: parseFloat(lon),
+          status: 'processing',
+          total: totalPrice + shippingFee,
+          shipping_fee: shippingFee,
+          created_at: new Date().toISOString(),
+          payment_reference: paymentReference,
+        };
+
+        const { data: order, error: orderError } = await supabase
+          .from('orders')
+          .insert([orderData])
+          .select()
+          .single();
+        if (orderError) {
+          console.error('Supabase insert error:', orderError.message, orderError.details, orderError.hint);
+          throw orderError;
+        }
+
+        // Generate PDF receipt for storage
+        const receiptResponse = await fetch('/api/generate-receipt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order: orderData, user: { email: profile?.email || user.email } }),
+        });
+        let receiptUrl = '';
+        if (receiptResponse.ok) {
+          const { url } = await receiptResponse.json();
+          receiptUrl = url;
+        } else {
+          console.error('Failed to generate receipt');
+        }
+
+        // Send HTML receipt email
+        await sendReceiptEmail({
+          email: profile?.email || user.email,
+          order: orderData,
+          receiptUrl,
+        });
+
+        // Create in-app notification with HTML receipt
+        const { error: notificationError } = await supabase.from('notifications').insert([
           {
             user_id: user.id,
-            items,
-            address,
-            lat: parseFloat(lat),
-            lng: parseFloat(lon),
-            status: 'processing',
-            total: totalPrice + shippingFee,
-            shipping_fee: shippingFee,
+            title: `Order #${orderData.id} Receipt`,
+            message: generateReceiptHtml({ order: orderData, user: { email: profile?.email || user.email } }),
+            read: false,
             created_at: new Date().toISOString(),
-            payment_reference: paymentReference,
+            receipt_url: receiptUrl,
           },
         ]);
-        if (error) {
-          console.error('Supabase insert error:', error.message, error.details, error.hint);
-          throw error;
+        if (notificationError) {
+          console.error('Notification error:', notificationError);
         }
+
         clearCart();
         router.push('/orders');
-        toast.success('Payment successful! Order placed.');
+        toast.success('Payment successful! Order placed and receipt sent to your email.');
       };
 
       const success = await initiatePayment({
@@ -608,9 +649,7 @@ export default function CheckoutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">Checkout</h1>
           <form onSubmit={handleOrder} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column: Address and Payment */}
             <div className="lg:col-span-2 space-y-8">
-              {/* Delivery Address Section */}
               <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">Delivery Address</h2>
                 {savedAddresses.length > 0 && (
@@ -676,8 +715,6 @@ export default function CheckoutPage() {
                 {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
               </section>
             </div>
-
-            {/* Right Column: Cart Summary and Payment */}
             <div className="lg:col-span-1">
               <section className="bg-white p-6 rounded-lg shadow-md border border-gray-200 sticky top-4">
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">Order Summary</h2>
