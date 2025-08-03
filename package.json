@@ -26,6 +26,7 @@
     "react-places-autocomplete": "^7.3.0",
     "react-responsive-carousel": "^3.2.23",
     "react-toastify": "^11.0.5",
+    "resend": "^4.7.0",
     "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
