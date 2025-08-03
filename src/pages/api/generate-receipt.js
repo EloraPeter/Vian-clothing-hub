@@ -11,12 +11,13 @@ const supabase = createClient(
 
 module.exports = async (req, res) => {
   // Set CORS headers for all responses
-  res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins (restrict to 'http://localhost:3000' in dev if needed)
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Origin', process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://vian-clothing-hub.vercel.app');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
+  // Handle preflight request
   if (req.method === 'OPTIONS') {
-    return res.status(200).json({});
+    return res.status(200).end();
   }
 
   if (req.method !== 'POST') {
