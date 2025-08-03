@@ -513,7 +513,7 @@ export default function Shop() {
         "@type": "Product",
         name: product.name,
         image: product.image_url.startsWith("data:image")
-            ? "/path/to/placeholder.jpg"
+            ? "placeholder.jpg"
             : [
                 product.image_url,
                 ...(product.product_images?.map((img) => img.image_url) || []),
@@ -565,7 +565,7 @@ export default function Shop() {
                 {products.some((p) => p.is_on_sale) && (
                     <div className="mb-12 relative rounded-2xl overflow-hidden shadow-lg">
                         <img
-                            src="/path/to/sale-banner.jpg"
+                            src="/placeholder.jpg"
                             alt="Sale Promotion"
                             className="w-full h-64 sm:h-80 object-cover"
                             loading="lazy"
@@ -1120,7 +1120,7 @@ export default function Shop() {
                                             <img
                                                 src={
                                                     product.image_url.startsWith("data:image")
-                                                        ? "/path/to/placeholder.jpg"
+                                                        ? "placeholder.jpg"
                                                         : product.image_url
                                                 }
                                                 srcSet={
@@ -1221,7 +1221,7 @@ export default function Shop() {
                                         <img
                                             src={
                                                 product.image_url.startsWith("data:image")
-                                                    ? "/path/to/placeholder.jpg"
+                                                    ? "placeholder.jpg"
                                                     : product.image_url
                                             }
                                             alt={product.name}
