@@ -1370,7 +1370,7 @@ supabase.from('shipping_fees').select('id, state_name, shipping_fee'),        ])
                               fee.state_name.slice(1)}
                           </td>
                           <td className="px-3 py-2">
-                            {Number(fee.fee).toLocaleString()}
+                            {Number(fee.shipping_fee).toLocaleString()}
                           </td>
                           <td className="px-3 py-2 flex gap-2">
                             <button
@@ -2260,8 +2260,8 @@ supabase.from('shipping_fees').select('id, state_name, shipping_fee'),        ])
                     name="fee"
                     value={
                       editShippingFeeData
-                        ? editShippingFeeData.fee
-                        : shippingFeeData.fee
+                        ? editShippingFeeData.shipping_fee
+                        : shippingFeeData.shipping_fee
                     }
                     onChange={
                       editShippingFeeData
