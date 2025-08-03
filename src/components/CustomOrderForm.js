@@ -456,10 +456,13 @@ export default function CustomOrderForm({ user, profile }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateStep()) return;
-    if (step < 4) {
+    if (validateStep() && step < 4) {
       setStep(step + 1);
-    } else if (step === 4) {
+    }
+  };
+
+  const handleConfirmOrder = async () => {
+    if (step === 4 && validateStep()) {
       setShowConfirmation(true);
     }
   };
@@ -855,7 +858,8 @@ export default function CustomOrderForm({ user, profile }) {
               </button>
             ) : (
               <button
-                type="submit"
+                type="button"
+                onClick={handleConfirmOrder}
                 disabled={loading}
                 className="bg-purple-700 text-white py-2 px-6 rounded-lg hover:bg-purple-800 disabled:bg-purple-400"
               >
