@@ -1341,12 +1341,9 @@ export default function AdminPage() {
                       {shippingFees.map((fee) => (
                         <tr key={fee.id} className="border-b border-gray-200">
                           <td className="px-3 py-2">
-                            {fee.state_name.charAt(0).toUpperCase() +
-                              fee.state_name.slice(1)}
+                            {fee.state_name.charAt(0).toUpperCase() + fee.state_name.slice(1)}
                           </td>
-                          <td className="px-3 py-2">
-                            {Number(fee.shipping_fee).toLocaleString()}
-                          </td>
+                          <td className="px-3 py-2">{Number(fee.shipping_fee).toLocaleString()}</td>
                           <td className="px-3 py-2 flex gap-2">
                             <button
                               onClick={() => openEditShippingFeeModal(fee)}
@@ -1368,6 +1365,7 @@ export default function AdminPage() {
                 </div>
               )}
             </section>
+
           </div>
 
           <div className="lg:col-span-2 space-y-6">
