@@ -310,6 +310,7 @@ export default function CustomOrderForm({ user, profile }) {
   const handleSaveAddress = async () => {
     if (!form.address) {
       setMessage('Please enter a valid address.');
+      toast.error('Please enter a valid address.');
       return;
     }
     try {
@@ -317,6 +318,7 @@ export default function CustomOrderForm({ user, profile }) {
       const data = await response.json();
       if (!data[0]) {
         setMessage('Invalid address. Please enter a valid address.');
+        toast.error('Invalid address. Please enter a valid address.');
         return;
       }
       const { lat, lon } = data[0];
@@ -454,14 +456,12 @@ export default function CustomOrderForm({ user, profile }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (step < 4) {
-      if (validateStep()) {
-        setStep(step + 1);
-      }
-      return;
-    }
     if (!validateStep()) return;
-    setShowConfirmation(true);
+    if (step < 4) {
+      setStep(step + 1);
+    } else if (step === 4) {
+      setShowConfirmation(true);
+    }
   };
 
   const confirmOrder = async () => {
