@@ -233,7 +233,7 @@ export default function Home() {
         />
         <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
-        <div className="mx-auto mt-0 px-4 sm:px-6 lg:px-8 py-4">
+        <div className="mx-auto mt-0 px-4 sm:px-6 lg:px-8 py-4  container ">
           {/* Hero Carousel */}
           <section className="relative mb-12 mt-0">
             <Carousel
