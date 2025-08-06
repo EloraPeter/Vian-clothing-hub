@@ -1011,46 +1011,52 @@ ${form.inspiration_image ? `📸 Inspiration Image:\n${form.inspiration_image}` 
                   <p className="text-red-500 text-sm mt-1">{errors.style}</p>
                 )}
               </div>
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700">
+              <div className="relative space-y-2">
+                <label
+                  htmlFor="inspiration-image"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Inspiration Image (Optional)
                 </label>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png"
-                  onChange={(e) =>
-                    setForm({ ...form, inspiration_image: e.target.files[0] })
-                  }
-                  className={`w-full text-gray-800 border p-3 rounded-lg ${errors.inspiration_image ? "border-red-500" : "border-gray-300"} focus:ring-purple-500 focus:border-purple-500`}
-                />
-                <InformationCircleIcon
-                  className="w-5 h-5 text-gray-400 absolute right-3 top-9"
-                  title="Upload a JPEG or PNG image (max 5MB) for design inspiration"
-                />
+                <div className="relative flex items-center">
+                  <input
+                    id="inspiration-image"
+                    type="file"
+                    accept="image/jpeg,image/png"
+                    onChange={(e) =>
+                      setForm({ ...form, inspiration_image: e.target.files[0] })
+                    }
+                    className={`w-full text-gray-800 text-sm border rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-purple-50 file:text-purple-700 file:font-medium file:hover:bg-purple-100 file:cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors ${errors.inspiration_image ? "border-red-500" : "border-gray-300"
+                      }`}
+                  />
+                  <InformationCircleIcon
+                    className="w-5 h-5 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2"
+                    title="Upload a JPEG or PNG image (max 5MB) for design inspiration"
+                    aria-hidden="true"
+                  />
+                </div>
                 {errors.inspiration_image && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.inspiration_image}
-                  </p>
+                  <p className="text-red-500 text-xs mt-1">{errors.inspiration_image}</p>
                 )}
-                {form.inspiration_image &&
-                  typeof form.inspiration_image === "string" && (
-                    <div className="mt-2">
+                {form.inspiration_image && typeof form.inspiration_image === "string" && (
+                  <div className="mt-3 flex items-center space-x-4">
+                    <div className="relative group">
                       <img
                         src={form.inspiration_image}
                         alt="Inspiration Preview"
-                        className="w-32 h-32 object-cover rounded-lg"
+                        className="w-40 h-40 object-cover rounded-xl shadow-sm border border-gray-200 transition-transform group-hover:scale-105"
                       />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setForm({ ...form, inspiration_image: null })
-                        }
-                        className="text-red-600 hover:underline mt-2"
-                      >
-                        Remove Image
-                      </button>
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-xl transition-opacity"></div>
                     </div>
-                  )}
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, inspiration_image: null })}
+                      className="text-sm text-red-600 font-medium hover:text-red-700 hover:underline focus:outline-none focus:ring-2 focus:ring-red-500 rounded-md px-2 py-1 transition-colors"
+                    >
+                      Remove Image
+                    </button>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
@@ -1222,7 +1228,7 @@ ${form.inspiration_image ? `📸 Inspiration Image:\n${form.inspiration_image}` 
                   <select
                     value={selectedAddressId}
                     onChange={handleSavedAddressChange}
-                    className="w-full border p-3 rounded-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full text-gray-800 border p-3 rounded-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500"
                   >
                     <option value="">Select an address</option>
                     {savedAddresses.map((addr) => (
@@ -1269,7 +1275,7 @@ ${form.inspiration_image ? `📸 Inspiration Image:\n${form.inspiration_image}` 
                   onChange={(e) =>
                     setForm({ ...form, address: e.target.value })
                   }
-                  className={`w-full border p-3 rounded-lg ${errors.address ? "border-red-500" : "border-gray-300"} focus:ring-purple-500 focus:border-purple-500`}
+                  className={`w-full text-gray-800 border p-3 rounded-lg ${errors.address ? "border-red-500" : "border-gray-300"} focus:ring-purple-500 focus:border-purple-500`}
                   placeholder="Enter delivery address"
                   required
                 />
