@@ -697,6 +697,37 @@ export default function CustomOrderForm({ user, profile }) {
 
         const userNotificationText = `Your custom order has been submitted! Fabric: ${form.fabric}, Style: ${form.style}. A non-refundable deposit of ₦5,000 has been paid. Please check the app for updates: https://vianclothinghub.com`;
         await sendWhatsAppNotification(form.phone, userNotificationText);
+        // Email Notification
+        try {
+          const res = await fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: form.email,
+              subject: 'Vian Clothing Hub - Custom Order Confirmation',
+              html: `
+              <h1>Order Confirmation</h1>
+              <p>Dear ${form.full_name},</p>
+              <p>Your custom order has been successfully submitted!</p>
+              <ul>
+                <li><strong>Fabric:</strong> ${form.fabric}</li>
+                <li><strong>Style:</strong> ${form.style}</li>
+                <li><strong>Deposit:</strong> ₦5,000 (non-refundable)</li>
+                ${form.inspiration_image ? `<li><strong>Inspiration Image:</strong> <a href="${form.inspiration_image}">View Image</a></li>` : ''}
+              </ul>
+              <p>Please check your dashboard for updates: <a href="https://vianclothinghub.com/dashboard">Vian Clothing Hub</a></p>
+              <p>Thank you for choosing Vian Clothing Hub!</p>
+            `,
+            }),
+          });
+          if (!res.ok) {
+            console.error('Failed to send email:', await res.text());
+          }
+        } catch (emailError) {
+          console.error('Email error:', emailError.message);
+          // Don't throw; let the order proceed even if email fails
+        }
+
         const adminNotificationText =
           `📌 NEW CUSTOM ORDER
 
