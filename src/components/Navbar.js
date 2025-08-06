@@ -108,28 +108,24 @@ export default function Navbar({
             />
 
             {/* Suggestions Dropdown */}
-          {expanded && suggestions.length > 0 && (
-            <div className="absolute top-0 left-0 right-0 mt-12 bg-white text-gray-900 border border-gray-200 rounded-lg shadow-lg w-64 max-h-64 overflow-y-auto z-50">
-              {suggestions.map((suggestion, index) => (
-                <Link
-                  key={suggestion.id || index}
-                  href={suggestion.type === 'product' ? `/product/${suggestion.id}` : `/category/${suggestion.slug}`}
-                  className="flex items-center px-4 py-3 hover:bg-purple-100 cursor-pointer transition-colors duration-200"
-                  role="option"
-                  aria-label={`Select ${suggestion.name}`}
-                >
-                  {suggestion.type === 'product' && suggestion.image_url && (
+            {expanded && suggestions.length > 0 && (
+              <div className="absolute top-0 left-0 right-0 mt-12 bg-white text-black shadow-lg rounded-lg w-64 max-h-64 overflow-y-auto z-50">
+                {suggestions.map((product) => (
+                  <Link
+                    key={product.id}
+                    href={`/product/${product.id}`}
+                    className="flex items-center px-4 py-2 hover:bg-purple-100"
+                  >
                     <img
-                      src={suggestion.image_url}
-                      alt={suggestion.name}
+                      src={product.image_url}
+                      alt={product.name}
                       className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded mr-2"
                     />
-                  )}
-                  <span className="text-sm truncate">{suggestion.name}</span>
-                </Link>
-              ))}
-            </div>
-          )}
+                    <span className="text-sm truncate">{product.name}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* hamburger menu */}
@@ -198,23 +194,19 @@ export default function Navbar({
 
           {/* Suggestions Dropdown */}
           {expanded && suggestions.length > 0 && (
-            <div className="absolute top-0 left-0 right-0 mt-12 bg-white text-gray-900 border border-gray-200 rounded-lg shadow-lg w-64 max-h-64 overflow-y-auto z-50">
-              {suggestions.map((suggestion, index) => (
+            <div className="absolute top-0 left-0 right-0 mt-12 bg-white text-black shadow-lg rounded-lg w-64 max-h-64 overflow-y-auto z-50">
+              {suggestions.map((product) => (
                 <Link
-                  key={suggestion.id || index}
-                  href={suggestion.type === 'product' ? `/product/${suggestion.id}` : `/category/${suggestion.slug}`}
-                  className="flex items-center px-4 py-3 hover:bg-purple-100 cursor-pointer transition-colors duration-200"
-                  role="option"
-                  aria-label={`Select ${suggestion.name}`}
+                  key={product.id}
+                  href={`/product/${product.id}`}
+                  className="flex items-center px-4 py-2 hover:bg-purple-100"
                 >
-                  {suggestion.type === 'product' && suggestion.image_url && (
-                    <img
-                      src={suggestion.image_url}
-                      alt={suggestion.name}
-                      className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded mr-2"
-                    />
-                  )}
-                  <span className="text-sm truncate">{suggestion.name}</span>
+                  <img
+                    src={product.image_url}
+                    alt={product.name}
+                    className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded mr-2"
+                  />
+                  <span className="text-sm truncate">{product.name}</span>
                 </Link>
               ))}
             </div>
