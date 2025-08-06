@@ -902,7 +902,7 @@ ${form.inspiration_image ? `📸 Inspiration Image:\n${form.inspiration_image}` 
                   onChange={(e) =>
                     setForm({ ...form, full_name: e.target.value })
                   }
-                  className={`w-full border p-3 rounded-lg ${errors.full_name ? "border-red-500" : "border-gray-300"} focus:ring-purple-500 focus:border-purple-500`}
+                  className={`w-full text-gray-800 border p-3 rounded-lg ${errors.full_name ? "border-red-500" : "border-gray-300"} focus:ring-purple-500 focus:border-purple-500`}
                   required
                 />
                 <InformationCircleIcon
@@ -937,7 +937,7 @@ ${form.inspiration_image ? `📸 Inspiration Image:\n${form.inspiration_image}` 
                   type="text"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className={`w-full border p-3 rounded-lg ${errors.phone ? "border-red-500" : "border-gray-300"} focus:ring-purple-500 focus:border-purple-500`}
+                  className={`w-full text-gray-800 border p-3 rounded-lg ${errors.phone ? "border-red-500" : "border-gray-300"} focus:ring-purple-500 focus:border-purple-500`}
                   required
                 />
                 <InformationCircleIcon
@@ -962,7 +962,7 @@ ${form.inspiration_image ? `📸 Inspiration Image:\n${form.inspiration_image}` 
                 <select
                   value={form.fabric}
                   onChange={(e) => setForm({ ...form, fabric: e.target.value })}
-                  className={`w-full border p-3 rounded-lg ${errors.fabric ? "border-red-500" : "border-gray-300"} focus:ring-purple-500 focus:border-purple-500`}
+                  className={`w-full text-gray-800 border p-3 rounded-lg ${errors.fabric ? "border-red-500" : "border-gray-300"} focus:ring-purple-500 focus:border-purple-500`}
                   required
                 >
                   <option value="">Select Fabric</option>
@@ -989,7 +989,7 @@ ${form.inspiration_image ? `📸 Inspiration Image:\n${form.inspiration_image}` 
                 <select
                   value={form.style}
                   onChange={(e) => setForm({ ...form, style: e.target.value })}
-                  className={`w-full border p-3 rounded-lg ${errors.style ? "border-red-500" : "border-gray-300"} focus:ring-purple-500 focus:border-purple-500`}
+                  className={`w-full text-gray-800 border p-3 rounded-lg ${errors.style ? "border-red-500" : "border-gray-300"} focus:ring-purple-500 focus:border-purple-500`}
                   required
                 >
                   <option value="">Select Style</option>
@@ -1021,7 +1021,7 @@ ${form.inspiration_image ? `📸 Inspiration Image:\n${form.inspiration_image}` 
                   onChange={(e) =>
                     setForm({ ...form, inspiration_image: e.target.files[0] })
                   }
-                  className={`w-full border p-3 rounded-lg ${errors.inspiration_image ? "border-red-500" : "border-gray-300"} focus:ring-purple-500 focus:border-purple-500`}
+                  className={`w-full text-gray-800 border p-3 rounded-lg ${errors.inspiration_image ? "border-red-500" : "border-gray-300"} focus:ring-purple-500 focus:border-purple-500`}
                 />
                 <InformationCircleIcon
                   className="w-5 h-5 text-gray-400 absolute right-3 top-9"
@@ -1061,7 +1061,7 @@ ${form.inspiration_image ? `📸 Inspiration Image:\n${form.inspiration_image}` 
                   onChange={(e) =>
                     setForm({ ...form, additional_notes: e.target.value })
                   }
-                  className="w-full border p-3 rounded-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full text-gray-800 border p-3 rounded-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500"
                   placeholder="E.g., Add embroidery details, specific color preferences, or custom fabric/style details"
                 />
               </div>
@@ -1089,7 +1089,7 @@ ${form.inspiration_image ? `📸 Inspiration Image:\n${form.inspiration_image}` 
                         },
                       })
                     }
-                    className={`w-full border p-3 rounded-lg ${errors.bust ? "border-red-500" : "border-gray-300"} focus:ring-purple-500 focus:border-purple-500`}
+                    className={`w-full text-gray-800 border p-3 rounded-lg ${errors.bust ? "border-red-500" : "border-gray-300"} focus:ring-purple-500 focus:border-purple-500`}
                     required
                     min="1"
                   />
@@ -1117,7 +1117,7 @@ ${form.inspiration_image ? `📸 Inspiration Image:\n${form.inspiration_image}` 
                         },
                       })
                     }
-                    className={`w-full border p-3 rounded-lg ${errors.waist ? "border-red-500" : "border-gray-300"} focus:ring-purple-500 focus:border-purple-500`}
+                    className={`w-full text-gray-800 border p-3 rounded-lg ${errors.waist ? "border-red-500" : "border-gray-300"} focus:ring-purple-500 focus:border-purple-500`}
                     required
                     min="1"
                   />
@@ -1145,7 +1145,7 @@ ${form.inspiration_image ? `📸 Inspiration Image:\n${form.inspiration_image}` 
                         },
                       })
                     }
-                    className={`w-full border p-3 rounded-lg ${errors.hips ? "border-red-500" : "border-gray-300"} focus:ring-purple-500 focus:border-purple-500`}
+                    className={`w-full text-gray-800 border p-3 rounded-lg ${errors.hips ? "border-red-500" : "border-gray-300"} focus:ring-purple-500 focus:border-purple-500`}
                     required
                     min="1"
                   />
@@ -1173,7 +1173,7 @@ ${form.inspiration_image ? `📸 Inspiration Image:\n${form.inspiration_image}` 
                         },
                       })
                     }
-                    className="w-full border p-3 rounded-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full text-gray-800 border p-3 rounded-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500"
                     min="1"
                   />
                   <InformationCircleIcon
@@ -1197,7 +1197,7 @@ ${form.inspiration_image ? `📸 Inspiration Image:\n${form.inspiration_image}` 
                         },
                       })
                     }
-                    className="w-full border p-3 rounded-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full text-gray-800 border p-3 rounded-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500"
                     min="1"
                   />
                   <InformationCircleIcon
@@ -1285,7 +1285,7 @@ ${form.inspiration_image ? `📸 Inspiration Image:\n${form.inspiration_image}` 
                 {isEditingAddress ? "Update Address" : "Save Address"}
               </button>
               <div className="h-64 w-full mt-4" ref={mapContainerRef}></div>
-              <div className="bg-gray-100 p-4 rounded-lg mt-4">
+              <div className="bg-gray-100 text-gray-800 p-4 rounded-lg mt-4">
                 <h3 className="text-lg font-semibold text-purple-800">
                   Order Summary
                 </h3>
