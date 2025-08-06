@@ -611,11 +611,11 @@ export default function Shop() {
                         />
                         <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
                         {searchSuggestions.length > 0 && (
-                            <ul className="absolute z-20 w-full bg-white border border-gray-200 rounded-lg mt-2 shadow-xl max-h-60 overflow-y-auto">
+                            <ul className="absolute z-20 w-full bg-white text-gray-900 border border-gray-200 rounded-lg mt-2 shadow-xl max-h-60 overflow-y-auto">
                                 {searchSuggestions.map((suggestion, index) => (
                                     <li
                                         key={index}
-                                        className="p-3 hover:bg-purple-50 cursor-pointer transition-colors duration-200"
+                                        className="p-3 text-gray-900 hover:bg-purple-100 cursor-pointer transition-colors duration-200"
                                         onClick={() => {
                                             setSearchQuery(suggestion);
                                             setSearchSuggestions([]);
