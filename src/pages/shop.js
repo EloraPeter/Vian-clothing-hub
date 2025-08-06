@@ -615,7 +615,7 @@ export default function Shop() {
                                 {searchSuggestions.map((suggestion, index) => (
                                     <li
                                         key={index}
-                                        className="p-3 text-gray-900 hover:bg-purple-100 cursor-pointer transition-colors duration-200"
+                                        className="p-3 text-gray-700 hover:bg-purple-100 cursor-pointer transition-colors duration-200"
                                         onClick={() => {
                                             setSearchQuery(suggestion);
                                             setSearchSuggestions([]);
