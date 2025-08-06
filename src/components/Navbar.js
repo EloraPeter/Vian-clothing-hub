@@ -33,7 +33,7 @@ export default function Navbar({
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [setSearchQuery]);
 
   useEffect(() => {
@@ -49,32 +49,15 @@ export default function Navbar({
 
   useEffect(() => {
     async function fetchSuggestions() {
-      if (!searchQuery) {
-        setSuggestions([]);
-        setExpanded(false);
-        return;
-      }
-      try {
-        // Fetch products
-        const { data: products } = await supabase
+      if (searchQuery) {
+        const { data } = await supabase
           .from("products")
           .select("id, name, image_url")
           .ilike("name", `%${searchQuery}%`)
-          .limit(5)
-          .then((data) => data.map((item) => ({ ...item, type: "product" })));
-
-        // Fetch categories
-        const { data: categories } = await supabase
-          .from("categories")
-          .select("id, name, slug")
-          .ilike("name", `%${searchQuery}%`)
-          .limit(5)
-          .then((data) => data.map((item) => ({ ...item, type: "category" })));
-
-        setSuggestions([...products, ...categories]);
-        setExpanded(true);
-      } catch (error) {
-        console.error("Error fetching suggestions:", error.message);
+          .limit(5);
+        setSuggestions(data || []);
+      } else {
+        setSuggestions([]);
       }
     }
     fetchSuggestions();
@@ -92,13 +75,16 @@ export default function Navbar({
         </Link>
 
         <div className="flex">
-          {/* Mobile search */}
+          {/* search icon */}
           <div
             ref={containerRef}
             className="relative flex items-center block lg:hidden"
             onClick={() => setExpanded(true)}
           >
+            {/* Search Icon */}
             <FaSearch className="sm:hidden text-purple-700 cursor-pointer" />
+
+            {/* Animated Input */}
             <input
               type="text"
               value={searchQuery}
@@ -106,56 +92,47 @@ export default function Navbar({
               onFocus={() => setExpanded(true)}
               placeholder="Search products..."
               className={`
-                transition-all duration-300 ease-in-out
-                ml-2
-                rounded-lg
-                text-black
-                border border-gray-300
-                focus:border-purple-700
-                focus:outline-none
-                text-sm sm:text-base
-                ${
-                  expanded
-                    ? "w-64 px-3 py-2 opacity-100 visible"
-                    : "w-0 px-0 py-0 opacity-0 invisible"
+          transition-all duration-300 ease-in-out
+          ml-2
+          rounded-lg
+          text-black
+          border border-gray-300
+          focus:border-purple-700
+          focus:outline-none
+          text-sm sm:text-base
+          ${expanded
+                  ? "w-64 px-3 py-2 opacity-100 visible"
+                  : "w-0 px-0 py-0 opacity-0 invisible"
                 }
-              `}
+        `}
             />
-            {/* Mobile Suggestions Dropdown */}
-            {expanded && suggestions.length > 0 && (
-              <div className="absolute top-0 left-0 right-0 mt-12 bg-white text-gray-900 border border-gray-200 rounded-lg shadow-lg w-64 max-h-64 overflow-y-auto z-50">
-                {suggestions.map((suggestion, index) => (
-                  <Link
-                    key={suggestion.id || index}
-                    href={
-                      suggestion.type === "product"
-                        ? `/product/${suggestion.id}`
-                        : `/category/${suggestion.slug}`
-                    }
-                    className="flex items-center px-4 py-3 hover:bg-purple-100 cursor-pointer transition-colors duration-200"
-                    role="option"
-                    aria-label={`Select ${suggestion.name}`}
-                    onClick={() => {
-                      setSearchQuery(suggestion.name);
-                      setSuggestions([]);
-                      setExpanded(false);
-                    }}
-                  >
-                    {suggestion.type === "product" && suggestion.image_url && (
-                      <img
-                        src={suggestion.image_url}
-                        alt={suggestion.name}
-                        className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded mr-2"
-                      />
-                    )}
-                    <span className="text-sm truncate">{suggestion.name}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
+
+            {/* Suggestions Dropdown */}
+          {expanded && suggestions.length > 0 && (
+            <div className="absolute top-0 left-0 right-0 mt-12 bg-white text-gray-900 border border-gray-200 rounded-lg shadow-lg w-64 max-h-64 overflow-y-auto z-50">
+              {suggestions.map((suggestion, index) => (
+                <Link
+                  key={suggestion.id || index}
+                  href={suggestion.type === 'product' ? `/product/${suggestion.id}` : `/category/${suggestion.slug}`}
+                  className="flex items-center px-4 py-3 hover:bg-purple-100 cursor-pointer transition-colors duration-200"
+                  role="option"
+                  aria-label={`Select ${suggestion.name}`}
+                >
+                  {suggestion.type === 'product' && suggestion.image_url && (
+                    <img
+                      src={suggestion.image_url}
+                      alt={suggestion.name}
+                      className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded mr-2"
+                    />
+                  )}
+                  <span className="text-sm truncate">{suggestion.name}</span>
+                </Link>
+              ))}
+            </div>
+          )}
           </div>
 
-          {/* Hamburger menu */}
+          {/* hamburger menu */}
           <button
             className="sm:hidden text-purple-700 hover:text-purple-800"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -184,17 +161,19 @@ export default function Navbar({
       </div>
 
       <div
-        className={`w-full sm:w-auto flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 ${
-          isMobileMenuOpen ? "flex" : "hidden sm:flex"
-        } mt-4 sm:mt-0`}
+        className={`w-full sm:w-auto flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 ${isMobileMenuOpen ? "flex" : "hidden sm:flex"
+          } mt-4 sm:mt-0`}
       >
-        {/* Desktop search */}
+        {/* search icon */}
         <div
           ref={containerRef}
           className="hidden sm:flex sm:relative items-center"
           onClick={() => setExpanded(true)}
         >
+          {/* Search Icon */}
           <FaSearch className="text-purple-700 cursor-pointer" />
+
+          {/* Animated Input */}
           <input
             type="text"
             value={searchQuery}
@@ -202,42 +181,33 @@ export default function Navbar({
             onFocus={() => setExpanded(true)}
             placeholder="Search products..."
             className={`
-              transition-all duration-300 ease-in-out
-              ml-2
-              rounded-lg
-              text-black
-              border border-gray-300
-              focus:border-purple-700
-              focus:outline-none
-              text-sm sm:text-base
-              ${
-                expanded
-                  ? "w-64 px-3 py-2 opacity-100 visible"
-                  : "w-0 px-0 py-0 opacity-0 invisible"
+          transition-all duration-300 ease-in-out
+          ml-2
+          rounded-lg
+          text-black
+          border border-gray-300
+          focus:border-purple-700
+          focus:outline-none
+          text-sm sm:text-base
+          ${expanded
+                ? "w-64 px-3 py-2 opacity-100 visible"
+                : "w-0 px-0 py-0 opacity-0 invisible"
               }
-            `}
+        `}
           />
-          {/* Desktop Suggestions Dropdown */}
+
+          {/* Suggestions Dropdown */}
           {expanded && suggestions.length > 0 && (
             <div className="absolute top-0 left-0 right-0 mt-12 bg-white text-gray-900 border border-gray-200 rounded-lg shadow-lg w-64 max-h-64 overflow-y-auto z-50">
               {suggestions.map((suggestion, index) => (
                 <Link
                   key={suggestion.id || index}
-                  href={
-                    suggestion.type === "product"
-                      ? `/product/${suggestion.id}`
-                      : `/category/${suggestion.slug}`
-                  }
+                  href={suggestion.type === 'product' ? `/product/${suggestion.id}` : `/category/${suggestion.slug}`}
                   className="flex items-center px-4 py-3 hover:bg-purple-100 cursor-pointer transition-colors duration-200"
                   role="option"
                   aria-label={`Select ${suggestion.name}`}
-                  onClick={() => {
-                    setSearchQuery(suggestion.name);
-                    setSuggestions([]);
-                    setExpanded(false);
-                  }}
                 >
-                  {suggestion.type === "product" && suggestion.image_url && (
+                  {suggestion.type === 'product' && suggestion.image_url && (
                     <img
                       src={suggestion.image_url}
                       alt={suggestion.name}
@@ -297,9 +267,8 @@ export default function Navbar({
                     notifications.map((notif) => (
                       <div
                         key={notif.id}
-                        className={`p-2 rounded-md mb-2 ${
-                          notif.read ? "bg-gray-100" : "bg-purple-50"
-                        }`}
+                        className={`p-2 rounded-md mb-2 ${notif.read ? "bg-gray-100" : "bg-purple-50"
+                          }`}
                       >
                         <p className="text-sm text-gray-700">{notif.message}</p>
                         <p className="text-xs text-gray-500">
