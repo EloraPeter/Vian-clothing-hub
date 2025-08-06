@@ -29,6 +29,7 @@ export default function CustomOrderForm({ user, profile }) {
     lng: null,
     deposit: 5000,
     additional_notes: '',
+    inspiration_image: null, // Added for image upload
   });
   const [showMeasurementGuide, setShowMeasurementGuide] = useState(false);
   const [message, setMessage] = useState('');
@@ -285,6 +286,12 @@ export default function CustomOrderForm({ user, profile }) {
     } else if (step === 2) {
       if (!form.fabric) newErrors.fabric = 'Fabric is required';
       if (!form.style) newErrors.style = 'Style is required';
+      if (form.inspiration_image && form.inspiration_image.size > 5 * 1024 * 1024) {
+        newErrors.inspiration_image = 'Image size must be less than 5MB';
+      }
+      if (form.inspiration_image && !['image/jpeg', 'image/png'].includes(form.inspiration_image.type)) {
+        newErrors.inspiration_image = 'Only JPEG or PNG images are allowed';
+      }
     } else if (step === 3) {
       if (!form.measurements.bust || isNaN(form.measurements.bust) || form.measurements.bust <= 0) newErrors.bust = 'Valid bust measurement is required';
       if (!form.measurements.waist || isNaN(form.measurements.waist) || form.measurements.waist <= 0) newErrors.waist = 'Valid waist measurement is required';
@@ -297,8 +304,39 @@ export default function CustomOrderForm({ user, profile }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNext = () => {
+  const handleImageUpload = async (file) => {
+    if (!file) return null;
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const { data, error } = await supabase.storage
+        .from('inspiration-images')
+        .upload(fileName, file);
+      if (error) throw error;
+      const { data: publicData } = supabase.storage
+        .from('inspiration-images')
+        .getPublicUrl(fileName);
+      return publicData.publicUrl;
+    } catch (err) {
+      setMessage('Failed to upload image: ' + err.message);
+      toast.error('Failed to upload image: ' + err.message);
+      return null;
+    }
+  };
+
+  const handleNext = async () => {
     if (validateStep()) {
+      if (step === 2 && form.inspiration_image) {
+        setLoading(true);
+        const imageUrl = await handleImageUpload(form.inspiration_image);
+        if (imageUrl) {
+          setForm((prev) => ({ ...prev, inspiration_image: imageUrl }));
+        } else {
+          setLoading(false);
+          return;
+        }
+        setLoading(false);
+      }
       setStep(step + 1);
     }
   };
@@ -457,6 +495,17 @@ export default function CustomOrderForm({ user, profile }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateStep() && step < 4) {
+      if (step === 2 && form.inspiration_image) {
+        setLoading(true);
+        const imageUrl = await handleImageUpload(form.inspiration_image);
+        if (imageUrl) {
+          setForm((prev) => ({ ...prev, inspiration_image: imageUrl }));
+        } else {
+          setLoading(false);
+          return;
+        }
+        setLoading(false);
+      }
       setStep(step + 1);
     }
   };
@@ -502,6 +551,7 @@ export default function CustomOrderForm({ user, profile }) {
             delivery_status: 'not_started',
             created_at: new Date().toISOString(),
             payment_reference: paymentReference,
+            inspiration_image: form.inspiration_image, // Added to store image URL
           },
         ]).select().single();
 
@@ -512,7 +562,7 @@ export default function CustomOrderForm({ user, profile }) {
 
         const userNotificationText = `Your custom order has been submitted! Fabric: ${form.fabric}, Style: ${form.style}. A non-refundable deposit of ₦5,000 has been paid. Please check the app for updates: https://vianclothinghub.com`;
         await sendWhatsAppNotification(form.phone, userNotificationText);
-        const adminNotificationText = `New custom order submitted by ${form.full_name} (ID: ${data.id}). Fabric: ${form.fabric}, Style: ${form.style}. Please set the outfit price in the admin dashboard.`;
+        const adminNotificationText = `New custom order submitted by ${form.full_name} (ID: ${data.id}). Fabric: ${form.fabric}, Style: ${form.style}${form.inspiration_image ? ', Inspiration Image provided' : ''}. Please set the outfit price in the admin dashboard.`;
         await sendWhatsAppNotification('2348087522801', adminNotificationText);
         await createAdminNotification(adminNotificationText);
         router.push('/dashboard');
@@ -685,6 +735,29 @@ export default function CustomOrderForm({ user, profile }) {
                 <InformationCircleIcon className="w-5 h-5 text-gray-400 absolute right-3 top-9" title="Choose a style or describe your custom design" />
                 {errors.style && <p className="text-red-500 text-sm mt-1">{errors.style}</p>}
               </div>
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700">Inspiration Image (Optional)</label>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  onChange={(e) => setForm({ ...form, inspiration_image: e.target.files[0] })}
+                  className={`w-full border p-3 rounded-lg ${errors.inspiration_image ? 'border-red-500' : 'border-gray-300'} focus:ring-purple-500 focus:border-purple-500`}
+                />
+                <InformationCircleIcon className="w-5 h-5 text-gray-400 absolute right-3 top-9" title="Upload a JPEG or PNG image (max 5MB) for design inspiration" />
+                {errors.inspiration_image && <p className="text-red-500 text-sm mt-1">{errors.inspiration_image}</p>}
+                {form.inspiration_image && typeof form.inspiration_image === 'string' && (
+                  <div className="mt-2">
+                    <img src={form.inspiration_image} alt="Inspiration Preview" className="w-32 h-32 object-cover rounded-lg" />
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, inspiration_image: null })}
+                      className="text-red-600 hover:underline mt-2"
+                    >
+                      Remove Image
+                    </button>
+                  </div>
+                )}
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Additional Notes</label>
                 <textarea
@@ -833,6 +906,7 @@ export default function CustomOrderForm({ user, profile }) {
                 <p><strong>Fabric:</strong> {form.fabric}</p>
                 <p><strong>Style:</strong> {form.style}</p>
                 <p><strong>Measurements:</strong> Bust: {form.measurements.bust || '-'}cm, Waist: {form.measurements.waist || '-'}cm, Hips: {form.measurements.hips || '-'}cm, Shoulder: {form.measurements.shoulder || '-'}cm, Length: {form.measurements.length || '-'}cm</p>
+                <p><strong>Inspiration Image:</strong> {form.inspiration_image && typeof form.inspiration_image === 'string' ? <a href={form.inspiration_image} target="_blank" className="text-purple-600 hover:underline">View Image</a> : 'None'}</p>
                 <p><strong>Additional Notes:</strong> {form.additional_notes || 'None'}</p>
                 <p><strong>Deposit:</strong> ₦{form.deposit}</p>
               </div>
@@ -852,9 +926,10 @@ export default function CustomOrderForm({ user, profile }) {
               <button
                 type="button"
                 onClick={handleNext}
-                className="bg-purple-700 text-white py-2 px-6 rounded-lg hover:bg-purple-800"
+                disabled={loading}
+                className="bg-purple-700 text-white py-2 px-6 rounded-lg hover:bg-purple-800 disabled:bg-purple-400"
               >
-                Next
+                {loading ? 'Uploading...' : 'Next'}
               </button>
             ) : (
               <button
@@ -913,6 +988,10 @@ export default function CustomOrderForm({ user, profile }) {
             <div>
               <p className="font-medium text-gray-700">Can I provide my own fabric?</p>
               <p className="text-gray-600">Yes, you can specify your own fabric in the additional notes section or contact us for details.</p>
+            </div>
+            <div>
+              <p className="font-medium text-gray-700">Can I upload an inspiration image?</p>
+              <p className="text-gray-600">Yes, you can upload a JPEG or PNG image (max 5MB) in the Design Details step to share your design inspiration.</p>
             </div>
           </div>
         </div>
