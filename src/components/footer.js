@@ -32,7 +32,7 @@ const Footer = () => {
                 <div>
                     <h4 className="font-bold text-lg mb-3 text-purple-100">Contact</h4>
                     <p className="text-gray-300">WhatsApp: <a href="https://wa.me/2348038879285" className="text-gold-300 hover:underline">+234 803 8879 285</a></p>
-                    <p className="text-gray-300">Email: <a href="mailto:support@vianclothinghub.com" className="text-gold-300 hover:underline">support@vianclothinghub.com</a></p>
+                    <p className="text-gray-300">Email: <a href="mailto:support@vianclothinghub.com.ng" className="text-gold-300 hover:underline">support@vianclothinghub.com.ng</a></p>
                     <p className="text-gray-300">Instagram: <a href="https://instagram.com/vianclothinghub" className="text-gold-300 hover:underline">@vianclothinghub</a></p>
                 </div>
 

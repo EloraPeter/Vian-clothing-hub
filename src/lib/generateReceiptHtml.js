@@ -59,7 +59,7 @@ const generateReceiptHtml = ({ order, user }) => {
         </div>
         <div class="footer">
           <p>Thank you for your purchase at Vian Clothing Hub!</p>
-          <p>Contact us at: <a href="mailto:info@vianclothinghub.com">info@vianclothinghub.com</a> | +234 808 752 2801</p>
+          <p>Contact us at: <a href="mailto:info@vianclothinghub.com.ng">info@vianclothinghub.com.ng</a> | +234 808 752 2801</p>
         </div>
       </div>
     </body>
