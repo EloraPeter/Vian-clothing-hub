@@ -261,8 +261,11 @@ export default function Dashboard() {
 
   return (
     <>
-      {/* <Script src="https://js.paystack.co/v1/inline.js" strategy="afterInteractive" /> */}
-      <main className="min-h-screen bg-gray-50">
+      <Script
+        src="https://js.paystack.co/v2/inline.js"
+        strategy="afterInteractive"
+        onError={(e) => console.error('Paystack script failed to load:', e)}
+      />      <main className="min-h-screen bg-gray-50">
         <Navbar
           profile={profile}
           onCartClick={() => setIsCartOpen(true)}
@@ -298,11 +301,10 @@ export default function Dashboard() {
                     setActiveSection(item.id);
                     setIsSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center space-x-2 p-3 rounded-lg text-left transition-colors ${
-                    activeSection === item.id
+                  className={`w-full flex items-center space-x-2 p-3 rounded-lg text-left transition-colors ${activeSection === item.id
                       ? "bg-purple-100 text-purple-800"
                       : "text-gray-600 hover:bg-purple-50 hover:text-purple-800"
-                  }`}
+                    }`}
                 >
                   {item.icon}
                   <span>{item.label}</span>
@@ -362,9 +364,8 @@ export default function Dashboard() {
                     {notifications.map((notif) => (
                       <li
                         key={notif.id}
-                        className={`p-4 rounded-lg border transition-all duration-300 ${
-                          notif.read ? "bg-gray-100 border-gray-200" : "bg-purple-50 border-purple-200"
-                        } hover:shadow-md`}
+                        className={`p-4 rounded-lg border transition-all duration-300 ${notif.read ? "bg-gray-100 border-gray-200" : "bg-purple-50 border-purple-200"
+                          } hover:shadow-md`}
                       >
                         <p className="text-gray-700">{notif.message}</p>
                         <p className="text-sm text-gray-500 mt-1">
@@ -769,15 +770,15 @@ export default function Dashboard() {
                             {order.delivery_status === "delivered"
                               ? "Delivered"
                               : order.delivery_status === "in_progress"
-                              ? "In Progress"
-                              : "Pending"}
+                                ? "In Progress"
+                                : "Pending"}
                           </p>
                           <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 -top-8 left-1/2 transform -translate-x-1/2">
                             {order.delivery_status === "delivered"
                               ? "Order has been delivered"
                               : order.delivery_status === "in_progress"
-                              ? "Order is being processed"
-                              : "Order is pending"}
+                                ? "Order is being processed"
+                                : "Order is pending"}
                           </div>
                         </div>
                         <p className="text-sm text-gray-500 mt-2">
@@ -832,19 +833,19 @@ export default function Dashboard() {
                             {order.status === "delivered"
                               ? "Delivered"
                               : order.status === "shipped"
-                              ? "Shipped"
-                              : order.status === "processing"
-                              ? "Processing"
-                              : "Pending"}
+                                ? "Shipped"
+                                : order.status === "processing"
+                                  ? "Processing"
+                                  : "Pending"}
                           </p>
                           <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 -top-8 left-1/2 transform -translate-x-1/2">
                             {order.status === "delivered"
                               ? "Order has been delivered"
                               : order.status === "shipped"
-                              ? "Order has been shipped"
-                              : order.status === "processing"
-                              ? "Order is being processed"
-                              : "Order is pending"}
+                                ? "Order has been shipped"
+                                : order.status === "processing"
+                                  ? "Order is being processed"
+                                  : "Order is pending"}
                           </div>
                         </div>
                         <p className="text-sm text-gray-500 mt-2">
