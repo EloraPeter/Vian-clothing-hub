@@ -542,7 +542,7 @@ export default function CheckoutPage() {
 
       const placeOrder = async (paymentReference) => {
         const items = mapCartItems(cart);
-        const { error } = await supabase.from('orders').insert([
+      const { data: orderData, error } = await supabase.from('orders').insert([
           {
             user_id: user.id,
             items,
@@ -555,7 +555,7 @@ export default function CheckoutPage() {
             created_at: new Date().toISOString(),
             payment_reference: paymentReference,
           },
-        ]);
+        ]).select().single();
         if (error) {
           console.error('Supabase insert error:', error.message, error.details, error.hint);
           throw error;
