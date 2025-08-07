@@ -16,6 +16,8 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import sendReceiptEmail from '@/lib/sendReceiptEmail';
+
 
 export default function CheckoutPage() {
   const { cart, totalPrice, clearCart } = useCart();
@@ -504,10 +506,10 @@ export default function CheckoutPage() {
     setError(null);
 
     if (!isPaystackLoaded) {
-    setError('Payment system is not ready. Please refresh the page.');
-    setIsPaying(false);
-    return;
-  }
+      setError('Payment system is not ready. Please refresh the page.');
+      setIsPaying(false);
+      return;
+    }
 
     if (!address) {
       setError('Please enter or select a delivery address.');
