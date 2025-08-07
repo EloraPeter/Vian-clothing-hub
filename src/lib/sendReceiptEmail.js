@@ -36,11 +36,11 @@ const sendReceiptEmail = async ({ email, order, receiptUrl }) => {
       <p><strong>Shipping:</strong> ₦${order.shipping_fee.toLocaleString()}</p>
       <p><strong>Total:</strong> ₦${order.total.toLocaleString()}</p>
       ${receiptUrl ? `<p><a href="${receiptUrl}">Download Receipt PDF</a></p>` : ''}
-      <p>Contact us at: info@vianclothinghub.com | +234 808 752 2801</p>
+      <p>Contact us at: info@vianclothinghub.com.ng | +234 808 752 2801</p>
     `;
 
     await resend.emails.send({
-      from: 'Vian Clothing Hub <info@vianclothinghub.com>',
+      from: 'Vian Clothing Hub <info@vianclothinghub.com.ng>',
       to: email,
       subject: `Order #${order.id} Receipt`,
       html: emailContent,

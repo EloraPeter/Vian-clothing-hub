@@ -17,7 +17,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'support@vianclothinghub.com',
+        from: 'support@vianclothinghub.com.ng',
         to,
         subject,
         html,

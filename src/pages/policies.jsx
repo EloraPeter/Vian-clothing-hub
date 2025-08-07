@@ -50,7 +50,7 @@ export default function Policies({ profile }) {
           </p>
           <h2 className="text-xl font-semibold text-purple-700">Contact Us</h2>
           <p>
-            For questions about our Cookies Policy, contact us via our <Link href="/contact" className="text-purple-600 hover:underline">Contact Page</Link> or at support@vianclothinghub.com.
+            For questions about our Cookies Policy, contact us via our <Link href="/contact" className="text-purple-600 hover:underline">Contact Page</Link> or at support@vianclothinghub.com.ng
           </p>
         </div>
       ),
@@ -86,7 +86,7 @@ export default function Policies({ profile }) {
           </p>
           <h2 className="text-xl font-semibold text-purple-700">6. Contact Us</h2>
           <p>
-            For questions about these Terms, contact us via our <Link href="/contact" className="text-purple-600 hover:underline">Contact Page</Link> or at support@vianclothinghub.com.
+            For questions about these Terms, contact us via our <Link href="/contact" className="text-purple-600 hover:underline">Contact Page</Link> or at support@vianclothinghub.com.ng
           </p>
         </div>
       ),
@@ -122,7 +122,7 @@ export default function Policies({ profile }) {
           </p>
           <h2 className="text-xl font-semibold text-purple-700">6. Contact Us</h2>
           <p>
-            For questions, contact us via our <Link href="/contact" className="text-purple-600 hover:underline">Contact Page</Link> or at support@vianclothinghub.com.
+            For questions, contact us via our <Link href="/contact" className="text-purple-600 hover:underline">Contact Page</Link> or at support@vianclothinghub.com.ng
           </p>
         </div>
       ),
@@ -142,7 +142,7 @@ export default function Policies({ profile }) {
           </p>
           <h2 className="text-xl font-semibold text-purple-700">2. Return Process</h2>
           <p>
-            To initiate a return, contact us via our <Link href="/contact" className="text-purple-600 hover:underline">Contact Page</Link> or at support@vianclothinghub.com with your order number. We’ll provide a return address and instructions. You are responsible for return shipping costs unless the item is defective.
+            To initiate a return, contact us via our <Link href="/contact" className="text-purple-600 hover:underline">Contact Page</Link> or at support@vianclothinghub.com.ng with your order number. We’ll provide a return address and instructions. You are responsible for return shipping costs unless the item is defective.
           </p>
           <h2 className="text-xl font-semibold text-purple-700">3. Inspection and Approval</h2>
           <p>
@@ -154,7 +154,7 @@ export default function Policies({ profile }) {
           </p>
           <h2 className="text-xl font-semibold text-purple-700">5. Contact Us</h2>
           <p>
-            For questions about returns, contact us via our <Link href="/contact" className="text-purple-600 hover:underline">Contact Page</Link> or at support@vianclothinghub.com.
+            For questions about returns, contact us via our <Link href="/contact" className="text-purple-600 hover:underline">Contact Page</Link> or at supportinghub.com.
           </p>
         </div>
       ),
@@ -186,7 +186,7 @@ export default function Policies({ profile }) {
           </p>
           <h2 className="text-xl font-semibold text-purple-700">5. Contact Us</h2>
           <p>
-            For questions about refunds, contact us via our <Link href="/contact" className="text-purple-600 hover:underline">Contact Page</Link> or at support@vianclothinghub.com.
+            For questions about refunds, contact us via our <Link href="/contact" className="text-purple-600 hover:underline">Contact Page</Link> or at support@vianclothinghub.com.ng
           </p>
         </div>
       ),

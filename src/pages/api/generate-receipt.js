@@ -150,7 +150,7 @@ export default async function handler(req, res) {
       .fontSize(10)
       .fillColor('#800080')
       .text('Thank you for your purchase at Vian Clothing Hub!', 50, y, { align: 'center' })
-      .text('Contact us at: info@vianclothinghub.com | +234 808 752 2801', 50, y + 15, { align: 'center' });
+      .text('Contact us at: info@vianclothinghub.com.ng | +234 808 752 2801', 50, y + 15, { align: 'center' });
 
     doc.end();
 
