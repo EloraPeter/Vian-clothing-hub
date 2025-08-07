@@ -175,7 +175,7 @@ export default function PayInvoice() {
             <p>Payment Reference: ${response.reference}</p>
             <p>Date: ${new Date().toLocaleDateString()}</p>
             <p><a href="${pdfUrl}">View/Download Receipt</a></p>
-            <p>Delivery has started. Please check the app for updates: <a href="https://your-app-url.com/dashboard">Go to Dashboard</a></p>
+            <p>Delivery has started. Please check the app for updates: <a href="https://vianclothinghub.com.ng">Go to Dashboard</a></p>
           `;
 
           const emailResponse = await fetch("/api/send-email", {

@@ -288,7 +288,7 @@ export default function AdminPage() {
               <p>Total Amount: ₦${Number(price).toLocaleString("en-NG")}</p>
               <p>Date: ${new Date().toLocaleDateString("en-GB")}</p>
               <p><a href="${pdfUrl}">View/Download Invoice</a></p>
-              <p>Please check the app for more details: [Your App URL]</p>
+              <p>Please check the app for more details: vianclothinghub.com.ng</p>
             `;
             await sendEmailNotification(
               order.email,
@@ -342,7 +342,7 @@ export default function AdminPage() {
               "_",
               " "
             )}.</p>
-              <p>Please check the app for more details: [Your App URL]</p>
+              <p>Please check the app for more details: vianclothinghub.com.ng</p>
             `
           );
         }
