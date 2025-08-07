@@ -9,7 +9,7 @@ export default function Navbar({
   profile,
   onCartClick,
   cartItemCount,
-  notifications = [],
+  notifications: initialNotifications = [],
 }) {
   const router = useRouter();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -17,9 +17,15 @@ export default function Navbar({
   const [categories, setCategories] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
+  const [notifications, setNotifications] = useState(initialNotifications);
   const unreadCount = notifications.filter((notif) => !notif.read).length;
   const [expanded, setExpanded] = useState(false);
   const containerRef = useRef();
+
+  // Sync notifications state when prop changes
+  useEffect(() => {
+    setNotifications(initialNotifications);
+  }, [initialNotifications]);
 
   // Close search if clicked outside
   useEffect(() => {
@@ -103,7 +109,7 @@ export default function Navbar({
         .update({ read: true })
         .eq("id", notificationId);
       if (error) throw error;
-      // Update notifications state to reflect the change
+      // Update local notifications state
       setNotifications(
         notifications.map((notif) =>
           notif.id === notificationId ? { ...notif, read: true } : notif
