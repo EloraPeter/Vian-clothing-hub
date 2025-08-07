@@ -697,7 +697,6 @@ export default function CustomOrderForm({ user, profile }) {
 
         const userNotificationText = `Your custom order has been submitted! Fabric: ${form.fabric}, Style: ${form.style}. A non-refundable deposit of ₦5,000 has been paid. Please check the app for updates: https://vianclothinghub.com`;
         await sendWhatsAppNotification(form.phone, userNotificationText);
-        // Email Notification
         try {
           const res = await fetch('/api/send-email', {
             method: 'POST',
@@ -706,18 +705,77 @@ export default function CustomOrderForm({ user, profile }) {
               to: form.email,
               subject: 'Vian Clothing Hub - Custom Order Confirmation',
               html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
+            .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; }
+            .header { background-color: #8B5CF6; padding: 20px; text-align: center; }
+            .header img { max-width: 150px; height: auto; }
+            .content { padding: 20px; color: #333333; }
+            h1 { font-size: 24px; color: #8B5CF6; margin-bottom: 10px; }
+            p { font-size: 16px; line-height: 1.5; margin: 10px 0; }
+            .order-details { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            .order-details th, .order-details td { padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+            .order-details th { background-color: #f9f9f9; font-weight: bold; }
+            .cta-button { display: inline-block; padding: 12px 24px; background-color: #8B5CF6; color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 16px; margin: 10px 0; }
+            .footer { background-color: #f9f9f9; padding: 20px; text-align: center; font-size: 14px; color: #666666; }
+            .footer a { color: #8B5CF6; text-decoration: none; }
+            .social-links { margin: 10px 0; }
+            .social-links a { margin: 0 10px; text-decoration: none; }
+            @media (max-width: 600px) { .container { margin: 10px; } h1 { font-size: 20px; } .cta-button { padding: 10px 20px; font-size: 14px; } }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <img src="https://vianclothinghub.com.ng/logo.svg" alt="Vian Clothing Hub Logo">
+            </div>
+            <div class="content">
               <h1>Order Confirmation</h1>
               <p>Dear ${form.full_name},</p>
-              <p>Your custom order has been successfully submitted!</p>
-              <ul>
-                <li><strong>Fabric:</strong> ${form.fabric}</li>
-                <li><strong>Style:</strong> ${form.style}</li>
-                <li><strong>Deposit:</strong> ₦5,000 (non-refundable)</li>
-                ${form.inspiration_image ? `<li><strong>Inspiration Image:</strong> <a href="${form.inspiration_image}">View Image</a></li>` : ''}
-              </ul>
-              <p>Please check your dashboard for updates: <a href="https://vianclothinghub.com/dashboard">Vian Clothing Hub</a></p>
-              <p>Thank you for choosing Vian Clothing Hub!</p>
-            `,
+              <p>Thank you for your custom order with Vian Clothing Hub! We're excited to bring your vision to life. Your order has been successfully submitted, and you can track its progress in your dashboard.</p>
+              <table class="order-details">
+                <tr>
+                  <th>Fabric</th>
+                  <td>${form.fabric}</td>
+                </tr>
+                <tr>
+                  <th>Style</th>
+                  <td>${form.style}</td>
+                </tr>
+                <tr>
+                  <th>Deposit</th>
+                  <td>₦5,000 (non-refundable)</td>
+                </tr>
+                ${form.inspiration_image ? `
+                <tr>
+                  <th>Inspiration Image</th>
+                  <td><a href="${form.inspiration_image}" style="color: #8B5CF6;">View Image</a></td>
+                </tr>` : ''}
+              </table>
+              <p>
+                <a href="https://vianclothinghub.com.ng/dashboard" class="cta-button">View Your Dashboard</a>
+              </p>
+              <p>We'll notify you with updates on your order's progress. Thank you for choosing Vian Clothing Hub!</p>
+            </div>
+            <div class="footer">
+              <p>🚫 Please do not reply to this email. This inbox is not monitored.<br>
+              For support, contact us at <a href="mailto:support@vianclothinghub.com.ng">support@vianclothinghub.com.ng</a></p>
+              <div class="social-links">
+                <a href="https://instagram.com/vianclothinghub">Instagram</a> |
+                <a href="https://twitter.com/vianclothinghub">Twitter</a> |
+                <a href="https://facebook.com/vianclothinghub">Facebook</a>
+              </div>
+              <p><a href="https://vianclothinghub.com.ng/shop">Shop Now</a> | <a href="https://vianclothinghub.com.ng">Vian Clothing Hub</a></p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
             }),
           });
           if (!res.ok) {
