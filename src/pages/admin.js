@@ -177,25 +177,17 @@ export default function AdminPage() {
     }
   };
 
-  const generateInvoicePDF = async (order, amount) => {
+  const generateInvoicePDF = async (order, amount, userId, email) => {
     const invoiceData = {
-      INVOICEID:
-        crypto?.randomUUID?.() ||
-        `${Date.now()}-${Math.random().toString(36).substring(2)}`,
+      INVOICEID: crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).substring(2)}`,
       ORDERID: order.id,
       FULLNAME: order.full_name || "N/A",
       FABRIC: order.fabric || "N/A",
       STYLE: order.style || "N/A",
       ADDRESS: order.address || "N/A",
-      DEPOSIT: Number(order.deposit || 0).toLocaleString("en-NG", {
-        minimumFractionDigits: 0,
-      }),
-      BALANCE: Number(amount - (order.deposit || 0)).toLocaleString("en-NG", {
-        minimumFractionDigits: 0,
-      }),
-      AMOUNT: Number(amount).toLocaleString("en-NG", {
-        minimumFractionDigits: 0,
-      }),
+      DEPOSIT: Number(order.deposit || 0).toLocaleString("en-NG", { minimumFractionDigits: 0 }),
+      BALANCE: Number(amount - (order.deposit || 0)).toLocaleString("en-NG", { minimumFractionDigits: 0 }),
+      AMOUNT: Number(amount).toLocaleString("en-NG", { minimumFractionDigits: 0 }),
       DATE: new Date().toLocaleDateString("en-GB"),
       products: [
         {
@@ -208,18 +200,94 @@ export default function AdminPage() {
     };
 
     try {
-      const { data, error } = await supabase.functions.invoke("generate-pdf", {
-        body: { type: "invoice", data: invoiceData },
-        headers: {
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-        },
+      let pdfData;
+      try {
+        const { data, error } = await supabase.functions.invoke("generate-pdf", {
+          body: { type: "invoice", data: invoiceData },
+          headers: {
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (error) throw new Error(`Supabase PDF generation failed: ${error.message}`);
+        pdfData = data;
+      } catch (supabaseError) {
+        console.warn("Falling back to API endpoint for PDF generation:", supabaseError.message);
+        const response = await fetch("/api/generate-pdf", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "invoice", data: invoiceData }),
+        });
+
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Failed to generate PDF via API");
+        pdfData = result;
+      }
+
+      // Insert invoice into database
+      const { data: invoice, error: invoiceError } = await supabase
+        .from("invoices")
+        .insert([
+          {
+            user_id: userId,
+            order_id: order.id,
+            amount,
+            paid: false,
+            pdf_url: pdfData.pdfUrl,
+          },
+        ])
+        .select()
+        .single();
+
+      if (invoiceError) {
+        console.error("Invoice creation failed:", invoiceError.message);
+        throw new Error("Failed to create invoice");
+      }
+
+      // Send email notification
+      const paymentLink = `https://your-app-url.com/pay-invoice?invoice_id=${invoice.id}`;
+      const emailBody = `
+      <h2>New Invoice Created</h2>
+      <p>Dear ${order.full_name},</p>
+      <p>A new invoice has been created for your order. Please review the details below and make the payment at your earliest convenience.</p>
+      <p><strong>Invoice Details</strong></p>
+      <p>Invoice ID: ${invoice.id}</p>
+      <p>Order ID: ${order.id}</p>
+      <p>Fabric: ${order.fabric}</p>
+      <p>Style: ${order.style}</p>
+      <p>Delivery Address: ${order.address}</p>
+      <p>Deposit: ₦${Number(order.deposit || 0).toLocaleString("en-NG", { minimumFractionDigits: 0 })}</p>
+      <p>Balance: ₦${Number(amount - (order.deposit || 0)).toLocaleString("en-NG", { minimumFractionDigits: 0 })}</p>
+      <p>Total Amount: ₦${Number(amount).toLocaleString("en-NG", { minimumFractionDigits: 0 })}</p>
+      <p>Date: ${new Date().toLocaleDateString("en-GB")}</p>
+      <p><a href="${pdfData.pdfUrl}">View/Download Invoice</a></p>
+      <p><a href="${paymentLink}" style="background-color: #6b46c1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Pay Now</a></p>
+      <p>You can also view and pay this invoice from your dashboard: <a href="https://your-app-url.com/dashboard">Go to Dashboard</a></p>
+    `;
+
+      const emailResponse = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: email,
+          subject: "New Invoice from Vian Clothing Hub",
+          html: emailBody,
+        }),
       });
 
-      if (error) throw new Error(`PDF generation failed: ${error.message}`);
-      return { pdfUrl: data.url, invoiceId: invoiceData.INVOICEID };
+      const emailResult = await emailResponse.json();
+      if (!emailResponse.ok) {
+        console.error("Email sending failed:", emailResult.error);
+        // Log the error but don't fail the invoice creation
+      } else {
+        console.log("Invoice email sent successfully:", emailResult.message);
+      }
+
+      return { pdfUrl: pdfData.pdfUrl, invoiceId: invoiceData.INVOICEID, invoice };
     } catch (error) {
-      console.error("Error in generateInvoicePDF:", error);
-      throw new Error(`PDF generation failed: ${error.message}`);
+      console.error("Error in generateInvoicePDF:", error.message);
+      throw new Error(`Invoice generation failed: ${error.message}`);
     }
   };
 
