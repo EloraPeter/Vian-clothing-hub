@@ -175,7 +175,7 @@ export default function Dashboard() {
     return { pdfUrl: data.pdfUrl, receiptId: receiptData.RECEIPTID };
   };
 
-  const initiatePayment = async (invoice) => {
+ const initiatePayment = async (invoice) => {
     if (!window.PaystackPop) {
       alert("Paystack SDK not loaded.");
       return;
@@ -188,72 +188,133 @@ export default function Dashboard() {
       currency: "NGN",
       ref: `VIAN_${invoice.id}_${Date.now()}`,
       callback: async (response) => {
-        const { error, data } = await supabase.functions.invoke("verify-paystack-payment", {
-          body: { reference: response.reference },
-        });
-        if (error || !data.success) {
-          alert("Payment verification failed.");
-          return;
+        try {
+          // Try Supabase Edge Function first
+          let verificationResult;
+          try {
+            const { data, error } = await supabase.functions.invoke("verify-paystack-payment", {
+              body: { reference: response.reference },
+              headers: { "Content-Type": "application/json" },
+            });
+
+            if (error) {
+              console.error("Supabase verification error:", error.message);
+              throw new Error(error.message);
+            }
+
+            verificationResult = data;
+          } catch (supabaseError) {
+            console.warn("Falling back to API endpoint due to Supabase error:", supabaseError.message);
+            // Fallback to /api/verify-payment
+            const apiResponse = await fetch("/api/verify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ reference: response.reference }),
+            });
+
+            const json = await apiResponse.json();
+            if (!apiResponse.ok || !json.status || json.data?.status !== "success") {
+              console.error("API verification failed:", json);
+              throw new Error(json.error || "Payment verification failed");
+            }
+
+            verificationResult = json.data;
+          }
+
+          // Check if payment is successful
+          if (verificationResult.status !== "success") {
+            console.error("Payment not successful:", verificationResult);
+            alert("Payment verification failed: " + (verificationResult.message || "Unknown error"));
+            return;
+          }
+
+          // Update invoice as paid
+          const { error: updateError } = await supabase
+            .from("invoices")
+            .update({ paid: true })
+            .eq("id", invoice.id);
+          if (updateError) {
+            console.error("Failed to update invoice:", updateError.message);
+            throw new Error("Failed to update invoice");
+          }
+
+          // Generate receipt
+          const { pdfUrl, receiptId } = await generateReceiptPDF(invoice, response.reference);
+          const receiptData = {
+            id: receiptId,
+            invoice_id: invoice.id,
+            user_id: user.id,
+            amount: invoice.amount,
+            payment_reference: response.reference,
+            pdf_url: pdfUrl,
+          };
+          const { error: receiptError } = await supabase.from("receipts").insert([receiptData]);
+          if (receiptError) {
+            console.error("Failed to insert receipt:", receiptError.message);
+            throw new Error("Failed to insert receipt");
+          }
+
+          // Update local state
+          setReceipts((prev) => [receiptData, ...prev]);
+          await supabase
+            .from("custom_orders")
+            .update({ delivery_status: "in_progress" })
+            .eq("id", invoice.order_id);
+          setOrders((prev) =>
+            prev.map((order) =>
+              order.id === invoice.order_id ? { ...order, delivery_status: "in_progress" } : order
+            )
+          );
+
+          // Send notification
+          const notificationText = `Payment successful for order ID: ${invoice.order_id}. Delivery has started. Check your dashboard for the receipt: [Your App URL]`;
+          const { error: notificationError } = await supabase.from("notifications").insert([
+            {
+              user_id: user.id,
+              message: notificationText,
+              created_at: new Date().toISOString(),
+              read: false,
+            },
+          ]);
+          if (notificationError) {
+            console.error("Failed to insert notification:", notificationError.message);
+          }
+          setNotifications((prev) => [
+            {
+              id: Date.now(),
+              user_id: user.id,
+              message: notificationText,
+              created_at: new Date().toISOString(),
+              read: false,
+            },
+            ...prev,
+          ]);
+
+          // Send email notification
+          const emailBody = `
+            <h2>Payment Confirmation</h2>
+            <p>Your payment for order ID: ${invoice.order_id} has been received.</p>
+            <p><strong>Receipt</strong></p>
+            <p>Order ID: ${invoice.order_id}</p>
+            <p>Customer: ${invoice.custom_orders.full_name}</p>
+            <p>Fabric: ${invoice.custom_orders.fabric}</p>
+            <p>Style: ${invoice.custom_orders.style}</p>
+            <p>Delivery Address: ${invoice.custom_orders.address}</p>
+            <p>Deposit: ₦${Number(invoice.custom_orders.deposit || 5000).toLocaleString()}</p>
+            <p>Balance Paid: ₦${Number(invoice.amount - (invoice.custom_orders.deposit || 5000)).toLocaleString()}</p>
+            <p>Total Amount: ₦${Number(invoice.amount).toLocaleString()}</p>
+            <p>Payment Reference: ${response.reference}</p>
+            <p>Date: ${new Date().toLocaleDateString()}</p>
+            <p><a href="${pdfUrl}">View/Download Receipt</a></p>
+            <p>Delivery has started. Please check the app for updates: [Your App URL]</p>
+          `;
+          await sendEmailNotification(profile.email, "Payment Receipt", emailBody);
+
+          alert("Payment successful! Receipt generated and delivery started.");
+        } catch (error) {
+          console.error("Payment processing error:", error.message);
+          alert("Error processing payment: " + error.message);
         }
-        await supabase.from("invoices").update({ paid: true }).eq("id", invoice.id);
-        const { pdfUrl, receiptId } = await generateReceiptPDF(invoice, response.reference);
-        const receiptData = {
-          id: receiptId,
-          invoice_id: invoice.id,
-          user_id: user.id,
-          amount: invoice.amount,
-          payment_reference: response.reference,
-          pdf_url: pdfUrl,
-        };
-        await supabase.from("receipts").insert([receiptData]);
-        setReceipts((prev) => [receiptData, ...prev]);
-        await supabase
-          .from("custom_orders")
-          .update({ delivery_status: "in_progress" })
-          .eq("id", invoice.order_id);
-        setOrders((prev) =>
-          prev.map((order) =>
-            order.id === invoice.order_id ? { ...order, delivery_status: "in_progress" } : order
-          )
-        );
-        const notificationText = `Payment successful for order ID: ${invoice.order_id}. Delivery has started. Check your dashboard for the receipt: [Your App URL]`;
-        await supabase.from("notifications").insert([
-          {
-            user_id: user.id,
-            message: notificationText,
-            created_at: new Date().toISOString(),
-            read: false,
-          },
-        ]);
-        setNotifications((prev) => [
-          {
-            id: Date.now(),
-            user_id: user.id,
-            message: notificationText,
-            created_at: new Date().toISOString(),
-            read: false,
-          },
-          ...prev,
-        ]);
-        const emailBody = `
-          <h2>Payment Confirmation</h2>
-          <p>Your payment for order ID: ${invoice.order_id} has been received.</p>
-          <p><strong>Receipt</strong></p>
-          <p>Order ID: ${invoice.order_id}</p>
-          <p>Customer: ${invoice.custom_orders.full_name}</p>
-          <p>Fabric: ${invoice.custom_orders.fabric}</p>
-          <p>Style: ${invoice.custom_orders.style}</p>
-          <p>Delivery Address: ${invoice.custom_orders.address}</p>
-          <p>Deposit: ₦${Number(invoice.custom_orders.deposit || 5000).toLocaleString()}</p>
-          <p>Balance Paid: ₦${Number(invoice.amount - (invoice.custom_orders.deposit || 5000)).toLocaleString()}</p>
-          <p>Total Amount: ₦${Number(invoice.amount).toLocaleString()}</p>
-          <p>Payment Reference: ${response.reference}</p>
-          <p>Date: ${new Date().toLocaleDateString()}</p>
-          <p><a href="${pdfUrl}">View/Download Receipt</a></p>
-          <p>Delivery has started. Please check the app for updates: [Your App URL]</p>
-        `;
-        await sendEmailNotification(profile.email, "Payment Receipt", emailBody);
-        alert("Payment successful! Receipt generated and delivery started.");
       },
       onClose: () => {
         alert("Payment cancelled.");
@@ -261,7 +322,7 @@ export default function Dashboard() {
     });
     handler.openIframe();
   };
-
+  
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/auth");
