@@ -505,11 +505,12 @@ export default function CheckoutPage() {
     setIsPaying(true);
     setError(null);
 
-    if (!isPaystackLoaded) {
+    if (typeof window === 'undefined' || !window.PaystackPop) {
       setError('Payment system is not ready. Please refresh the page.');
       setIsPaying(false);
       return;
     }
+
 
     if (!address) {
       setError('Please enter or select a delivery address.');
