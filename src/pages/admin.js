@@ -246,7 +246,7 @@ export default function AdminPage() {
       }
 
       // Send email notification
-      const paymentLink = `https://your-app-url.com/pay-invoice?invoice_id=${invoice.id}`;
+      const paymentLink = `https://vianclothinghub.com.ng/pay-invoice?invoice_id=${invoice.id}`;
       const emailBody = `
       <h2>New Invoice Created</h2>
       <p>Dear ${order.full_name},</p>
@@ -263,7 +263,7 @@ export default function AdminPage() {
       <p>Date: ${new Date().toLocaleDateString("en-GB")}</p>
       <p><a href="${pdfData.pdfUrl}">View/Download Invoice</a></p>
       <p><a href="${paymentLink}" style="background-color: #6b46c1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Pay Now</a></p>
-      <p>You can also view and pay this invoice from your dashboard: <a href="https://your-app-url.com/dashboard">Go to Dashboard</a></p>
+      <p>You can also view and pay this invoice from your dashboard: <a href="https://vianclothinghub.com.ng/dashboard">Go to Dashboard</a></p>
     `;
 
       const emailResponse = await fetch("/api/send-email", {
@@ -344,7 +344,7 @@ export default function AdminPage() {
         return;
       }
 
-      const paymentLink = `https://your-app-url.com/pay-invoice?invoice_id=${invoiceId}`;
+      const paymentLink = `https://vianclothinghub.com.ng/pay-invoice?invoice_id=${invoiceId}`;
       const notificationText = `Your custom order (ID: ${order.id}) is now in progress! View your invoice: ${pdfUrl}`;
       await sendWhatsAppNotification(order.phone, notificationText);
 
@@ -371,7 +371,7 @@ export default function AdminPage() {
         <p>Date: ${new Date().toLocaleDateString("en-GB")}</p>
         <p><a href="${pdfUrl}">View/Download Invoice</a></p>
         <p><a href="${paymentLink}" style="background-color: #6b46c1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Pay Now</a></p>
-        <p>Please check the app for more details: <a href="https://your-app-url.com/dashboard">Go to Dashboard</a></p>
+        <p>Please check the app for more details: <a href="https://vianclothinghub.com.ng/dashboard">Go to Dashboard</a></p>
       `;
 
       try {

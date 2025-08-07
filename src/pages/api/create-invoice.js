@@ -74,7 +74,7 @@ export default async function handler(req, res) {
       throw new Error("Failed to create invoice");
     }
 
-    const paymentLink = `https://your-app-url.com/pay-invoice?invoice_id=${invoice.id}`;
+    const paymentLink = `https://vianclothinghub.com.ng/pay-invoice?invoice_id=${invoice.id}`;
     const emailBody = `
       <h2>New Invoice Created</h2>
       <p>Dear ${custom_orders.full_name},</p>

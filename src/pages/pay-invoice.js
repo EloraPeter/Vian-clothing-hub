@@ -150,7 +150,7 @@ export default function PayInvoice() {
             .update({ delivery_status: "in_progress" })
             .eq("id", invoice.order_id);
 
-          const notificationText = `Payment successful for order ID: ${invoice.order_id}. Delivery has started. Check your dashboard for the receipt: https://your-app-url.com/dashboard`;
+          const notificationText = `Payment successful for order ID: ${invoice.order_id}. Delivery has started. Check your dashboard for the receipt: https://vianclothinghub.com.ng/dashboard`;
           await supabase.from("notifications").insert([
             {
               user_id: invoice.user_id,
