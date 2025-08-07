@@ -9,7 +9,7 @@ export default function Navbar({
   profile,
   onCartClick,
   cartItemCount,
-  notifications: initialNotifications = [],
+  notifications = [],
 }) {
   const router = useRouter();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -17,15 +17,9 @@ export default function Navbar({
   const [categories, setCategories] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
-  const [notifications, setNotifications] = useState(initialNotifications);
   const unreadCount = notifications.filter((notif) => !notif.read).length;
   const [expanded, setExpanded] = useState(false);
   const containerRef = useRef();
-
-  // Sync notifications state when prop changes
-  useEffect(() => {
-    setNotifications(initialNotifications);
-  }, [initialNotifications]);
 
   // Close search if clicked outside
   useEffect(() => {
@@ -101,25 +95,6 @@ export default function Navbar({
     fetchSuggestions();
   }, [searchQuery]);
 
-  // Function to mark a notification as read
-  const markAsRead = async (notificationId) => {
-    try {
-      const { error } = await supabase
-        .from("notifications")
-        .update({ read: true })
-        .eq("id", notificationId);
-      if (error) throw error;
-      // Update local notifications state
-      setNotifications(
-        notifications.map((notif) =>
-          notif.id === notificationId ? { ...notif, read: true } : notif
-        )
-      );
-    } catch (error) {
-      console.error("Error marking notification as read:", error);
-    }
-  };
-
   return (
     <nav className="bg-white shadow-md px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row justify-between items-center sticky top-0 z-50">
       <div className="flex justify-between items-center w-full sm:w-auto">
@@ -131,7 +106,7 @@ export default function Navbar({
           />
         </Link>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex">
           {/* Mobile search */}
           <div
             ref={containerRef}
@@ -156,14 +131,14 @@ export default function Navbar({
                 text-sm sm:text-base
                 ${
                   expanded
-                    ? "w-48 sm:w-64 px-3 py-2 opacity-100 visible"
+                    ? "w-64 px-3 py-2 opacity-100 visible"
                     : "w-0 px-0 py-0 opacity-0 invisible"
                 }
               `}
             />
             {/* Mobile Suggestions Dropdown */}
             {expanded && suggestions.length > 0 && (
-              <div className="absolute top-0 left-0 right-0 mt-12 bg-white text-gray-900 border border-gray-200 rounded-lg shadow-lg w-48 sm:w-64 max-h-64 overflow-y-auto z-50">
+              <div className="absolute top-0 left-0 right-0 mt-12 bg-white text-gray-900 border border-gray-200 rounded-lg shadow-lg w-64 max-h-64 overflow-y-auto z-50">
                 {suggestions.map((suggestion, index) => (
                   <Link
                     key={suggestion.id || suggestion.slug || index}
@@ -192,7 +167,7 @@ export default function Navbar({
 
           {/* Hamburger menu */}
           <button
-            className="sm:hidden text-purple-700 hover:text-purple-800 p-2"
+            className="sm:hidden text-purple-700 hover:text-purple-800"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle mobile menu"
           >
@@ -219,9 +194,9 @@ export default function Navbar({
       </div>
 
       <div
-        className={`w-full sm:w-auto flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 ${
+        className={`w-full sm:w-auto flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 ${
           isMobileMenuOpen ? "flex" : "hidden sm:flex"
-        } mt-4 sm:mt-0 px-2 sm:px-0`}
+        } mt-4 sm:mt-0`}
       >
         {/* Desktop search */}
         <div
@@ -247,14 +222,14 @@ export default function Navbar({
               text-sm sm:text-base
               ${
                 expanded
-                  ? "w-48 sm:w-64 px-3 py-2 opacity-100 visible"
+                  ? "w-64 px-3 py-2 opacity-100 visible"
                   : "w-0 px-0 py-0 opacity-0 invisible"
               }
             `}
           />
           {/* Desktop Suggestions Dropdown */}
           {expanded && suggestions.length > 0 && (
-            <div className="absolute top-0 left-0 right-0 mt-12 bg-white text-gray-900 border border-gray-200 rounded-lg shadow-lg w-48 sm:w-64 max-h-64 overflow-y-auto z-50">
+            <div className="absolute top-0 left-0 right-0 mt-12 bg-white text-gray-900 border border-gray-200 rounded-lg shadow-lg w-64 max-h-64 overflow-y-auto z-50">
               {suggestions.map((suggestion, index) => (
                 <Link
                   key={suggestion.id || suggestion.slug || index}
@@ -262,7 +237,7 @@ export default function Navbar({
                     suggestion.type === "product"
                       ? `/product/${suggestion.id}`
                       : `/category/${suggestion.slug}`
-                    }
+                  }
                   className="flex items-center px-4 py-2 hover:bg-purple-100"
                   role="option"
                   aria-label={`Select ${suggestion.name}`}
@@ -303,20 +278,20 @@ export default function Navbar({
           <div className="relative">
             <button
               onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-              className="relative text-purple-700 hover:text-purple-300 transition-colors p-2"
+              className="relative text-purple-700 hover:text-purple-300 transition-colors"
               aria-label="View notifications"
             >
               <FaBell className="text-lg sm:text-xl" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
                   {unreadCount}
                 </span>
               )}
             </button>
             {isNotificationOpen && (
-              <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-lg shadow-xl border border-gray-200 max-h-96 overflow-y-auto z-50">
+              <div className="absolute right-0 mt-2 w-64 sm:w-72 bg-white rounded-lg shadow-xl border border-gray-200 max-h-96 overflow-y-auto z-50">
                 <div className="p-4">
-                  <h3 className="text-sm font-semibold text-purple-700 mb-3">
+                  <h3 className="text-sm font-semibold text-purple-700 mb-2">
                     Notifications
                   </h3>
                   {notifications.length === 0 ? (
@@ -327,25 +302,14 @@ export default function Navbar({
                     notifications.map((notif) => (
                       <div
                         key={notif.id}
-                        className={`p-3 rounded-md mb-3 flex justify-between items-start ${
+                        className={`p-2 rounded-md mb-2 ${
                           notif.read ? "bg-gray-100" : "bg-purple-50"
                         }`}
                       >
-                        <div>
-                          <p className="text-sm text-gray-700">{notif.message}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {new Date(notif.created_at).toLocaleString()}
-                          </p>
-                        </div>
-                        {!notif.read && (
-                          <button
-                            onClick={() => markAsRead(notif.id)}
-                            className="text-xs text-purple-700 hover:text-purple-900 font-medium ml-2"
-                            aria-label={`Mark notification ${notif.id} as read`}
-                          >
-                            Mark as Read
-                          </button>
-                        )}
+                        <p className="text-sm text-gray-700">{notif.message}</p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(notif.created_at).toLocaleString()}
+                        </p>
                       </div>
                     ))
                   )}
@@ -356,12 +320,12 @@ export default function Navbar({
 
           <button
             onClick={onCartClick}
-            className="relative text-purple-700 hover:text-purple-400 transition-colors active:scale-90 transition-transform duration-150 p-2"
+            className="relative text-purple-700 hover:text-purple-400 transition-colors active:scale-90 transition-transform duration-150"
             aria-label="Open cart"
           >
             <FaShoppingCart className="text-lg sm:text-xl" />
             {cartItemCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
                 {cartItemCount}
               </span>
             )}
@@ -369,7 +333,7 @@ export default function Navbar({
 
           <button
             onClick={() => router.push("/dashboard")}
-            className="text-gray-600 hover:text-purple-700 transition-colors p-2"
+            className="text-gray-600 hover:text-purple-700 transition-colors"
           >
             {profile?.avatar_url ? (
               <img
