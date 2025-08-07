@@ -595,7 +595,11 @@ export default function CheckoutPage() {
       <Script
         src="https://js.paystack.co/v2/inline.js"
         strategy="afterInteractive"
-        onError={(e) => console.error('Paystack script failed to load:', e)}
+        onLoad={() => console.log('Paystack SDK loaded successfully')}
+        onError={(e) => {
+          console.error('Paystack script failed to load:', e);
+          setError('Failed to load payment system. Please try again later.');
+        }}
       />
       <ToastContainer position="top-right" autoClose={3000} />
       <main className="min-h-screen bg-gray-50">
