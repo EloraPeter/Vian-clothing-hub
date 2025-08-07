@@ -576,14 +576,33 @@ export default function CheckoutPage() {
         // }
 
         // Send the receipt email in a non-blocking manner
-        sendReceiptEmail({
-          email: profile?.email || user.email,
-          order: { ...orderData, items: cart, address, total: totalPrice + shippingFee, shipping_fee: shippingFee },
-          receiptUrl: '',
-        }).catch((emailError) => {
-          // Log email errors but do not interrupt the order process
-          console.error('Failed to send receipt email:', emailError.message);
-        });
+       fetch('/api/send-receipt-email', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    email: profile?.email || user.email,
+    order: {
+      ...orderData,
+      items: cart,
+      address,
+      total: totalPrice + shippingFee,
+      shipping_fee: shippingFee,
+    },
+    receiptUrl: '',
+  }),
+})
+  .then((res) => res.json())
+  .then((data) => {
+    if (data.error) {
+      console.error('Failed to send receipt email:', data.error);
+    } else {
+      console.log('Receipt email sent successfully');
+    }
+  })
+  .catch((emailError) => {
+    console.error('Failed to send receipt email:', emailError.message);
+  });
+
 
         clearCart();
         router.push('/orders');
