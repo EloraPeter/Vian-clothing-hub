@@ -177,7 +177,7 @@ export default function Dashboard() {
       currency: "NGN",
       ref: `VIAN_${invoice.id}_${Date.now()}`,
       callback: async (response) => {
-        const { error, data } = await supabase.functions.invoke("verify-payment", {
+        const { error, data } = await supabase.functions.invoke("verify-paystack-payment", {
           body: { reference: response.reference },
         });
         if (error || !data.success) {
