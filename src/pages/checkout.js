@@ -554,6 +554,31 @@ export default function CheckoutPage() {
           console.error('Supabase insert error:', error.message, error.details, error.hint);
           throw error;
         }
+        // Generate the receipt PDF by calling the generate-receipt API
+        const receiptResponse = await fetch('/api/generate-receipt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order: { ...orderData, items: cart, address, total: totalPrice + shippingFee, shipping_fee: shippingFee }, user }),
+        });
+
+        let receiptUrl = '';
+        if (receiptResponse.ok) {
+          const receiptData = await receiptResponse.json();
+          receiptUrl = receiptData.url;
+        } else {
+          console.error('Failed to generate receipt:', await receiptResponse.text());
+        }
+
+        // Send the receipt email in a non-blocking manner
+        sendReceiptEmail({
+          email: profile?.email || user.email,
+          order: { ...orderData, items: cart, address, total: totalPrice + shippingFee, shipping_fee: shippingFee },
+          receiptUrl,
+        }).catch((emailError) => {
+          // Log email errors but do not interrupt the order process
+          console.error('Failed to send receipt email:', emailError.message);
+        });
+
         clearCart();
         router.push('/orders');
         toast.success('Payment successful! Order placed.');
