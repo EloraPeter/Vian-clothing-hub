@@ -1,4 +1,3 @@
-// pages/pay-invoice.js
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/router";
@@ -48,6 +47,43 @@ export default function PayInvoice() {
     fetchInvoice();
   }, [invoice_id, router]);
 
+  const generateReceiptPDF = async (invoice, paymentReference) => {
+    const receiptData = {
+      RECEIPTID: crypto.randomUUID(),
+      INVOICEID: invoice.id,
+      ORDERID: invoice.order_id,
+      PAYMENTREF: paymentReference,
+      FULLNAME: invoice.custom_orders.full_name,
+      FABRIC: invoice.custom_orders.fabric,
+      STYLE: invoice.custom_orders.style,
+      ADDRESS: invoice.custom_orders.address,
+      DEPOSIT: Number(invoice.custom_orders.deposit || 5000).toLocaleString(),
+      BALANCE: Number(invoice.amount - (invoice.custom_orders.deposit || 5000)).toLocaleString(),
+      AMOUNT: Number(invoice.amount).toLocaleString(),
+      DATE: new Date().toLocaleDateString(),
+    };
+
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-pdf", {
+        body: { type: "receipt", data: receiptData },
+      });
+
+      if (error) throw error;
+      return { pdfUrl: data.pdfUrl, receiptId: receiptData.RECEIPTID };
+    } catch (supabaseError) {
+      console.warn("Falling back to API endpoint for PDF generation:", supabaseError.message);
+      const response = await fetch("/api/generate-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "receipt", data: receiptData }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Failed to generate PDF");
+      return { pdfUrl: result.pdfUrl, receiptId: receiptData.RECEIPTID };
+    }
+  };
+
   const initiatePayment = async () => {
     if (!window.PaystackPop) {
       alert("Paystack SDK not loaded.");
@@ -62,14 +98,12 @@ export default function PayInvoice() {
       ref: `VIAN_${invoice.id}_${Date.now()}`,
       callback: async (response) => {
         try {
-          // Try Supabase Edge Function first
           let verificationResult;
           try {
             const { data, error } = await supabase.functions.invoke("verify-paystack-payment", {
               body: { reference: response.reference },
               headers: { "Content-Type": "application/json" },
             });
-
             if (error) throw error;
             verificationResult = data;
           } catch (supabaseError) {
@@ -98,33 +132,14 @@ export default function PayInvoice() {
             .eq("id", invoice.id);
           if (updateError) throw updateError;
 
-          const receiptData = {
-            RECEIPTID: crypto.randomUUID(),
-            INVOICEID: invoice.id,
-            ORDERID: invoice.order_id,
-            PAYMENTREF: response.reference,
-            FULLNAME: invoice.custom_orders.full_name,
-            FABRIC: invoice.custom_orders.fabric,
-            STYLE: invoice.custom_orders.style,
-            ADDRESS: invoice.custom_orders.address,
-            DEPOSIT: Number(invoice.custom_orders.deposit || 5000).toLocaleString(),
-            BALANCE: Number(invoice.amount - (invoice.custom_orders.deposit || 5000)).toLocaleString(),
-            AMOUNT: Number(invoice.amount).toLocaleString(),
-            DATE: new Date().toLocaleDateString(),
-          };
-
-          const { data: pdfData, error: pdfError } = await supabase.functions.invoke("generate-pdf", {
-            body: { type: "receipt", data: receiptData },
-          });
-          if (pdfError) throw pdfError;
-
+          const { pdfUrl, receiptId } = await generateReceiptPDF(invoice, response.reference);
           const receipt = {
-            id: receiptData.RECEIPTID,
+            id: receiptId,
             invoice_id: invoice.id,
             user_id: invoice.user_id,
             amount: invoice.amount,
             payment_reference: response.reference,
-            pdf_url: pdfData.pdfUrl,
+            pdf_url: pdfUrl,
           };
 
           const { error: receiptError } = await supabase.from("receipts").insert([receipt]);
@@ -159,7 +174,7 @@ export default function PayInvoice() {
             <p>Total Amount: ₦${Number(invoice.amount).toLocaleString()}</p>
             <p>Payment Reference: ${response.reference}</p>
             <p>Date: ${new Date().toLocaleDateString()}</p>
-            <p><a href="${pdfData.pdfUrl}">View/Download Receipt</a></p>
+            <p><a href="${pdfUrl}">View/Download Receipt</a></p>
             <p>Delivery has started. Please check the app for updates: <a href="https://your-app-url.com/dashboard">Go to Dashboard</a></p>
           `;
 

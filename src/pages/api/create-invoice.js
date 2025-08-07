@@ -1,5 +1,6 @@
 // pages/api/create-invoice.js
 import { supabase } from '@/lib/supabaseClient';
+import crypto from 'crypto';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
@@ -21,7 +22,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Generate PDF for the invoice
     const invoiceData = {
       INVOICEID: crypto.randomUUID(),
       ORDERID: order_id,
@@ -33,18 +33,28 @@ export default async function handler(req, res) {
       BALANCE: Number(amount - (custom_orders.deposit || 5000)).toLocaleString(),
       AMOUNT: Number(amount).toLocaleString(),
       DATE: new Date().toLocaleDateString(),
+      products: custom_orders.products || [{ product_id: 'custom', name: 'Custom Order', price: amount }],
     };
 
-    const { data: pdfData, error: pdfError } = await supabase.functions.invoke("generate-pdf", {
-      body: { type: "invoice", data: invoiceData },
-    });
-
-    if (pdfError) {
-      console.error("Invoice PDF generation failed:", pdfError.message);
-      throw new Error("Failed to generate invoice PDF");
+    let pdfData;
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-pdf", {
+        body: { type: "invoice", data: invoiceData },
+      });
+      if (error) throw error;
+      pdfData = data;
+    } catch (supabaseError) {
+      console.warn("Falling back to API endpoint for PDF generation:", supabaseError.message);
+      const response = await fetch("/api/generate-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "invoice", data: invoiceData }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Failed to generate PDF");
+      pdfData = result;
     }
 
-    // Insert invoice into database
     const { data: invoice, error: invoiceError } = await supabase
       .from("invoices")
       .insert([
@@ -64,7 +74,6 @@ export default async function handler(req, res) {
       throw new Error("Failed to create invoice");
     }
 
-    // Send email notification
     const paymentLink = `https://your-app-url.com/pay-invoice?invoice_id=${invoice.id}`;
     const emailBody = `
       <h2>New Invoice Created</h2>
@@ -82,7 +91,7 @@ export default async function handler(req, res) {
       <p>Date: ${new Date().toLocaleDateString()}</p>
       <p><a href="${pdfData.pdfUrl}">View/Download Invoice</a></p>
       <p><a href="${paymentLink}" style="background-color: #6b46c1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Pay Now</a></p>
-      <p>You can also view and pay this invoice from your dashboard: <a href="https://your-app-url.com/dashboard">Go to Dashboard</a></p>
+      <p>You can also view and pay this invoice from your dashboard: <a href="https://vianclothinghub.com.ng/dashboard">Go to Dashboard</a></p>
     `;
 
     const emailResponse = await fetch("/api/send-email", {
@@ -98,7 +107,6 @@ export default async function handler(req, res) {
     const emailResult = await emailResponse.json();
     if (!emailResponse.ok) {
       console.error("Email sending failed:", emailResult.error);
-      // Don't fail the request, just log the error
     }
 
     return res.status(200).json({ message: "Invoice created successfully", invoice });
