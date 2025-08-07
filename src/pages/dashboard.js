@@ -10,6 +10,7 @@ import zxcvbn from "zxcvbn";
 import Script from "next/script";
 import DressLoader from "@/components/DressLoader";
 import Link from "next/link";
+import { initiatePayment } from "@/lib/payment";
 import { FaUser, FaBox, FaFileInvoice, FaReceipt, FaHeart, FaSignOutAlt, FaBars } from "react-icons/fa";
 
 export default function Dashboard() {
@@ -129,13 +130,23 @@ export default function Dashboard() {
   };
 
   const sendEmailNotification = async (email, subject, body) => {
-    const { error } = await supabase.functions.invoke("send-email", {
-      body: { to: email, subject, html: body },
-    });
-    if (error) {
+    try {
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: email, subject, html: body }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        console.error("Email sending failed:", result.error);
+        throw new Error(result.error || "Failed to send email");
+      }
+      console.log("Email sent successfully:", result.message);
+    } catch (error) {
       console.error("Error sending email:", error.message);
     }
   };
+
 
   const generateReceiptPDF = async (invoice, paymentReference) => {
     const receiptData = {
