@@ -326,7 +326,7 @@ export default function Dashboard() {
             <p>Payment Reference: ${response.reference}</p>
             <p>Date: ${new Date().toLocaleDateString()}</p>
             <p><a href="${pdfUrl}">View/Download Receipt</a></p>
-            <p>Delivery has started. Please check the app for updates: [Your App URL]</p>
+            <p>Delivery has started. Please check the app for updates: [vianclothinghub.com.ng/dashboard]</p>
           `;
           await sendEmailNotification(profile.email, "Payment Receipt", emailBody);
 
