@@ -291,89 +291,122 @@ export default function AdminPage() {
     }
   };
 
-  async function updateCustomOrderStatus(id, newStatus) {
-    const price = orderPrices[id] || 0;
-    if (newStatus === "in progress" && !price) {
-      alert("Please set a price before marking as in progress.");
-      return;
-    }
+ async function updateCustomOrderStatus(id, newStatus) {
+  const price = orderPrices[id] || 0;
+  if (newStatus === "in progress" && !price) {
+    alert("Please set a price before marking as in progress.");
+    return;
+  }
 
-    const updates = { status: newStatus };
-    if (newStatus === "in progress") {
-      updates.price = parseFloat(price);
-    }
+  const updates = { status: newStatus };
+  if (newStatus === "in progress") {
+    updates.price = parseFloat(price);
+  }
 
-    const { error, data } = await supabase
-      .from("custom_orders")
-      .update(updates)
-      .eq("id", id)
-      .select()
-      .single();
+  const { error, data } = await supabase
+    .from("custom_orders")
+    .update(updates)
+    .eq("id", id)
+    .select("*, profiles(email)") // Join with profiles to get email
+    .single();
 
-    if (error) {
-      alert("Error updating status: " + error.message);
-    } else {
-      setOrders((prev) =>
-        prev.map((order) =>
-          order.id === id ? { ...order, ...updates } : order
-        )
-      );
-      if (newStatus === "in progress") {
-        const order = data;
-        try {
-          const { pdfUrl, invoiceId } = await generateInvoicePDF(order, price);
-          const { error: invoiceError } = await supabase
-            .from("invoices")
-            .insert([
-              {
-                id: invoiceId,
-                order_id: order.id,
-                user_id: order.user_id,
-                amount: parseFloat(price),
-                pdf_url: pdfUrl,
-              },
-            ]);
-          if (invoiceError) {
-            alert("Error creating invoice: " + invoiceError.message);
-          } else {
-            const notificationText = `Your custom order (ID: ${order.id}) is now in progress! View your invoice: ${pdfUrl}`;
-            await sendWhatsAppNotification(order.phone, notificationText);
-            const emailBody = `
-              <h2>Order Update</h2>
-              <p>Your custom order (ID: ${order.id}) is now in progress.</p>
-              <p><strong>Invoice</strong></p>
-              <p>Order ID: ${order.id}</p>
-              <p>Customer: ${order.full_name}</p>
-              <p>Fabric: ${order.fabric || "N/A"}</p>
-              <p>Style: ${order.style || "N/A"}</p>
-              <p>Delivery Address: ${order.address || "N/A"}</p>
-              <p>Deposit: ₦${Number(order.deposit || 0).toLocaleString(
-              "en-NG"
-            )}</p>
-              <p>Balance: ₦${Number(
-              price - (order.deposit || 0)
-            ).toLocaleString("en-NG")}</p>
-              <p>Total Amount: ₦${Number(price).toLocaleString("en-NG")}</p>
-              <p>Date: ${new Date().toLocaleDateString("en-GB")}</p>
-              <p><a href="${pdfUrl}">View/Download Invoice</a></p>
-              <p>Please check the app for more details: vianclothinghub.com.ng</p>
-            `;
-            await sendEmailNotification(
-              order.email,
-              "Order In Progress - Invoice",
-              emailBody
-            );
-            await createInAppNotification(
-              order.user_id,
-              `Your order (ID: ${order.id}) is now in progress. Check your dashboard for the invoice.`
-            );
-          }
-        } catch (error) {
-          alert("Error generating PDF: " + error.message);
-        }
+  if (error) {
+    console.error("Error updating status:", error.message);
+    alert("Error updating status: " + error.message);
+    return;
+  }
+
+  setOrders((prev) =>
+    prev.map((order) =>
+      order.id === id ? { ...order, ...updates } : order
+    )
+  );
+
+  if (newStatus === "in progress") {
+    const order = data;
+    try {
+      const { pdfUrl, invoiceId } = await generateInvoicePDF(order, price);
+      const { error: invoiceError } = await supabase
+        .from("invoices")
+        .insert([
+          {
+            id: invoiceId,
+            order_id: order.id,
+            user_id: order.user_id,
+            amount: parseFloat(price),
+            pdf_url: pdfUrl,
+          },
+        ]);
+
+      if (invoiceError) {
+        console.error("Error creating invoice:", invoiceError.message);
+        alert("Error creating invoice: " + invoiceError.message);
+        return;
       }
+
+      const paymentLink = `https://your-app-url.com/pay-invoice?invoice_id=${invoiceId}`;
+      const notificationText = `Your custom order (ID: ${order.id}) is now in progress! View your invoice: ${pdfUrl}`;
+      await sendWhatsAppNotification(order.phone, notificationText);
+
+      const email = order.profiles?.email || order.email;
+      if (!email) {
+        console.error("No email found for order:", order.id);
+        alert("Failed to send invoice email: No email address found");
+        return;
+      }
+
+      const emailBody = `
+        <h2>Order Update</h2>
+        <p>Dear ${order.full_name},</p>
+        <p>Your custom order (ID: ${order.id}) is now in progress.</p>
+        <p><strong>Invoice Details</strong></p>
+        <p>Invoice ID: ${invoiceId}</p>
+        <p>Order ID: ${order.id}</p>
+        <p>Fabric: ${order.fabric || "N/A"}</p>
+        <p>Style: ${order.style || "N/A"}</p>
+        <p>Delivery Address: ${order.address || "N/A"}</p>
+        <p>Deposit: ₦${Number(order.deposit || 0).toLocaleString("en-NG")}</p>
+        <p>Balance: ₦${Number(price - (order.deposit || 0)).toLocaleString("en-NG")}</p>
+        <p>Total Amount: ₦${Number(price).toLocaleString("en-NG")}</p>
+        <p>Date: ${new Date().toLocaleDateString("en-GB")}</p>
+        <p><a href="${pdfUrl}">View/Download Invoice</a></p>
+        <p><a href="${paymentLink}" style="background-color: #6b46c1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Pay Now</a></p>
+        <p>Please check the app for more details: <a href="https://your-app-url.com/dashboard">Go to Dashboard</a></p>
+      `;
+
+      try {
+        const emailResponse = await fetch("/api/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: email,
+            subject: "Order In Progress - Invoice",
+            html: emailBody,
+          }),
+        });
+
+        const emailResult = await emailResponse.json();
+        if (!emailResponse.ok) {
+          console.error("Email sending failed:", emailResult.error);
+          alert("Failed to send invoice email: " + emailResult.error);
+        } else {
+          console.log("Invoice email sent successfully:", emailResult.message);
+        }
+      } catch (emailError) {
+        console.error("Error sending email:", emailError.message);
+        alert("Error sending invoice email: " + emailError.message);
+      }
+
+      await createInAppNotification(
+        order.user_id,
+        `Your order (ID: ${order.id}) is now in progress. Check your dashboard for the invoice: ${paymentLink}`
+      );
+    } catch (error) {
+      console.error("Error generating PDF or invoice:", error.message);
+      alert("Error generating PDF: " + error.message);
     }
   }
+}
 
   async function updateProductOrderStatus(id, newStatus) {
     const { error } = await supabase
