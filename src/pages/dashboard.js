@@ -164,18 +164,38 @@ export default function Dashboard() {
       DATE: new Date().toLocaleDateString(),
     };
 
-    const { data, error } = await supabase.functions.invoke("generate-pdf", {
-      body: { type: "receipt", data: receiptData },
-    });
+    try {
+      // Try Supabase Edge Function first
+      const { data, error } = await supabase.functions.invoke("generate-pdf", {
+        body: { type: "receipt", data: receiptData },
+      });
 
-    if (error) {
-      throw new Error(`Receipt PDF generation failed: ${error.message}`);
+      if (error) {
+        console.warn("Supabase PDF generation error:", error.message);
+        throw error;
+      }
+
+      return { pdfUrl: data.pdfUrl, receiptId: receiptData.RECEIPTID };
+    } catch (supabaseError) {
+      console.warn("Falling back to API endpoint for PDF generation:", supabaseError.message);
+      // Fallback to /api/generate-pdf
+      const response = await fetch("/api/generate-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "receipt", data: receiptData }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        console.error("API PDF generation failed:", result.error);
+        throw new Error(result.error || "Failed to generate PDF");
+      }
+
+      return { pdfUrl: result.pdfUrl, receiptId: receiptData.RECEIPTID };
     }
-
-    return { pdfUrl: data.pdfUrl, receiptId: receiptData.RECEIPTID };
   };
-
- const initiatePayment = async (invoice) => {
+  
+  const initiatePayment = async (invoice) => {
     if (!window.PaystackPop) {
       alert("Paystack SDK not loaded.");
       return;
@@ -322,7 +342,7 @@ export default function Dashboard() {
     });
     handler.openIframe();
   };
-  
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/auth");
@@ -374,8 +394,8 @@ export default function Dashboard() {
                     setIsSidebarOpen(false);
                   }}
                   className={`w-full flex items-center space-x-2 p-3 rounded-lg text-left transition-colors ${activeSection === item.id
-                      ? "bg-purple-100 text-purple-800"
-                      : "text-gray-600 hover:bg-purple-50 hover:text-purple-800"
+                    ? "bg-purple-100 text-purple-800"
+                    : "text-gray-600 hover:bg-purple-50 hover:text-purple-800"
                     }`}
                 >
                   {item.icon}
