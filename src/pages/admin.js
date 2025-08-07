@@ -413,22 +413,79 @@ export default function AdminPage() {
         }
 
         const emailBody = `
-        <h2>Order Update</h2>
-        <p>Dear ${order.full_name},</p>
-        <p>Your custom order (ID: ${order.id}) is now in progress.</p>
-        <p><strong>Invoice Details</strong></p>
-        <p>Invoice ID: ${invoiceId}</p>
-        <p>Order ID: ${order.id}</p>
-        <p>Fabric: ${order.fabric || "N/A"}</p>
-        <p>Style: ${order.style || "N/A"}</p>
-        <p>Delivery Address: ${order.address || "N/A"}</p>
-        <p>Deposit: ₦${Number(order.deposit || 0).toLocaleString("en-NG")}</p>
-        <p>Balance: ₦${Number(price - (order.deposit || 0)).toLocaleString("en-NG")}</p>
-        <p>Total Amount: ₦${Number(price).toLocaleString("en-NG")}</p>
-        <p>Date: ${new Date().toLocaleDateString("en-GB")}</p>
-        <p><a href="${pdfUrl}">View/Download Invoice</a></p>
-        <p><a href="${paymentLink}" style="background-color: #6b46c1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Pay Now</a></p>
-        <p>Please check the app for more details: <a href="https://vianclothinghub.com.ng/dashboard">Go to Dashboard</a></p>
+        <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vian Clothing Hub - Order Update</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; color: #333; line-height: 1.6; background-color: #f4f4f4;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border: 1px solid #ddd; border-radius: 8px;">
+          <!-- Header -->
+          <tr>
+            <td style="text-align: center; border-bottom: 2px solid #800080; padding: 20px; margin-bottom: 20px;">
+              <img src="https://vian-clothing-hub.vercel.app/logo.svg" alt="Vian Clothing Hub Logo" style="max-width: 100px; display: block; margin: 0 auto;" />
+              <h1 style="color: #800080; margin: 10px 0; font-size: 24px;">Vian Clothing Hub</h1>
+              <h2 style="font-size: 20px; margin: 0 0 10px;">Order Update</h2>
+              <p style="font-size: 14px; margin: 0;">Issued on: ${new Date().toLocaleDateString('en-GB')}</p>
+            </td>
+          </tr>
+          <!-- Details -->
+          <tr>
+            <td style="padding: 0 20px 20px;">
+              <p style="font-size: 16px; margin: 0 0 10px;">Dear ${order.full_name},</p>
+              <p style="font-size: 14px; margin: 0 0 20px;">Your custom order (ID: ${order.id}) is now in progress.</p>
+              <div style="margin-bottom: 20px;">
+                <p style="font-size: 14px; margin: 5px 0;"><strong>Invoice ID:</strong> ${invoiceId}</p>
+                <p style="font-size: 14px; margin: 5px 0;"><strong>Order ID:</strong> ${order.id}</p>
+                <p style="font-size: 14px; margin: 5px 0;"><strong>Fabric:</strong> ${order.fabric || "N/A"}</p>
+                <p style="font-size: 14px; margin: 5px 0;"><strong>Style:</strong> ${order.style || "N/A"}</p>
+                <p style="font-size: 14px; margin: 5px 0;"><strong>Delivery Address:</strong> ${order.address || "N/A"}</p>
+                <p style="font-size: 14px; margin: 5px 0;"><strong style="color: #800080;">Deposit:</strong> ₦${Number(order.deposit || 0).toLocaleString("en-NG")}</p>
+                <p style="font-size: 14px; margin: 5px 0;"><strong style="color: #800080;">Balance:</strong> ₦${Number(price - (order.deposit || 0)).toLocaleString("en-NG")}</p>
+                <p style="font-size: 16px; margin: 5px 0;"><strong style="color: #800080;">Total Amount:</strong> ₦${Number(price).toLocaleString("en-NG")}</p>
+              </div>
+              <!-- Call-to-Action Buttons -->
+              <div style="text-align: center; margin: 20px 0;">
+                <a href="${pdfUrl}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #800080; color: #fff; text-decoration: none; border-radius: 5px; margin-right: 10px;">View/Download Invoice</a>
+                <a href="${paymentLink}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #800080; color: #fff; text-decoration: none; border-radius: 5px;">Pay Now</a>
+              </div>
+              <p style="font-size: 14px; margin: 0 0 20px; text-align: center;">
+                Please check the app for more details: 
+                <a href="https://vianclothinghub.com.ng/dashboard" style="color: #800080; text-decoration: none;">Go to Dashboard</a>
+              </p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="text-align: center; font-size: 12px; color: #666; border-top: 1px solid #ddd; padding: 20px;">
+              <p style="margin: 0 0 10px;">Thank you for choosing Vian Clothing Hub!</p>
+              <p style="margin: 0 0 10px;">
+                🚫 Please do not reply to this email. This inbox is not monitored.<br>
+                For support, contact us at <a href="mailto:support@vianclothinghub.com.ng" style="color: #800080; text-decoration: none;">support@vianclothinghub.com.ng</a>
+              </p>
+              <div style="margin: 0 0 10px;">
+                <a href="https://instagram.com/vianclothinghub" style="color: #800080; text-decoration: none; margin: 0 5px;">Instagram</a> |
+                <a href="https://twitter.com/vianclothinghub" style="color: #800080; text-decoration: none; margin: 0 5px;">Twitter</a> |
+                <a href="https://facebook.com/vianclothinghub" style="color: #800080; text-decoration: none; margin: 0 5px;">Facebook</a>
+              </div>
+              <p style="margin: 0;">
+                <a href="https://vianclothinghub.com.ng/shop" style="color: #800080; text-decoration: none;">Shop Now</a> | 
+                <a href="https://vianclothinghub.com.ng" style="color: #800080; text-decoration: none;">Vian Clothing Hub</a>
+              </p>
+              <p style="margin: 10px 0 0;">Contact us at: <a href="mailto:info@vianclothinghub.com.ng" style="color: #800080; text-decoration: none;">info@vianclothinghub.com.ng</a> | +234 808 752 2801</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
       `;
 
         try {
