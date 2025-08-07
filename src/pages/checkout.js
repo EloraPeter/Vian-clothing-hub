@@ -511,6 +511,11 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (cart.some(item => item.is_out_of_stock)) {
+    setError('Cannot place order: some items are out of stock');
+    return;
+  }
+
 
     if (!address) {
       setError('Please enter or select a delivery address.');

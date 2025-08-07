@@ -21,12 +21,6 @@ const verifyPayment = async ({ reference, setError, setIsPaying, orderCallback, 
       }
 
       console.log('Paystack verification response:', json);
-      console.log('Check condition values:', {
-        status: json.status,
-        statusType: typeof json.status,
-        dataStatus: json.data?.status,
-        dataStatusType: typeof json.data?.status
-      });
 
       if (!json || !json.data || (json.status !== true && json.status !== 'true') || json.data.status !== 'success') {
         console.error('Verification failed:', { json });
@@ -48,15 +42,16 @@ const verifyPayment = async ({ reference, setError, setIsPaying, orderCallback, 
     }
 
     try {
+      console.log('Calling orderCallback with reference:', reference);
       await orderCallback(reference);
+      setIsPaying(false);
+      return true;
     } catch (err) {
       console.error('Order callback failed:', err?.message || err);
       setError('Order placement failed. Please contact support.');
       setIsPaying(false);
       return false;
     }
-    setIsPaying(false);
-    return true;
   } catch (err) {
     console.error('Payment verification error:', err?.message || err);
     setError('Payment verification failed: ' + (err?.message || 'Unknown error'));
@@ -64,9 +59,6 @@ const verifyPayment = async ({ reference, setError, setIsPaying, orderCallback, 
     return false;
   }
 };
-
-
-
 
 export const initiatePayment = ({
   email,
@@ -119,16 +111,6 @@ export const initiatePayment = ({
       return;
     }
 
-    // Store parameters for callback
-    const callbackParams = { setError, setIsPaying, orderCallback, useApiFallback };
-
-    // Define a simple, serializable callback function
-    function paystackCallback(response) {
-      verifyPayment({ reference: response.reference, ...callbackParams })
-        .then((success) => resolve(success))
-        .catch((err) => reject(err));
-    }
-
     try {
       const reference = `VIAN_ORDER_${Date.now()}`;
       console.log('Initiating Paystack payment with:', {
@@ -145,18 +127,27 @@ export const initiatePayment = ({
         amount: totalPrice * 100,
         currency: 'NGN',
         reference,
-        callback: (response) => {
-          verifyPayment({ reference: response.reference, setError, setIsPaying, orderCallback, useApiFallback })
-            .then((success) => resolve(success))
-            .catch((err) => reject(err));
+        callback: async (response) => {
+          console.log('Paystack callback response:', response);
+          try {
+            const success = await verifyPayment({
+              reference: response.reference,
+              setError,
+              setIsPaying,
+              orderCallback,
+              useApiFallback,
+            });
+            resolve(success);
+          } catch (err) {
+            reject(err);
+          }
         },
-        onCancel: () => {
+        onClose: () => {
           setError('Payment cancelled.');
           setIsPaying(false);
           reject(new Error('Payment cancelled'));
         },
       });
-
     } catch (err) {
       console.error('Paystack error:', err.message);
       setError('Failed to initialize payment: ' + err.message);
