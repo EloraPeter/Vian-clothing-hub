@@ -503,6 +503,12 @@ export default function CheckoutPage() {
     setIsPaying(true);
     setError(null);
 
+    if (!isPaystackLoaded) {
+    setError('Payment system is not ready. Please refresh the page.');
+    setIsPaying(false);
+    return;
+  }
+
     if (!address) {
       setError('Please enter or select a delivery address.');
       setIsPaying(false);
