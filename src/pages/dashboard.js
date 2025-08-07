@@ -130,22 +130,22 @@ export default function Dashboard() {
   };
 
   const sendEmailNotification = async (email, subject, body) => {
-    try {
-      const response = await fetch("/api/send-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: email, subject, html: body }),
-      });
-      const result = await response.json();
-      if (!response.ok) {
-        console.error("Email sending failed:", result.error);
-        throw new Error(result.error || "Failed to send email");
-      }
-      console.log("Email sent successfully:", result.message);
-    } catch (error) {
-      console.error("Error sending email:", error.message);
+  try {
+    const response = await fetch("/api/send-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ to: email, subject, html: body }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      console.error("Email sending failed:", result.error);
+      throw new Error(result.error || "Failed to send email");
     }
-  };
+    console.log("Email sent successfully:", result.message);
+  } catch (error) {
+    console.error("Error sending email:", error.message);
+  }
+};
 
 
   const generateReceiptPDF = async (invoice, paymentReference) => {
@@ -194,7 +194,7 @@ export default function Dashboard() {
       return { pdfUrl: result.pdfUrl, receiptId: receiptData.RECEIPTID };
     }
   };
-  
+
   const initiatePayment = async (invoice) => {
     if (!window.PaystackPop) {
       alert("Paystack SDK not loaded.");
