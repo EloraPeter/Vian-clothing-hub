@@ -248,22 +248,79 @@ export default function AdminPage() {
       // Send email notification
       const paymentLink = `https://vianclothinghub.com.ng/pay-invoice?invoice_id=${invoice.id}`;
       const emailBody = `
-      <h2>New Invoice Created</h2>
-      <p>Dear ${order.full_name},</p>
-      <p>A new invoice has been created for your order. Please review the details below and make the payment at your earliest convenience.</p>
-      <p><strong>Invoice Details</strong></p>
-      <p>Invoice ID: ${invoice.id}</p>
-      <p>Order ID: ${order.id}</p>
-      <p>Fabric: ${order.fabric}</p>
-      <p>Style: ${order.style}</p>
-      <p>Delivery Address: ${order.address}</p>
-      <p>Deposit: ₦${Number(order.deposit || 0).toLocaleString("en-NG", { minimumFractionDigits: 0 })}</p>
-      <p>Balance: ₦${Number(amount - (order.deposit || 0)).toLocaleString("en-NG", { minimumFractionDigits: 0 })}</p>
-      <p>Total Amount: ₦${Number(amount).toLocaleString("en-NG", { minimumFractionDigits: 0 })}</p>
-      <p>Date: ${new Date().toLocaleDateString("en-GB")}</p>
-      <p><a href="${pdfData.pdfUrl}">View/Download Invoice</a></p>
-      <p><a href="${paymentLink}" style="background-color: #6b46c1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Pay Now</a></p>
-      <p>You can also view and pay this invoice from your dashboard: <a href="https://vianclothinghub.com.ng/dashboard">Go to Dashboard</a></p>
+      <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vian Clothing Hub - New Invoice</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; color: #333; line-height: 1.6; background-color: #f4f4f4;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border: 1px solid #ddd; border-radius: 8px;">
+          <!-- Header -->
+          <tr>
+            <td style="text-align: center; border-bottom: 2px solid #800080; padding: 20px; margin-bottom: 20px;">
+              <img src="https://vian-clothing-hub.vercel.app/logo.svg" alt="Vian Clothing Hub Logo" style="max-width: 100px; display: block; margin: 0 auto;" />
+              <h1 style="color: #800080; margin: 10px 0; font-size: 24px;">Vian Clothing Hub</h1>
+              <h2 style="font-size: 20px; margin: 0 0 10px;">New Invoice Created</h2>
+              <p style="font-size: 14px; margin: 0;">Issued on: ${new Date().toLocaleDateString('en-GB')}</p>
+            </td>
+          </tr>
+          <!-- Details -->
+          <tr>
+            <td style="padding: 0 20px 20px;">
+              <p style="font-size: 16px; margin: 0 0 10px;">Dear ${order.full_name},</p>
+              <p style="font-size: 14px; margin: 0 0 20px;">A new invoice has been created for your order. Please review the details below and make the payment at your earliest convenience.</p>
+              <div style="margin-bottom: 20px;">
+                <p style="font-size: 14px; margin: 5px 0;"><strong>Invoice ID:</strong> ${invoice.id}</p>
+                <p style="font-size: 14px; margin: 5px 0;"><strong>Order ID:</strong> ${order.id}</p>
+                <p style="font-size: 14px; margin: 5px 0;"><strong>Fabric:</strong> ${order.fabric}</p>
+                <p style="font-size: 14px; margin: 5px 0;"><strong>Style:</strong> ${order.style}</p>
+                <p style="font-size: 14px; margin: 5px 0;"><strong>Delivery Address:</strong> ${order.address}</p>
+                <p style="font-size: 14px; margin: 5px 0;"><strong style="color: #800080;">Deposit:</strong> ₦${Number(order.deposit || 0).toLocaleString("en-NG", { minimumFractionDigits: 0 })}</p>
+                <p style="font-size: 14px; margin: 5px 0;"><strong style="color: #800080;">Balance:</strong> ₦${Number(amount - (order.deposit || 0)).toLocaleString("en-NG", { minimumFractionDigits: 0 })}</p>
+                <p style="font-size: 16px; margin: 5px 0;"><strong style="color: #800080;">Total Amount:</strong> ₦${Number(amount).toLocaleString("en-NG", { minimumFractionDigits: 0 })}</p>
+              </div>
+              <!-- Call-to-Action Buttons -->
+              <div style="text-align: center; margin: 20px 0;">
+                <a href="${pdfData.pdfUrl}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #800080; color: #fff; text-decoration: none; border-radius: 5px; margin-right: 10px;">View/Download Invoice</a>
+                <a href="${paymentLink}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #800080; color: #fff; text-decoration: none; border-radius: 5px;">Pay Now</a>
+              </div>
+              <p style="font-size: 14px; margin: 0 0 20px; text-align: center;">
+                You can also view and pay this invoice from your dashboard: 
+                <a href="https://vianclothinghub.com.ng/dashboard" style="color: #800080; text-decoration: none;">Go to Dashboard</a>
+              </p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="text-align: center; font-size: 12px; color: #666; border-top: 1px solid #ddd; padding: 20px;">
+              <p style="margin: 0 0 10px;">Thank you for choosing Vian Clothing Hub!</p>
+              <p style="margin: 0 0 10px;">
+                🚫 Please do not reply to this email. This inbox is not monitored.<br>
+                For support, contact us at <a href="mailto:support@vianclothinghub.com.ng" style="color: #800080; text-decoration: none;">support@vianclothinghub.com.ng</a>
+              </p>
+              <div style="margin: 0 0 10px;">
+                <a href="https://instagram.com/vianclothinghub" style="color: #800080; text-decoration: none; margin: 0 5px;">Instagram</a> |
+                <a href="https://twitter.com/vianclothinghub" style="color: #800080; text-decoration: none; margin: 0 5px;">Twitter</a> |
+                <a href="https://facebook.com/vianclothinghub" style="color: #800080; text-decoration: none; margin: 0 5px;">Facebook</a>
+              </div>
+              <p style="margin: 0;">
+                <a href="https://vianclothinghub.com.ng/shop" style="color: #800080; text-decoration: none;">Shop Now</a> | 
+                <a href="https://vianclothinghub.com.ng" style="color: #800080; text-decoration: none;">Vian Clothing Hub</a>
+              </p>
+              <p style="margin: 10px 0 0;">Contact us at: <a href="mailto:info@vianclothinghub.com.ng" style="color: #800080; text-decoration: none;">info@vianclothinghub.com.ng</a> | +234 808 752 2801</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
     `;
 
       const emailResponse = await fetch("/api/send-email", {
@@ -291,71 +348,71 @@ export default function AdminPage() {
     }
   };
 
- async function updateCustomOrderStatus(id, newStatus) {
-  const price = orderPrices[id] || 0;
-  if (newStatus === "in progress" && !price) {
-    alert("Please set a price before marking as in progress.");
-    return;
-  }
+  async function updateCustomOrderStatus(id, newStatus) {
+    const price = orderPrices[id] || 0;
+    if (newStatus === "in progress" && !price) {
+      alert("Please set a price before marking as in progress.");
+      return;
+    }
 
-  const updates = { status: newStatus };
-  if (newStatus === "in progress") {
-    updates.price = parseFloat(price);
-  }
+    const updates = { status: newStatus };
+    if (newStatus === "in progress") {
+      updates.price = parseFloat(price);
+    }
 
-  const { error, data } = await supabase
-    .from("custom_orders")
-    .update(updates)
-    .eq("id", id)
-    .select("*, profiles(email)") // Join with profiles to get email
-    .single();
+    const { error, data } = await supabase
+      .from("custom_orders")
+      .update(updates)
+      .eq("id", id)
+      .select("*, profiles(email)") // Join with profiles to get email
+      .single();
 
-  if (error) {
-    console.error("Error updating status:", error.message);
-    alert("Error updating status: " + error.message);
-    return;
-  }
+    if (error) {
+      console.error("Error updating status:", error.message);
+      alert("Error updating status: " + error.message);
+      return;
+    }
 
-  setOrders((prev) =>
-    prev.map((order) =>
-      order.id === id ? { ...order, ...updates } : order
-    )
-  );
+    setOrders((prev) =>
+      prev.map((order) =>
+        order.id === id ? { ...order, ...updates } : order
+      )
+    );
 
-  if (newStatus === "in progress") {
-    const order = data;
-    try {
-      const { pdfUrl, invoiceId } = await generateInvoicePDF(order, price);
-      const { error: invoiceError } = await supabase
-        .from("invoices")
-        .insert([
-          {
-            id: invoiceId,
-            order_id: order.id,
-            user_id: order.user_id,
-            amount: parseFloat(price),
-            pdf_url: pdfUrl,
-          },
-        ]);
+    if (newStatus === "in progress") {
+      const order = data;
+      try {
+        const { pdfUrl, invoiceId } = await generateInvoicePDF(order, price);
+        const { error: invoiceError } = await supabase
+          .from("invoices")
+          .insert([
+            {
+              id: invoiceId,
+              order_id: order.id,
+              user_id: order.user_id,
+              amount: parseFloat(price),
+              pdf_url: pdfUrl,
+            },
+          ]);
 
-      if (invoiceError) {
-        console.error("Error creating invoice:", invoiceError.message);
-        alert("Error creating invoice: " + invoiceError.message);
-        return;
-      }
+        if (invoiceError) {
+          console.error("Error creating invoice:", invoiceError.message);
+          alert("Error creating invoice: " + invoiceError.message);
+          return;
+        }
 
-      const paymentLink = `https://vianclothinghub.com.ng/pay-invoice?invoice_id=${invoiceId}`;
-      const notificationText = `Your custom order (ID: ${order.id}) is now in progress! View your invoice: ${pdfUrl}`;
-      await sendWhatsAppNotification(order.phone, notificationText);
+        const paymentLink = `https://vianclothinghub.com.ng/pay-invoice?invoice_id=${invoiceId}`;
+        const notificationText = `Your custom order (ID: ${order.id}) is now in progress! View your invoice: ${pdfUrl}`;
+        await sendWhatsAppNotification(order.phone, notificationText);
 
-      const email = order.profiles?.email || order.email;
-      if (!email) {
-        console.error("No email found for order:", order.id);
-        alert("Failed to send invoice email: No email address found");
-        return;
-      }
+        const email = order.profiles?.email || order.email;
+        if (!email) {
+          console.error("No email found for order:", order.id);
+          alert("Failed to send invoice email: No email address found");
+          return;
+        }
 
-      const emailBody = `
+        const emailBody = `
         <h2>Order Update</h2>
         <p>Dear ${order.full_name},</p>
         <p>Your custom order (ID: ${order.id}) is now in progress.</p>
@@ -374,39 +431,39 @@ export default function AdminPage() {
         <p>Please check the app for more details: <a href="https://vianclothinghub.com.ng/dashboard">Go to Dashboard</a></p>
       `;
 
-      try {
-        const emailResponse = await fetch("/api/send-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            to: email,
-            subject: "Order In Progress - Invoice",
-            html: emailBody,
-          }),
-        });
+        try {
+          const emailResponse = await fetch("/api/send-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              to: email,
+              subject: "Order In Progress - Invoice",
+              html: emailBody,
+            }),
+          });
 
-        const emailResult = await emailResponse.json();
-        if (!emailResponse.ok) {
-          console.error("Email sending failed:", emailResult.error);
-          alert("Failed to send invoice email: " + emailResult.error);
-        } else {
-          console.log("Invoice email sent successfully:", emailResult.message);
+          const emailResult = await emailResponse.json();
+          if (!emailResponse.ok) {
+            console.error("Email sending failed:", emailResult.error);
+            alert("Failed to send invoice email: " + emailResult.error);
+          } else {
+            console.log("Invoice email sent successfully:", emailResult.message);
+          }
+        } catch (emailError) {
+          console.error("Error sending email:", emailError.message);
+          alert("Error sending invoice email: " + emailError.message);
         }
-      } catch (emailError) {
-        console.error("Error sending email:", emailError.message);
-        alert("Error sending invoice email: " + emailError.message);
-      }
 
-      await createInAppNotification(
-        order.user_id,
-        `Your order (ID: ${order.id}) is now in progress. Check your dashboard for the invoice: ${paymentLink}`
-      );
-    } catch (error) {
-      console.error("Error generating PDF or invoice:", error.message);
-      alert("Error generating PDF: " + error.message);
+        await createInAppNotification(
+          order.user_id,
+          `Your order (ID: ${order.id}) is now in progress. Check your dashboard for the invoice: ${paymentLink}`
+        );
+      } catch (error) {
+        console.error("Error generating PDF or invoice:", error.message);
+        alert("Error generating PDF: " + error.message);
+      }
     }
   }
-}
 
   async function updateProductOrderStatus(id, newStatus) {
     const { error } = await supabase
