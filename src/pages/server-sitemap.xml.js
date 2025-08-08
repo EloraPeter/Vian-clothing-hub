@@ -1,6 +1,7 @@
+// pages/server-sitemap.xml.js
 import { getServerSideSitemap } from 'next-sitemap';
 
-export async function GET() {
+export const getServerSideProps = async (ctx) => {
   // Static pages
   const staticPages = [
     {
@@ -50,10 +51,15 @@ export async function GET() {
   // Dynamic pages (replace with your API or data source)
   let productFields = [];
   let orderFields = [];
+
   try {
-    // Example: Fetch products and orders from your API
-    const products = await fetch('https://your-api.com/products').then((res) => res.json()).catch(() => []);
-    const orders = await fetch('https://your-api.com/orders').then((res) => res.json()).catch(() => []);
+    const products = await fetch('https://your-api.com/products')
+      .then((res) => res.json())
+      .catch(() => []);
+
+    const orders = await fetch('https://your-api.com/orders')
+      .then((res) => res.json())
+      .catch(() => []);
 
     productFields = products.map((product) => ({
       loc: `https://www.vianclothinghub.com.ng/products/${product.slug || product.id}`,
@@ -72,8 +78,10 @@ export async function GET() {
     console.error('Failed to fetch dynamic routes:', error);
   }
 
-  // Combine static and dynamic pages
   const fields = [...staticPages, ...productFields, ...orderFields];
 
-  return getServerSideSitemap(fields);
-}
+  return getServerSideSitemap(ctx, fields);
+};
+
+// 👇 Dummy export required by Next.js Pages Router
+export default function Sitemap() {}
