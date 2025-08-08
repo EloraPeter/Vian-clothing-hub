@@ -14,7 +14,7 @@ export async function GET() {
   fields.push(
     { loc: 'https://www.vianclothinghub.com.ng/', lastmod: new Date().toISOString(), changefreq: 'daily', priority: 1.0 },
     { loc: 'https://www.vianclothinghub.com.ng/shop', lastmod: new Date().toISOString(), changefreq: 'weekly', priority: 0.8 },
-    { loc: 'https://www.vianclothinghub.com.ng/about', lastmod: new Date().toISOString(), changefreq: 'monthly', priority: 0.6 }
+    { loc: 'https://www.vianclothinghub.com.ng/checkout', lastmod: new Date().toISOString(), changefreq: 'monthly', priority: 0.6 }
   );
 
   return getServerSideSitemap(fields);

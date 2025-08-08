@@ -6,6 +6,7 @@
     "dev": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev",
     "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next build",
     "start": "next start",
+    "postbuild": "next-sitemap",
     "lint": "next lint"
   },
   "dependencies": {
