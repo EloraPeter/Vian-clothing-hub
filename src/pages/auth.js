@@ -55,11 +55,11 @@ export default function Auth() {
         return;
       }
 
-      // Step 2: Insert into "users" table
+      // Step 2: Insert into "profiles" table
       const userId = authData.user.id;
 
       const { error: insertError } = await supabase
-        .from("users")
+        .from("profiles")
         .insert([
           {
             id: userId,
