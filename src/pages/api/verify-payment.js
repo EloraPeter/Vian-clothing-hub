@@ -18,6 +18,15 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Place this at the very start of your verification API endpoint
+    const key = process.env.PAYSTACK_SECRET_KEY;
+
+    if (!key) {
+      console.error("❌ PAYSTACK_SECRET_KEY is NOT set in this environment.");
+    } else {
+      console.log(`✅ PAYSTACK_SECRET_KEY loaded: ${key.slice(0, 10)}...`);
+    }
+
     const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
       method: 'GET',
       headers: {
