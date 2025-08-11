@@ -24,7 +24,7 @@ export default function ProductOrdersTable({ productOrders, setProductOrders, it
           <tbody className="bg-white divide-y divide-gray-200">
             {currentProductOrders.map((order) => (
               <tr key={order.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.id}</td>
+                <td className="px-6 py-4 whitespace-wrap text-sm text-gray-900">{order.id}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.user_id}</td> {/* Assume user_id for customer */}
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {order.items?.map((item) => (
