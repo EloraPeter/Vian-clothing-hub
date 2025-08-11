@@ -505,9 +505,49 @@ export default function AdminPage() {
     }
   }
 
-  const updateProductOrderStatus = async (id, newStatus) => {
-    // Unchanged (add if missing from original)
-  };
+  async function updateProductOrderStatus(id, newStatus) {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: newStatus })
+        .eq("id", id);
+  
+      if (error) {
+        alert("Error updating status: " + error.message);
+      } else {
+        setProductOrders((prev) =>
+          prev.map((order) =>
+            order.id === id ? { ...order, status: newStatus } : order
+          )
+        );
+        const order = productOrders.find((o) => o.id === id);
+        if (order) {
+          const notificationText = `Your order (ID: ${id}) is now ${newStatus.replace(
+            "_",
+            " "
+          )}. Check your dashboard for details.`;
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("email")
+            .eq("id", order.user_id)
+            .single();
+          if (profile?.email) {
+            await sendEmailNotification(
+              profile.email,
+              `Order Status Update - Order #${id}`,
+              `
+                <h2>Order Status Update</h2>
+                <p>Your order (ID: ${id}) is now ${newStatus.replace(
+                "_",
+                " "
+              )}.</p>
+                <p>Please check the app for more details: vianclothinghub.com.ng</p>
+              `
+            );
+          }
+          await createInAppNotification(order.user_id, notificationText);
+        }
+      }
+    }
 
   // New: Handler for delivery_status updates
   const updateCustomOrderDeliveryStatus = async (id, newDeliveryStatus) => {
