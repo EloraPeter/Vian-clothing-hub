@@ -61,7 +61,7 @@ export default function Dashboard() {
       try {
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("email, avatar_url, is_admin")
+          .select("email, avatar_url, is_admin, first_name, last_name")
           .eq("id", user.id)
           .maybeSingle();
         if (profileError) throw profileError;
