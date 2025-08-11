@@ -11,12 +11,13 @@ import { FaEye, FaEyeSlash, FaGoogle } from "react-icons/fa";
 export default function Auth() {
   const router = useRouter();
   const [mode, setMode] = useState("login");
-  const [form, setForm] = useState({ email: "", password: "", confirm: "" });
+  const [form, setForm] = useState({ fullName: "", email: "", password: "", confirm: "" });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [strengthScore, setStrengthScore] = useState(0);
+
 
   const toggleMode = () => {
     setMessage("");
@@ -132,6 +133,24 @@ export default function Auth() {
                 <FaGoogle className="w-5 h-5 mr-2" />
                 Continue with Google
               </button>
+
+              {mode === "signup" && (
+                <div className="relative">
+                  <label htmlFor="full-name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Full Name
+                  </label>
+                  <input
+                    id="full-name"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={form.fullName}
+                    onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                    required
+                  />
+                </div>
+              )}
+
 
               <div className="relative">
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
