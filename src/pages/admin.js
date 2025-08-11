@@ -506,48 +506,48 @@ export default function AdminPage() {
   }
 
   async function updateProductOrderStatus(id, newStatus) {
-      const { error } = await supabase
-        .from("orders")
-        .update({ status: newStatus })
-        .eq("id", id);
-  
-      if (error) {
-        alert("Error updating status: " + error.message);
-      } else {
-        setProductOrders((prev) =>
-          prev.map((order) =>
-            order.id === id ? { ...order, status: newStatus } : order
-          )
-        );
-        const order = productOrders.find((o) => o.id === id);
-        if (order) {
-          const notificationText = `Your order (ID: ${id}) is now ${newStatus.replace(
-            "_",
-            " "
-          )}. Check your dashboard for details.`;
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("email")
-            .eq("id", order.user_id)
-            .single();
-          if (profile?.email) {
-            await sendEmailNotification(
-              profile.email,
-              `Order Status Update - Order #${id}`,
-              `
+    const { error } = await supabase
+      .from("orders")
+      .update({ status: newStatus })
+      .eq("id", id);
+
+    if (error) {
+      alert("Error updating status: " + error.message);
+    } else {
+      setProductOrders((prev) =>
+        prev.map((order) =>
+          order.id === id ? { ...order, status: newStatus } : order
+        )
+      );
+      const order = productOrders.find((o) => o.id === id);
+      if (order) {
+        const notificationText = `Your order (ID: ${id}) is now ${newStatus.replace(
+          "_",
+          " "
+        )}. Check your dashboard for details.`;
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("email")
+          .eq("id", order.user_id)
+          .single();
+        if (profile?.email) {
+          await sendEmailNotification(
+            profile.email,
+            `Order Status Update - Order #${id}`,
+            `
                 <h2>Order Status Update</h2>
                 <p>Your order (ID: ${id}) is now ${newStatus.replace(
-                "_",
-                " "
-              )}.</p>
+              "_",
+              " "
+            )}.</p>
                 <p>Please check the app for more details: vianclothinghub.com.ng</p>
               `
-            );
-          }
-          await createInAppNotification(order.user_id, notificationText);
+          );
         }
+        await createInAppNotification(order.user_id, notificationText);
       }
     }
+  }
 
   // New: Handler for delivery_status updates
   const updateCustomOrderDeliveryStatus = async (id, newDeliveryStatus) => {
@@ -595,39 +595,48 @@ export default function AdminPage() {
       <Navbar profile={profile} />
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <h1 className="text-3xl font-bold text-purple-800 mb-8 text-center">Admin Dashboard</h1>
+        <p className="text-lg text-gray-700 text-center mb-8">
+          Welcome, {profile?.email}
+        </p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-1 space-y-6">
+                                <ProfileSection profile={profile} setProfile={setProfile} user={user} />
 
-        <ProfileSection profile={profile} setProfile={setProfile} user={user} />
-        <AddProductForm products={products} setProducts={setProducts} categories={categories} setCategories={setCategories} />
-        <ProductsTable
-          products={products} setProducts={setProducts} categories={categories} setCategories={setCategories}
-          variants={variants} setVariants={setVariants} itemsPerPage={itemsPerPage}
-          currentProductPage={currentProductPage} setCurrentProductPage={setCurrentProductPage}
-        />
-        <ShippingFeesTable shippingFees={shippingFees} setShippingFees={setShippingFees} />
-        <CustomOrdersTable
-          orders={orders} setOrders={setOrders} itemsPerPage={itemsPerPage}
-          currentCustomOrderPage={currentCustomOrderPage} setCurrentCustomOrderPage={setCurrentCustomOrderPage}
-          updateCustomOrderStatus={updateCustomOrderStatus} updateCustomOrderDeliveryStatus={updateCustomOrderDeliveryStatus}
-          orderPrices={orderPrices} setOrderPrices={setOrderPrices}
-        />
-        <ProductOrdersTable
-          productOrders={productOrders} setProductOrders={setProductOrders} itemsPerPage={itemsPerPage}
-          currentProductOrderPage={currentProductOrderPage} setCurrentProductOrderPage={setCurrentProductOrderPage}
-          updateProductOrderStatus={updateProductOrderStatus}
-        />
+</div>
 
-        <div className="text-center mt-8">
-          <button
-            className="bg-red-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-red-700 transition-colors"
-            onClick={async () => {
-              await supabase.auth.signOut();
-              router.push("/login");
-            }}
-          >
-            Log Out
-          </button>
+          <AddProductForm products={products} setProducts={setProducts} categories={categories} setCategories={setCategories} />
+          <ProductsTable
+            products={products} setProducts={setProducts} categories={categories} setCategories={setCategories}
+            variants={variants} setVariants={setVariants} itemsPerPage={itemsPerPage}
+            currentProductPage={currentProductPage} setCurrentProductPage={setCurrentProductPage}
+          />
+          <ShippingFeesTable shippingFees={shippingFees} setShippingFees={setShippingFees} />
+          <CustomOrdersTable
+            orders={orders} setOrders={setOrders} itemsPerPage={itemsPerPage}
+            currentCustomOrderPage={currentCustomOrderPage} setCurrentCustomOrderPage={setCurrentCustomOrderPage}
+            updateCustomOrderStatus={updateCustomOrderStatus} updateCustomOrderDeliveryStatus={updateCustomOrderDeliveryStatus}
+            orderPrices={orderPrices} setOrderPrices={setOrderPrices}
+          />
+          <ProductOrdersTable
+            productOrders={productOrders} setProductOrders={setProductOrders} itemsPerPage={itemsPerPage}
+            currentProductOrderPage={currentProductOrderPage} setCurrentProductOrderPage={setCurrentProductOrderPage}
+            updateProductOrderStatus={updateProductOrderStatus}
+          />
+
+          <div className="text-center mt-8">
+            <button
+              className="bg-red-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-red-700 transition-colors"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                router.push("/login");
+              }}
+            >
+              Log Out
+            </button>
+          </div>
         </div>
       </div>
+
     </main>
   );
 }
