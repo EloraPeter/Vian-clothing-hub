@@ -25,118 +25,116 @@ export default function AddProductForm({ products, setProducts, categories, setC
   };
 
   const handleProductSubmit = async (e) => {
-  e.preventDefault();
-  setProductUploading(true);
-
-  try {
-    // Handle category creation or selection as before
-    let categoryId = productData.category_id;
-    if (!categories.some((cat) => cat.id === categoryId || cat.name.toLowerCase() === categoryId.toLowerCase())) {
-      const { data: newCategory, error: categoryError } = await supabase
-        .from("categories")
-        .insert([{ name: categoryId, slug: categoryId.toLowerCase().replace(/\s+/g, "-") }])
-        .select()
-        .single();
-
-      if (categoryError) throw new Error("Error creating category: " + categoryError.message);
-
-      categoryId = newCategory.id;
-      setCategories((prev) => [...prev, newCategory]);
-    } else if (!categories.some((cat) => cat.id === categoryId)) {
-      const existingCategory = categories.find((cat) => cat.name.toLowerCase() === categoryId.toLowerCase());
-      categoryId = existingCategory.id;
-    }
-
-    // Check for at least one image
-    if (!productData.imageFiles.length) {
-      alert("Please upload at least one product image.");
-      setProductUploading(false);
-      return;
-    }
-
-    // Upload first image
-    const firstFile = productData.imageFiles[0];
-    const fileExt = firstFile.name.split(".").pop();
-    const fileName = `${Date.now()}-${firstFile.name}`;
-    const filePath = fileName;
-
-    const { error: uploadError } = await supabase.storage
-      .from("product_images")
-      .upload(filePath, firstFile);
-
-    if (uploadError) throw new Error("Error uploading image: " + uploadError.message);
-
-    const { data: { publicUrl } } = supabase.storage
-      .from("product_images")
-      .getPublicUrl(filePath);
-
-    // Insert product with main image URL
-    const { data: product, error: productError } = await supabase
-      .from("products")
-      .insert([
-        {
-          name: productData.name,
-          price: parseFloat(productData.price),
-          description: productData.description,
-          category_id: categoryId === "none" ? null : categoryId,
-          image_url: publicUrl,
-        },
-      ])
-      .select()
-      .single();
-
-    if (productError) throw new Error("Error adding product: " + productError.message);
-
-    // Upload and save any additional images beyond the first
-    const imageUrls = [publicUrl];
-
-    for (let i = 1; i < productData.imageFiles.length; i++) {
-      const file = productData.imageFiles[i];
-      const ext = file.name.split(".").pop();
-      const name = `${product.id}-${i}.${ext}`;
-      const path = name;
-
-      const { error: err } = await supabase.storage
-        .from("product_images")
-        .upload(path, file);
-
-      if (err) {
-        console.error("Error uploading additional image:", err.message);
-        continue;
+      e.preventDefault();
+      if (
+        !productData.name ||
+        !productData.price ||
+        !productData.description ||
+        productData.imageFiles.length === 0
+      ) {
+        alert(
+          "Please fill in all required fields and upload at least one image."
+        );
+        return;
       }
-
-      const { data: { publicUrl: url } } = supabase.storage
-        .from("product_images")
-        .getPublicUrl(path);
-
-      const { error: insertError } = await supabase
-        .from("product_images")
-        .insert([{ product_id: product.id, image_url: url }]);
-
-      if (!insertError) {
-        imageUrls.push(url);
-      } else {
-        console.error("Error inserting additional image URL:", insertError.message);
+  
+      setProductUploading(true);
+      try {
+        let categoryId = productData.category_id;
+  
+        if (!categories.some((cat) => cat.id === parseInt(categoryId))) {
+          const newCategoryName = productData.category_id.trim();
+          if (newCategoryName) {
+            const slug = newCategoryName
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/(^-|-$)/g, "");
+  
+            const { data: newCategory, error: categoryError } = await supabase
+              .from("categories")
+              .insert({
+                name: newCategoryName,
+                slug: slug,
+                parent_id: null,
+                created_at: new Date().toISOString(),
+              })
+              .select()
+              .single();
+  
+            if (categoryError)
+              throw new Error(
+                "Failed to create new category: " + categoryError.message
+              );
+  
+            categoryId = newCategory.id;
+            setCategories((prev) => [...prev, newCategory]);
+          } else {
+            categoryId = null;
+          }
+        }
+  
+        const imageUrls = [];
+  
+        for (const file of productData.imageFiles) {
+          const fileExt = file.name.split(".").pop();
+          const fileName = `products/${Date.now()}_${Math.random()
+            .toString(36)
+            .substring(2, 15)}.${fileExt}`;
+          const { error: uploadError } = await supabase.storage
+            .from("products")
+            .upload(fileName, file);
+          if (uploadError)
+            throw new Error("Upload failed: " + uploadError.message);
+  
+          const { data: urlData } = supabase.storage
+            .from("products")
+            .getPublicUrl(fileName);
+          imageUrls.push(urlData.publicUrl);
+        }
+  
+        const { data: productInsert, error: insertError } = await supabase
+          .from("products")
+          .insert({
+            name: productData.name,
+            price: parseFloat(productData.price),
+            description: productData.description,
+            category_id: categoryId || null,
+            image_url: imageUrls[0] || "",
+            is_on_sale: false,
+            discount_percentage: 0,
+            is_out_of_stock: false,
+            is_new: false,
+          })
+          .select()
+          .single();
+  
+        if (insertError) throw new Error("Insert failed: " + insertError.message);
+  
+        if (imageUrls.length > 1) {
+          await supabase.from("product_images").insert(
+            imageUrls.slice(1).map((url) => ({
+              product_id: productInsert.id,
+              image_url: url,
+            }))
+          );
+        }
+  
+        setProductData({
+          name: "",
+          price: "",
+          description: "",
+          category_id: "",
+          imageFiles: [],
+        });
+        setProductPreviewUrl(null);
+        setProducts((prev) => [productInsert, ...prev]);
+        alert("Product added successfully!");
+      } catch (error) {
+        alert(error.message);
+      } finally {
+        setProductUploading(false);
       }
-    }
-
-    setProducts((prev) => [{ ...product, imageUrls }, ...prev]);
-    setProductData({
-      name: "",
-      price: "",
-      description: "",
-      category_id: "",
-      imageFiles: [],
-    });
-    setProductPreviewUrl(null);
-    alert("Product added successfully!");
-  } catch (err) {
-    alert(err.message);
-  } finally {
-    setProductUploading(false);
-  }
-};
-
+    };
 
   return (
     <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
