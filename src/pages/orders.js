@@ -57,10 +57,10 @@ export default function OrderTrackingPage() {
         setOrders(ordersData || []);
       }
 
-      // New: Fetch custom orders (similar fields for consistency)
+      // New: Fetch custom orders (similar fields for consistency, changed 'amount' to 'price')
       const { data: customOrdersData, error: customOrdersError } = await supabase
         .from('custom_orders')
-        .select('id, created_at, fabric, style, full_name, address, delivery_status, status, amount') // Selected based on dashboard display
+        .select('id, created_at, fabric, style, full_name, address, delivery_status, status, price') // Fixed: 'price' instead of 'amount'
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       if (customOrdersError) {
@@ -120,10 +120,10 @@ export default function OrderTrackingPage() {
     }
   };
 
-  // New: Status details for custom orders (mapped delivery_status to similar labels)
+  // New: Status details for custom orders (mapped delivery_status to similar labels, updated for 'not_started')
   const getCustomStatusDetails = (deliveryStatus) => {
     switch (deliveryStatus) {
-      case 'pending':
+      case 'not_started':
         return { color: 'bg-blue-100 text-blue-800', icon: ClockIcon, label: 'Processing' }; // Mapped to match product "processing"
       case 'in_progress':
         return { color: 'bg-purple-100 text-purple-800', icon: TruckIcon, label: 'Shipped' }; // Mapped to "shipped" (in progress means on the way)
@@ -144,11 +144,11 @@ export default function OrderTrackingPage() {
     }));
   };
 
-  // New: Progress steps for custom orders (uses 3 steps to match delivery_status, but mapped to 4 for consistency)
+  // New: Progress steps for custom orders (uses 3 steps to match delivery_status, but mapped to 4 for consistency, updated for 'not_started')
   const getCustomProgressSteps = (deliveryStatus) => {
     let mappedStatus;
     switch (deliveryStatus) {
-      case 'pending': mappedStatus = 'processing'; break;
+      case 'not_started': mappedStatus = 'processing'; break;
       case 'in_progress': mappedStatus = 'shipped'; break;
       case 'delivered': mappedStatus = 'delivered'; break;
       default: mappedStatus = 'awaiting_payment'; // Fallback
@@ -442,7 +442,7 @@ export default function OrderTrackingPage() {
                             </div>
                             <div className="mt-6 flex justify-between items-center">
                               <p className="text-xl font-bold text-purple-700">
-                                Total: ₦{(order.amount || 0).toLocaleString()} {/* Fallback to 0 if no amount */}
+                                Total: ₦{(order.price || 0).toLocaleString()} {/* Fixed: 'price' instead of 'amount' */}
                               </p>
                               <div className="space-x-4">
                                 {/* No "View Details" link for custom yet—can add if you have a page */}
