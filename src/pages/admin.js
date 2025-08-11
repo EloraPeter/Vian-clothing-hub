@@ -601,16 +601,16 @@ export default function AdminPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-1 space-y-6">
                                 <ProfileSection profile={profile} setProfile={setProfile} user={user} />
+                                
+          <ShippingFeesTable shippingFees={shippingFees} setShippingFees={setShippingFees} />
 
 </div>
 
-          <AddProductForm products={products} setProducts={setProducts} categories={categories} setCategories={setCategories} />
           <ProductsTable
             products={products} setProducts={setProducts} categories={categories} setCategories={setCategories}
             variants={variants} setVariants={setVariants} itemsPerPage={itemsPerPage}
             currentProductPage={currentProductPage} setCurrentProductPage={setCurrentProductPage}
           />
-          <ShippingFeesTable shippingFees={shippingFees} setShippingFees={setShippingFees} />
           <CustomOrdersTable
             orders={orders} setOrders={setOrders} itemsPerPage={itemsPerPage}
             currentCustomOrderPage={currentCustomOrderPage} setCurrentCustomOrderPage={setCurrentCustomOrderPage}
