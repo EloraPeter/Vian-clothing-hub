@@ -12,12 +12,13 @@ export default function AddProductForm({ products, setProducts, categories, setC
   const [productPreviewUrl, setProductPreviewUrl] = useState(null);
   const [productUploading, setProductUploading] = useState(false);
 
-  const handleProductChange = (e) => {
+   const handleProductChange = (e) => {
     const { name, value, files } = e.target;
     if (name === "imageFiles") {
-      setProductData((prev) => ({ ...prev, [name]: Array.from(files) }));
-      if (files[0]) {
-        setProductPreviewUrl(URL.createObjectURL(files[0]));
+      const fileList = Array.from(files);
+      if (fileList.length > 0) {
+        setProductData((prev) => ({ ...prev, imageFiles: fileList }));
+        setProductPreviewUrl(URL.createObjectURL(fileList[0]));
       }
     } else {
       setProductData((prev) => ({ ...prev, [name]: value }));
