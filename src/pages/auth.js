@@ -38,14 +38,47 @@ export default function Auth() {
         return;
       }
 
-      const { error } = await supabase.auth.signUp({
+      // Split full name
+      const nameParts = form.fullName.trim().split(" ");
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(" ") || null;
+
+      // Step 1: Create auth account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
       });
 
-      if (error) setMessage(error.message);
-      else setMessage("Signup successful! Please check your email to confirm.");
-    } else {
+      if (authError) {
+        setMessage(authError.message);
+        setLoading(false);
+        return;
+      }
+
+      // Step 2: Insert into "users" table
+      const userId = authData.user.id;
+
+      const { error: insertError } = await supabase
+        .from("users")
+        .insert([
+          {
+            id: userId,
+            email: form.email,
+            first_name: firstName,
+            last_name: lastName,
+            is_admin: false, // default
+            avatar_url: null,
+          },
+        ]);
+
+      if (insertError) {
+        console.error(insertError);
+        setMessage("Signup successful, but profile details were not saved. Contact support.");
+      } else {
+        setMessage("Signup successful! Please check your email to confirm.");
+      }
+    }
+    else {
       const { error } = await supabase.auth.signInWithPassword({
         email: form.email,
         password: form.password,
