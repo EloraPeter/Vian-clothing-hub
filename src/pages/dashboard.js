@@ -521,18 +521,7 @@ export default function Dashboard() {
 
                       const { error: uploadError } = await supabase.storage
                         .from("avatars")
-                        .update(filePath, avatarFile);
-
-                      if (uploadError && uploadError.message.includes("The resource was not found")) {
-                        const { error: firstUploadError } = await supabase.storage
-                          .from("avatars")
-                          .upload(filePath, avatarFile);
-                        if (firstUploadError) {
-                          alert("Upload failed: " + firstUploadError.message);
-                          setUploading(false);
-                          return;
-                        }
-                      }
+                        .upload(filePath, avatarFile, { upsert: true });
 
                       if (uploadError) {
                         alert("Upload failed: " + uploadError.message);
@@ -547,7 +536,12 @@ export default function Dashboard() {
 
                     const { error } = await supabase
                       .from("profiles")
-                      .update({ email: profile.email, avatar_url })
+                      .update({
+                        email: profile.email,
+                        avatar_url,
+                        first_name: profile.first_name,
+                        last_name: profile.last_name,
+                      })
                       .eq("id", user.id);
 
                     if (error) alert("Update failed: " + error.message);
@@ -560,7 +554,21 @@ export default function Dashboard() {
                   }}
                   className="space-y-4"
                 >
+                  {/* Email Input */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={profile?.email || ""}
+                      onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      required
+                    />
+                  </div>
 
+                  {/* First Name Input */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       First Name
@@ -574,6 +582,7 @@ export default function Dashboard() {
                     />
                   </div>
 
+                  {/* Last Name Input */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Last Name
@@ -587,18 +596,7 @@ export default function Dashboard() {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      value={profile?.email || ""}
-                      onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      required
-                    />
-                  </div>
+                  {/* Submit Button */}
                   <button
                     type="submit"
                     className="w-full bg-purple-600 text-white font-semibold py-2 rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50"
@@ -607,6 +605,7 @@ export default function Dashboard() {
                     {uploading ? "Uploading..." : "Save Changes"}
                   </button>
                 </form>
+
               </section>
             )}
 
