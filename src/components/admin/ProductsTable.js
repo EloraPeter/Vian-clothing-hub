@@ -29,89 +29,120 @@ export default function ProductsTable({ products, setProducts, categories, setCa
         setIsEditModalOpen(true);
     };
 
-    const handleEditProductSubmit = async (e) => {
+     const handleEditProductSubmit = async (e) => {
         e.preventDefault();
+        if (
+          !editProductData.name ||
+          !editProductData.price ||
+          !editProductData.description
+        ) {
+          alert("Please fill in all required fields.");
+          return;
+        }
+    
         setProductUploading(true);
-
-        let categoryId = editProductData.category_id;
-        if (!categories.some((cat) => cat.id === categoryId || cat.name.toLowerCase() === categoryId.toLowerCase())) {
-            const { data: newCategory, error: categoryError } = await supabase
+        try {
+          let categoryId = editProductData.category_id;
+    
+          if (!categories.some((cat) => cat.id === parseInt(categoryId))) {
+            const newCategoryName = editProductData.category_id.trim();
+            if (newCategoryName) {
+              const slug = newCategoryName
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/(^-|-$)/g, "");
+    
+              const { data: newCategory, error: categoryError } = await supabase
                 .from("categories")
-                .insert([{ name: categoryId, slug: categoryId.toLowerCase().replace(/\s+/g, "-") }])
+                .insert({
+                  name: newCategoryName,
+                  slug: slug,
+                  parent_id: null,
+                  created_at: new Date().toISOString(),
+                })
                 .select()
                 .single();
-
-            if (categoryError) {
-                console.error("Error creating category:", categoryError.message);
-                alert("Error creating category: " + categoryError.message);
-                setProductUploading(false);
-                return;
+    
+              if (categoryError)
+                throw new Error(
+                  "Failed to create new category: " + categoryError.message
+                );
+    
+              categoryId = newCategory.id;
+              setCategories((prev) => [...prev, newCategory]);
+            } else {
+              categoryId = null;
             }
-            categoryId = newCategory.id;
-            setCategories((prev) => [...prev, newCategory]);
-        } else if (!categories.some((cat) => cat.id === categoryId)) {
-            const existingCategory = categories.find((cat) => cat.name.toLowerCase() === categoryId.toLowerCase());
-            categoryId = existingCategory.id;
-        }
-
-        const { error: updateError } = await supabase
+          }
+    
+          const imageUrls =
+            editProductData.additionalImageFiles?.length > 0 ? [] : null;
+    
+          if (imageUrls) {
+            for (const file of editProductData.additionalImageFiles) {
+              const fileExt = file.name.split(".").pop();
+              const fileName = `products/${Date.now()}_${Math.random()
+                .toString(36)
+                .substring(2, 15)}.${fileExt}`;
+              const { error: uploadError } = await supabase.storage
+                .from("products")
+                .upload(fileName, file);
+              if (uploadError)
+                throw new Error("Upload failed: " + uploadError.message);
+    
+              const { data: urlData } = supabase.storage
+                .from("products")
+                .getPublicUrl(fileName);
+              imageUrls.push(urlData.publicUrl);
+            }
+    
+            if (imageUrls.length > 0) {
+              await supabase.from("product_images").insert(
+                imageUrls.map((url) => ({
+                  product_id: editProductData.id,
+                  image_url: url,
+                }))
+              );
+            }
+          }
+    
+          const { error } = await supabase
             .from("products")
             .update({
-                name: editProductData.name,
-                price: parseFloat(editProductData.price),
-                description: editProductData.description,
-                category_id: categoryId === "none" ? null : categoryId,
+              name: editProductData.name,
+              price: parseFloat(editProductData.price),
+              description: editProductData.description,
+              category_id: categoryId || null,
             })
             .eq("id", editProductData.id);
-
-        if (updateError) {
-            console.error("Error updating product:", updateError.message);
-            alert("Error updating product: " + updateError.message);
-            setProductUploading(false);
-            return;
-        }
-
-        if (editProductData.additionalImageFiles?.length > 0) {
-            for (let i = 0; i < editProductData.additionalImageFiles.length; i++) {
-                const file = editProductData.additionalImageFiles[i];
-                const fileExt = file.name.split(".").pop();
-                const fileName = `${editProductData.id}-${Date.now()}-${i}.${fileExt}`;
-                const filePath = `${fileName}`;
-
-                const { error: uploadError } = await supabase.storage
-                    .from("product_images")
-                    .upload(filePath, file);
-
-                if (uploadError) {
-                    console.error("Error uploading additional image:", uploadError.message);
-                    continue;
+    
+          if (error) throw new Error("Update failed: " + error.message);
+    
+          setProducts((prev) =>
+            prev.map((product) =>
+              product.id === editProductData.id
+                ? {
+                  ...product,
+                  name: editProductData.name,
+                  price: parseFloat(editProductData.price),
+                  description: editProductData.description,
+                  category_id: categoryId,
+                  categories: categories.find((c) => c.id === categoryId) || null,
                 }
-
-                const { data: { publicUrl } } = supabase.storage
-                    .from("product_images")
-                    .getPublicUrl(filePath);
-
-                const { error: insertError } = await supabase
-                    .from("product_images")
-                    .insert([{ product_id: editProductData.id, image_url: publicUrl }]);
-
-                if (insertError) {
-                    console.error("Error inserting additional image URL:", insertError.message);
-                }
-            }
-        }
-
-        setProducts((prev) =>
-            prev.map((p) =>
-                p.id === editProductData.id ? { ...p, ...editProductData } : p
+                : product
             )
-        );
-        setIsEditModalOpen(false);
-        setEditProductData(null);
-        setProductPreviewUrl(null);
-        setProductUploading(false);
-        alert("Product updated successfully!");
-    };
+          );
+    
+          setIsEditModalOpen(false);
+          setEditProductData(null);
+          setProductPreviewUrl(null);
+          alert("Product updated successfully!");
+        } catch (error) {
+          alert(error.message);
+        } finally {
+          setProductUploading(false);
+        }
+      };
 
     const handleDeleteProduct = async (id) => {
         if (!confirm("Are you sure you want to delete this product?")) return;
