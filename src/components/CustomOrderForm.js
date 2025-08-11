@@ -799,7 +799,7 @@ ${form.inspiration_image ? `📸 Inspiration Image:\n${form.inspiration_image}` 
 --------------------------
 
 📍 Action: Please set the outfit price in the admin dashboard.`;
-        await sendWhatsAppNotification("2348087522801", adminNotificationText);
+        await sendWhatsAppNotification("2348122123280", adminNotificationText);
         await createAdminNotification(adminNotificationText);
         router.push("/dashboard");
         toast.success("Payment successful! Order placed.");
