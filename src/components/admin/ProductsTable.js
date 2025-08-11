@@ -9,16 +9,20 @@ export default function ProductsTable({ products, setProducts, categories, setCa
     const [discountInputs, setDiscountInputs] = useState({});
 
     const handleEditProductChange = (e) => {
-        const { name, value, files } = e.target;
-        if (name === "imageFiles") {
-            setEditProductData((prev) => ({ ...prev, additionalImageFiles: Array.from(files) }));
-            if (files[0]) {
-                setProductPreviewUrl(URL.createObjectURL(files[0]));
-            }
-        } else {
-            setEditProductData((prev) => ({ ...prev, [name]: value }));
-        }
-    };
+    const { name, value, files } = e.target;
+    if (name === "imageFiles") {
+      const fileList = Array.from(files);
+      setEditProductData((prev) => ({
+        ...prev,
+        additionalImageFiles: fileList,
+      }));
+      setProductPreviewUrl(
+        fileList.length > 0 ? URL.createObjectURL(fileList[0]) : null
+      );
+    } else {
+      setEditProductData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
 
     const handleEditProduct = (product) => {
         setEditProductData({ ...product, additionalImageFiles: [] });
