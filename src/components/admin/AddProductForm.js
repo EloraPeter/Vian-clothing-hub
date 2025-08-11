@@ -25,9 +25,11 @@ export default function AddProductForm({ products, setProducts, categories, setC
   };
 
   const handleProductSubmit = async (e) => {
-    e.preventDefault();
-    setProductUploading(true);
+  e.preventDefault();
+  setProductUploading(true);
 
+  try {
+    // Handle category creation or selection as before
     let categoryId = productData.category_id;
     if (!categories.some((cat) => cat.id === categoryId || cat.name.toLowerCase() === categoryId.toLowerCase())) {
       const { data: newCategory, error: categoryError } = await supabase
@@ -36,12 +38,8 @@ export default function AddProductForm({ products, setProducts, categories, setC
         .select()
         .single();
 
-      if (categoryError) {
-        console.error("Error creating category:", categoryError.message);
-        alert("Error creating category: " + categoryError.message);
-        setProductUploading(false);
-        return;
-      }
+      if (categoryError) throw new Error("Error creating category: " + categoryError.message);
+
       categoryId = newCategory.id;
       setCategories((prev) => [...prev, newCategory]);
     } else if (!categories.some((cat) => cat.id === categoryId)) {
@@ -49,6 +47,30 @@ export default function AddProductForm({ products, setProducts, categories, setC
       categoryId = existingCategory.id;
     }
 
+    // Check for at least one image
+    if (!productData.imageFiles.length) {
+      alert("Please upload at least one product image.");
+      setProductUploading(false);
+      return;
+    }
+
+    // Upload first image
+    const firstFile = productData.imageFiles[0];
+    const fileExt = firstFile.name.split(".").pop();
+    const fileName = `${Date.now()}-${firstFile.name}`;
+    const filePath = fileName;
+
+    const { error: uploadError } = await supabase.storage
+      .from("product_images")
+      .upload(filePath, firstFile);
+
+    if (uploadError) throw new Error("Error uploading image: " + uploadError.message);
+
+    const { data: { publicUrl } } = supabase.storage
+      .from("product_images")
+      .getPublicUrl(filePath);
+
+    // Insert product with main image URL
     const { data: product, error: productError } = await supabase
       .from("products")
       .insert([
@@ -57,47 +79,44 @@ export default function AddProductForm({ products, setProducts, categories, setC
           price: parseFloat(productData.price),
           description: productData.description,
           category_id: categoryId === "none" ? null : categoryId,
+          image_url: publicUrl,
         },
       ])
       .select()
       .single();
 
-    if (productError) {
-      console.error("Error adding product:", productError.message);
-      alert("Error adding product: " + productError.message);
-      setProductUploading(false);
-      return;
-    }
+    if (productError) throw new Error("Error adding product: " + productError.message);
 
-    const imageUrls = [];
-    for (let i = 0; i < productData.imageFiles.length; i++) {
+    // Upload and save any additional images beyond the first
+    const imageUrls = [publicUrl];
+
+    for (let i = 1; i < productData.imageFiles.length; i++) {
       const file = productData.imageFiles[i];
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${product.id}-${i}.${fileExt}`;
-      const filePath = `${fileName}`;
+      const ext = file.name.split(".").pop();
+      const name = `${product.id}-${i}.${ext}`;
+      const path = name;
 
-      const { error: uploadError } = await supabase.storage
+      const { error: err } = await supabase.storage
         .from("product_images")
-        .upload(filePath, file);
+        .upload(path, file);
 
-      if (uploadError) {
-        console.error("Error uploading image:", uploadError.message);
-        alert("Error uploading image: " + uploadError.message);
+      if (err) {
+        console.error("Error uploading additional image:", err.message);
         continue;
       }
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl: url } } = supabase.storage
         .from("product_images")
-        .getPublicUrl(filePath);
+        .getPublicUrl(path);
 
       const { error: insertError } = await supabase
         .from("product_images")
-        .insert([{ product_id: product.id, image_url: publicUrl }]);
+        .insert([{ product_id: product.id, image_url: url }]);
 
-      if (insertError) {
-        console.error("Error inserting image URL:", insertError.message);
+      if (!insertError) {
+        imageUrls.push(url);
       } else {
-        imageUrls.push(publicUrl);
+        console.error("Error inserting additional image URL:", insertError.message);
       }
     }
 
@@ -110,9 +129,14 @@ export default function AddProductForm({ products, setProducts, categories, setC
       imageFiles: [],
     });
     setProductPreviewUrl(null);
-    setProductUploading(false);
     alert("Product added successfully!");
-  };
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    setProductUploading(false);
+  }
+};
+
 
   return (
     <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
