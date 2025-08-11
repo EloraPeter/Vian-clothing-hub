@@ -593,36 +593,36 @@ export default function AdminPage() {
   return (
     <main className="min-h-screen bg-gray-50">
       <Navbar profile={profile} />
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="container mx-auto px-4 py-8 max-w-9xl">
         <h1 className="text-3xl font-bold text-purple-800 mb-8 text-center">Admin Dashboard</h1>
         <p className="text-lg text-gray-700 text-center mb-8">
           Welcome, {profile?.email}
         </p>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-1 space-y-6">
-                                <ProfileSection profile={profile} setProfile={setProfile} user={user} />
-                                
-          <ShippingFeesTable shippingFees={shippingFees} setShippingFees={setShippingFees} />
+          <div className="lg:col-span-1 space-y-6">
+            <ProfileSection profile={profile} setProfile={setProfile} user={user} />
+            <AddProductForm products={products} setProducts={setProducts} categories={categories} setCategories={setCategories} />
+            <ShippingFeesTable shippingFees={shippingFees} setShippingFees={setShippingFees} />
 
-</div>
-
-          <ProductsTable
-            products={products} setProducts={setProducts} categories={categories} setCategories={setCategories}
-            variants={variants} setVariants={setVariants} itemsPerPage={itemsPerPage}
-            currentProductPage={currentProductPage} setCurrentProductPage={setCurrentProductPage}
-          />
-          <CustomOrdersTable
-            orders={orders} setOrders={setOrders} itemsPerPage={itemsPerPage}
-            currentCustomOrderPage={currentCustomOrderPage} setCurrentCustomOrderPage={setCurrentCustomOrderPage}
-            updateCustomOrderStatus={updateCustomOrderStatus} updateCustomOrderDeliveryStatus={updateCustomOrderDeliveryStatus}
-            orderPrices={orderPrices} setOrderPrices={setOrderPrices}
-          />
-          <ProductOrdersTable
-            productOrders={productOrders} setProductOrders={setProductOrders} itemsPerPage={itemsPerPage}
-            currentProductOrderPage={currentProductOrderPage} setCurrentProductOrderPage={setCurrentProductOrderPage}
-            updateProductOrderStatus={updateProductOrderStatus}
-          />
-
+          </div>
+          <div className="lg:col-span-2 space-y-6">
+            <ProductsTable
+              products={products} setProducts={setProducts} categories={categories} setCategories={setCategories}
+              variants={variants} setVariants={setVariants} itemsPerPage={itemsPerPage}
+              currentProductPage={currentProductPage} setCurrentProductPage={setCurrentProductPage}
+            />
+            <CustomOrdersTable
+              orders={orders} setOrders={setOrders} itemsPerPage={itemsPerPage}
+              currentCustomOrderPage={currentCustomOrderPage} setCurrentCustomOrderPage={setCurrentCustomOrderPage}
+              updateCustomOrderStatus={updateCustomOrderStatus} updateCustomOrderDeliveryStatus={updateCustomOrderDeliveryStatus}
+              orderPrices={orderPrices} setOrderPrices={setOrderPrices}
+            />
+            <ProductOrdersTable
+              productOrders={productOrders} setProductOrders={setProductOrders} itemsPerPage={itemsPerPage}
+              currentProductOrderPage={currentProductOrderPage} setCurrentProductOrderPage={setCurrentProductOrderPage}
+              updateProductOrderStatus={updateProductOrderStatus}
+            />
+          </div>
           <div className="text-center mt-8">
             <button
               className="bg-red-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-red-700 transition-colors"
