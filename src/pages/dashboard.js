@@ -130,22 +130,22 @@ export default function Dashboard() {
   };
 
   const sendEmailNotification = async (email, subject, body) => {
-  try {
-    const response = await fetch("/api/send-email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ to: email, subject, html: body }),
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      console.error("Email sending failed:", result.error);
-      throw new Error(result.error || "Failed to send email");
+    try {
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: email, subject, html: body }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        console.error("Email sending failed:", result.error);
+        throw new Error(result.error || "Failed to send email");
+      }
+      console.log("Email sent successfully:", result.message);
+    } catch (error) {
+      console.error("Error sending email:", error.message);
     }
-    console.log("Email sent successfully:", result.message);
-  } catch (error) {
-    console.error("Error sending email:", error.message);
-  }
-};
+  };
 
 
   const generateReceiptPDF = async (invoice, paymentReference) => {
@@ -560,6 +560,33 @@ export default function Dashboard() {
                   }}
                   className="space-y-4"
                 >
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      First Name
+                    </label>
+                    <input
+                      type="text"
+                      value={profile?.first_name || ""}
+                      onChange={(e) => setProfile({ ...profile, first_name: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Last Name
+                    </label>
+                    <input
+                      type="text"
+                      value={profile?.last_name || ""}
+                      onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      required
+                    />
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Email Address
