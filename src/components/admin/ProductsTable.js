@@ -214,9 +214,9 @@ export default function ProductsTable({ products, setProducts, categories, setCa
                         {currentProducts.map((product) => (
                             <tr key={product.id}>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    {product.product_images && product.product_images.length > 0 ? (
+                                    {product.image_url ? (
                                         <img
-                                            src={product.product_images[0].image_url}
+                                            src={product.image_url}
                                             alt={product.name}
                                             className="w-16 h-16 object-cover rounded-md"
                                         />
