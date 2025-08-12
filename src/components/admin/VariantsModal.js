@@ -20,7 +20,27 @@ export default function VariantsModal({ product, variants, setVariants }) {
 
     const handleVariantSubmit = async (e) => {
         e.preventDefault();
-        const { error } = await supabase.from("product_variants").insert([variantData]);
+
+        // Validation
+        if (!variantData.stock_quantity) {
+            alert("Stock quantity is required.");
+            return;
+        }
+        if (!variantData.size && !variantData.color) {
+            alert("Provide at least one of size or color for variant uniqueness.");
+            return;
+        }
+
+        // Prepare data with proper types
+        const preparedData = {
+            product_id: product.id,
+            size: variantData.size || null,
+            color: variantData.color || null,
+            stock_quantity: Number(variantData.stock_quantity),
+            additional_price: Number(variantData.additional_price) || 0,
+        };
+
+        const { error } = await supabase.from("product_variants").insert([preparedData]);
 
         if (error) {
             console.error("Error adding variant:", error.message);
@@ -30,7 +50,7 @@ export default function VariantsModal({ product, variants, setVariants }) {
 
         setVariants((prev) => ({
             ...prev,
-            [product.id]: [...(prev[product.id] || []), variantData],
+            [product.id]: [...(prev[product.id] || []), { ...preparedData, id: /* Fetch actual ID if needed */ }],
         }));
         setVariantData({
             product_id: product.id,
@@ -54,9 +74,29 @@ export default function VariantsModal({ product, variants, setVariants }) {
 
     const handleEditVariantSubmit = async (e) => {
         e.preventDefault();
+
+        // Validation (optional for edit, but consistent)
+        if (!editVariantData.stock_quantity) {
+            alert("Stock quantity is required.");
+            return;
+        }
+        if (!editVariantData.size && !editVariantData.color) {
+            alert("Provide at least one of size or color for variant uniqueness.");
+            return;
+        }
+
+        // Prepare data with proper types
+        const preparedData = {
+            ...editVariantData,
+            size: editVariantData.size || null,
+            color: editVariantData.color || null,
+            stock_quantity: Number(editVariantData.stock_quantity),
+            additional_price: Number(editVariantData.additional_price) || 0,
+        };
+
         const { error } = await supabase
             .from("product_variants")
-            .update(editVariantData)
+            .update(preparedData)
             .eq("id", editVariantData.id);
 
         if (error) {
@@ -68,7 +108,7 @@ export default function VariantsModal({ product, variants, setVariants }) {
         setVariants((prev) => ({
             ...prev,
             [product.id]: prev[product.id].map((v) =>
-                v.id === editVariantData.id ? editVariantData : v
+                v.id === editVariantData.id ? preparedData : v
             ),
         }));
         setIsVariantModalOpen(false);
