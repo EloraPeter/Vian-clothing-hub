@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import VariantsModal from "./VariantsModal"; // Assuming VariantsModal.js is in the same directory or adjust the path accordingly
 
 export default function ProductsTable({ products, setProducts, categories, setCategories, variants, setVariants, itemsPerPage, currentProductPage, setCurrentProductPage }) {
     const [editProductData, setEditProductData] = useState(null);
@@ -200,16 +201,29 @@ export default function ProductsTable({ products, setProducts, categories, setCa
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount (%)</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variants</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {currentProducts.map((product) => (
                             <tr key={product.id}>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    {product.product_images && product.product_images.length > 0 ? (
+                                        <img
+                                            src={product.product_images[0].image_url}
+                                            alt={product.name}
+                                            className="w-16 h-16 object-cover rounded-md"
+                                        />
+                                    ) : (
+                                        <span className="text-sm text-gray-500">No Image</span>
+                                    )}
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{product.name}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₦{Number(product.price).toLocaleString()}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -234,6 +248,9 @@ export default function ProductsTable({ products, setProducts, categories, setCa
                                         </button>
                                     </div>
                                     <p className="text-xs text-gray-400 mt-1">Current: {product.discount_percentage || 0}%</p>
+                                </td>
+                                <td className="px-6 py-4 text-sm text-gray-500">
+                                    <VariantsModal product={product} variants={variants} setVariants={setVariants} />
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <button
