@@ -29,7 +29,11 @@ export default function VariantsModal({ product, variants, setVariants }) {
             additional_price: cleanNumber(variantData.additional_price),
         };
 
-        const { error } = await supabase.from("product_variants").insert([payload]);
+        const { data, error } = await supabase
+            .from("product_variants")
+            .insert([payload])
+            .select()
+            .single();
 
         if (error) {
             console.error("Error adding variant:", error.message);
@@ -37,9 +41,10 @@ export default function VariantsModal({ product, variants, setVariants }) {
             return;
         }
 
+        // `data` now includes `id` from DB
         setVariants((prev) => ({
             ...prev,
-            [product.id]: [...(prev[product.id] || []), payload],
+            [product.id]: [...(prev[product.id] || []), data],
         }));
 
         setVariantData({
@@ -51,6 +56,7 @@ export default function VariantsModal({ product, variants, setVariants }) {
         });
         setIsVariantModalOpen(false);
     };
+
 
 
     const handleEditVariant = (variant) => {
@@ -95,6 +101,12 @@ export default function VariantsModal({ product, variants, setVariants }) {
     };
 
     const handleDeleteVariant = async (id) => {
+        if (!id) {
+            console.error("Delete failed: No ID provided for variant.");
+            alert("Cannot delete variant: missing ID.");
+            return;
+        }
+
         if (!confirm("Are you sure you want to delete this variant?")) return;
 
         const { error } = await supabase.from("product_variants").delete().eq("id", id);
@@ -109,6 +121,7 @@ export default function VariantsModal({ product, variants, setVariants }) {
             [product.id]: prev[product.id].filter((v) => v.id !== id),
         }));
     };
+
 
     return (
         <>
