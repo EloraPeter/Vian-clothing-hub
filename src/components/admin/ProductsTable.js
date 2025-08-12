@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import VariantsModal from "./VariantsModal"; // Assuming VariantsModal.js is in the same directory or adjust the path accordingly
+import VariantsModal from "./VariantsModal"; // Assuming VariantsModal.js is in the same directory
 
 export default function ProductsTable({ products, setProducts, categories, setCategories, variants, setVariants, itemsPerPage, currentProductPage, setCurrentProductPage }) {
     const [editProductData, setEditProductData] = useState(null);
@@ -10,140 +10,138 @@ export default function ProductsTable({ products, setProducts, categories, setCa
     const [discountInputs, setDiscountInputs] = useState({});
 
     const handleEditProductChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === "imageFiles") {
-      const fileList = Array.from(files);
-      setEditProductData((prev) => ({
-        ...prev,
-        additionalImageFiles: fileList,
-      }));
-      setProductPreviewUrl(
-        fileList.length > 0 ? URL.createObjectURL(fileList[0]) : null
-      );
-    } else {
-      setEditProductData((prev) => ({ ...prev, [name]: value }));
-    }
-  };
+        const { name, value, files } = e.target;
+        if (name === "imageFiles") {
+            const fileList = Array.from(files);
+            setEditProductData((prev) => ({
+                ...prev,
+                additionalImageFiles: fileList,
+            }));
+            setProductPreviewUrl(
+                fileList.length > 0 ? URL.createObjectURL(fileList[0]) : null
+            );
+        } else {
+            setEditProductData((prev) => ({ ...prev, [name]: value }));
+        }
+    };
 
     const handleEditProduct = (product) => {
         setEditProductData({ ...product, additionalImageFiles: [] });
         setIsEditModalOpen(true);
     };
 
-     const handleEditProductSubmit = async (e) => {
+    const handleEditProductSubmit = async (e) => {
         e.preventDefault();
         if (
-          !editProductData.name ||
-          !editProductData.price ||
-          !editProductData.description
+            !editProductData.name ||
+            !editProductData.price ||
+            !editProductData.description
         ) {
-          alert("Please fill in all required fields.");
-          return;
+            alert("Please fill in all required fields.");
+            return;
         }
-    
+
         setProductUploading(true);
         try {
-          let categoryId = editProductData.category_id;
-    
-          if (!categories.some((cat) => cat.id === parseInt(categoryId))) {
-            const newCategoryName = editProductData.category_id.trim();
-            if (newCategoryName) {
-              const slug = newCategoryName
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, "-")
-                .replace(/(^-|-$)/g, "");
-    
-              const { data: newCategory, error: categoryError } = await supabase
-                .from("categories")
-                .insert({
-                  name: newCategoryName,
-                  slug: slug,
-                  parent_id: null,
-                  created_at: new Date().toISOString(),
-                })
-                .select()
-                .single();
-    
-              if (categoryError)
-                throw new Error(
-                  "Failed to create new category: " + categoryError.message
-                );
-    
-              categoryId = newCategory.id;
-              setCategories((prev) => [...prev, newCategory]);
-            } else {
-              categoryId = null;
-            }
-          }
-    
-          const imageUrls =
-            editProductData.additionalImageFiles?.length > 0 ? [] : null;
-    
-          if (imageUrls) {
-            for (const file of editProductData.additionalImageFiles) {
-              const fileExt = file.name.split(".").pop();
-              const fileName = `products/${Date.now()}_${Math.random()
-                .toString(36)
-                .substring(2, 15)}.${fileExt}`;
-              const { error: uploadError } = await supabase.storage
-                .from("products")
-                .upload(fileName, file);
-              if (uploadError)
-                throw new Error("Upload failed: " + uploadError.message);
-    
-              const { data: urlData } = supabase.storage
-                .from("products")
-                .getPublicUrl(fileName);
-              imageUrls.push(urlData.publicUrl);
-            }
-    
-            if (imageUrls.length > 0) {
-              await supabase.from("product_images").insert(
-                imageUrls.map((url) => ({
-                  product_id: editProductData.id,
-                  image_url: url,
-                }))
-              );
-            }
-          }
-    
-          const { error } = await supabase
-            .from("products")
-            .update({
-              name: editProductData.name,
-              price: parseFloat(editProductData.price),
-              description: editProductData.description,
-              category_id: categoryId || null,
-            })
-            .eq("id", editProductData.id);
-    
-          if (error) throw new Error("Update failed: " + error.message);
-    
-          setProducts((prev) =>
-            prev.map((product) =>
-              product.id === editProductData.id
-                ? {
-                  ...product,
-                  name: editProductData.name,
-                  price: parseFloat(editProductData.price),
-                  description: editProductData.description,
-                  category_id: categoryId,
-                  categories: categories.find((c) => c.id === categoryId) || null,
+            let categoryId = editProductData.category_id;
+
+            if (!categories.some((cat) => cat.id === parseInt(categoryId))) {
+                const newCategoryName = editProductData.category_id.trim();
+                if (newCategoryName) {
+                    const slug = newCategoryName
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]+/g, "-")
+                        .replace(/(^-|-$)/g, "");
+
+                    const { data: newCategory, error: categoryError } = await supabase
+                        .from("categories")
+                        .insert({
+                            name: newCategoryName,
+                            slug: slug,
+                            parent_id: null,
+                            created_at: new Date().toISOString(),
+                        })
+                        .select()
+                        .single();
+
+                    if (categoryError)
+                        throw new Error("Failed to create new category: " + categoryError.message);
+
+                    categoryId = newCategory.id;
+                    setCategories((prev) => [...prev, newCategory]);
+                } else {
+                    categoryId = null;
                 }
-                : product
-            )
-          );
-    
-          setIsEditModalOpen(false);
-          setEditProductData(null);
-          setProductPreviewUrl(null);
-          alert("Product updated successfully!");
+            }
+
+            const imageUrls =
+                editProductData.additionalImageFiles?.length > 0 ? [] : null;
+
+            if (imageUrls) {
+                for (const file of editProductData.additionalImageFiles) {
+                    const fileExt = file.name.split(".").pop();
+                    const fileName = `products/${Date.now()}_${Math.random()
+                        .toString(36)
+                        .substring(2, 15)}.${fileExt}`;
+                    const { error: uploadError } = await supabase.storage
+                        .from("products")
+                        .upload(fileName, file);
+                    if (uploadError)
+                        throw new Error("Upload failed: " + uploadError.message);
+
+                    const { data: urlData } = supabase.storage
+                        .from("products")
+                        .getPublicUrl(fileName);
+                    imageUrls.push(urlData.publicUrl);
+                }
+
+                if (imageUrls.length > 0) {
+                    await supabase.from("product_images").insert(
+                        imageUrls.map((url) => ({
+                            product_id: editProductData.id,
+                            image_url: url,
+                        }))
+                    );
+                }
+            }
+
+            const { error } = await supabase
+                .from("products")
+                .update({
+                    name: editProductData.name,
+                    price: parseFloat(editProductData.price),
+                    description: editProductData.description,
+                    category_id: categoryId || null,
+                })
+                .eq("id", editProductData.id);
+
+            if (error) throw new Error("Update failed: " + error.message);
+
+            setProducts((prev) =>
+                prev.map((product) =>
+                    product.id === editProductData.id
+                        ? {
+                              ...product,
+                              name: editProductData.name,
+                              price: parseFloat(editProductData.price),
+                              description: editProductData.description,
+                              category_id: categoryId,
+                              categories: categories.find((c) => c.id === categoryId) || null,
+                          }
+                        : product
+                )
+            );
+
+            setIsEditModalOpen(false);
+            setEditProductData(null);
+            setProductPreviewUrl(null);
+            alert("Product updated successfully!");
         } catch (error) {
-          alert(error.message);
+            alert(error.message);
         } finally {
-          setProductUploading(false);
+            setProductUploading(false);
         }
-      };
+    };
 
     const handleDeleteProduct = async (id) => {
         if (!confirm("Are you sure you want to delete this product?")) return;
@@ -206,6 +204,7 @@ export default function ProductsTable({ products, setProducts, categories, setCa
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount (%)</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variants</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
@@ -248,6 +247,25 @@ export default function ProductsTable({ products, setProducts, categories, setCa
                                         </button>
                                     </div>
                                     <p className="text-xs text-gray-400 mt-1">Current: {product.discount_percentage || 0}%</p>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <div className="flex flex-wrap gap-2">
+                                        {product.is_new && (
+                                            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                                                New
+                                            </span>
+                                        )}
+                                        {product.is_out_of_stock && (
+                                            <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
+                                                Out of Stock
+                                            </span>
+                                        )}
+                                        {product.is_on_sale && (
+                                            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                                                On Sale
+                                            </span>
+                                        )}
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-500">
                                     <VariantsModal product={product} variants={variants} setVariants={setVariants} />
@@ -415,8 +433,7 @@ export default function ProductsTable({ products, setProducts, categories, setCa
                                 <button
                                     type="submit"
                                     disabled={productUploading}
-                                    className={`w-full py-2 rounded-md font-semibold text-white transition-colors ${productUploading ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"
-                                        }`}
+                                    className={`w-full py-2 rounded-md font-semibold text-white transition-colors ${productUploading ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"}`}
                                 >
                                     {productUploading ? "Updating..." : "Update Product"}
                                 </button>
