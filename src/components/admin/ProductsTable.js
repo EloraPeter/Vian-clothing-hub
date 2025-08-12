@@ -10,7 +10,7 @@ export default function ProductsTable({ products, setProducts, categories, setCa
     const [discountInputs, setDiscountInputs] = useState({});
 
     const handleEditProductChange = (e) => {
-        const { name, value, files } = e.target;
+        const { name, value, files, type, checked } = e.target;
         if (name === "imageFiles") {
             const fileList = Array.from(files);
             setEditProductData((prev) => ({
@@ -20,6 +20,8 @@ export default function ProductsTable({ products, setProducts, categories, setCa
             setProductPreviewUrl(
                 fileList.length > 0 ? URL.createObjectURL(fileList[0]) : null
             );
+        } else if (type === "checkbox") {
+            setEditProductData((prev) => ({ ...prev, [name]: checked }));
         } else {
             setEditProductData((prev) => ({ ...prev, [name]: value }));
         }
@@ -112,6 +114,9 @@ export default function ProductsTable({ products, setProducts, categories, setCa
                     price: parseFloat(editProductData.price),
                     description: editProductData.description,
                     category_id: categoryId || null,
+                    is_new: editProductData.is_new,
+                    is_out_of_stock: editProductData.is_out_of_stock,
+                    is_on_sale: editProductData.is_on_sale,
                 })
                 .eq("id", editProductData.id);
 
@@ -127,6 +132,9 @@ export default function ProductsTable({ products, setProducts, categories, setCa
                               description: editProductData.description,
                               category_id: categoryId,
                               categories: categories.find((c) => c.id === categoryId) || null,
+                              is_new: editProductData.is_new,
+                              is_out_of_stock: editProductData.is_out_of_stock,
+                              is_on_sale: editProductData.is_on_sale,
                           }
                         : product
                 )
@@ -389,6 +397,43 @@ export default function ProductsTable({ products, setProducts, categories, setCa
                                 <p className="text-sm text-gray-500 mt-1">
                                     Type a new category name to create it.
                                 </p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Product Tags
+                                </label>
+                                <div className="flex flex-col gap-2">
+                                    <label className="flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            name="is_new"
+                                            checked={editProductData?.is_new || false}
+                                            onChange={handleEditProductChange}
+                                            className="mr-2 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                                        />
+                                        <span className="text-sm text-gray-700">New</span>
+                                    </label>
+                                    <label className="flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            name="is_out_of_stock"
+                                            checked={editProductData?.is_out_of_stock || false}
+                                            onChange={handleEditProductChange}
+                                            className="mr-2 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                                        />
+                                        <span className="text-sm text-gray-700">Out of Stock</span>
+                                    </label>
+                                    <label className="flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            name="is_on_sale"
+                                            checked={editProductData?.is_on_sale || false}
+                                            onChange={handleEditProductChange}
+                                            className="mr-2 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                                        />
+                                        <span className="text-sm text-gray-700">On Sale</span>
+                                    </label>
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
