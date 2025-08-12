@@ -18,9 +18,18 @@ export default function VariantsModal({ product, variants, setVariants }) {
         setVariantData((prev) => ({ ...prev, [name]: value }));
     };
 
+    const cleanNumber = (val) => (val === "" || val === null ? null : Number(val));
+
     const handleVariantSubmit = async (e) => {
         e.preventDefault();
-        const { error } = await supabase.from("product_variants").insert([variantData]);
+
+        const payload = {
+            ...variantData,
+            stock_quantity: cleanNumber(variantData.stock_quantity),
+            additional_price: cleanNumber(variantData.additional_price),
+        };
+
+        const { error } = await supabase.from("product_variants").insert([payload]);
 
         if (error) {
             console.error("Error adding variant:", error.message);
@@ -30,8 +39,9 @@ export default function VariantsModal({ product, variants, setVariants }) {
 
         setVariants((prev) => ({
             ...prev,
-            [product.id]: [...(prev[product.id] || []), variantData],
+            [product.id]: [...(prev[product.id] || []), payload],
         }));
+
         setVariantData({
             product_id: product.id,
             size: "",
@@ -41,6 +51,7 @@ export default function VariantsModal({ product, variants, setVariants }) {
         });
         setIsVariantModalOpen(false);
     };
+
 
     const handleEditVariant = (variant) => {
         setEditVariantData(variant);
@@ -54,9 +65,16 @@ export default function VariantsModal({ product, variants, setVariants }) {
 
     const handleEditVariantSubmit = async (e) => {
         e.preventDefault();
+
+        const payload = {
+            ...editVariantData,
+            stock_quantity: cleanNumber(editVariantData.stock_quantity),
+            additional_price: cleanNumber(editVariantData.additional_price),
+        };
+
         const { error } = await supabase
             .from("product_variants")
-            .update(editVariantData)
+            .update(payload)
             .eq("id", editVariantData.id);
 
         if (error) {
@@ -68,9 +86,10 @@ export default function VariantsModal({ product, variants, setVariants }) {
         setVariants((prev) => ({
             ...prev,
             [product.id]: prev[product.id].map((v) =>
-                v.id === editVariantData.id ? editVariantData : v
+                v.id === editVariantData.id ? payload : v
             ),
         }));
+
         setIsVariantModalOpen(false);
         setEditVariantData(null);
     };
