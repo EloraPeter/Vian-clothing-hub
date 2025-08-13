@@ -75,7 +75,7 @@ export default function Auth() {
         email: form.email,
         password: form.password,
         options: {
-          userMetadata: {
+          data: {
             first_name,
             last_name,
           },
