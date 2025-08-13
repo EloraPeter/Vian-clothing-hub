@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FaShoppingCart, FaWhatsapp, FaRobot } from "react-icons/fa";
+import { FaPhone, FaWhatsapp, FaRobot } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
