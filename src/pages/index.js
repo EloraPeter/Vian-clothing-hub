@@ -298,185 +298,185 @@ export default function Home() {
           </section>
 
           {/* Flash Sale Section */}
-{saleProducts.length > 0 && (
-  <section className="mb-12">
-    <h2 className="max-w-7xl mx-auto text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-6">
-      Flash Sale - Limited Time!
-    </h2>
-    <div className="grid grid-cols-1 mx-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
-      {saleProducts.map((product) => (
-        <div
-          key={product.id}
-          className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 relative group"
-        >
-          <Link href={`/product/${product.id}`} role="button" aria-label={`View ${product.name} product details`}>
-            <div className="relative w-full h-40 sm:h-48 mb-4">
-              <Image
-                src={product.image_url}
-                alt={`Image of ${product.name}`}
-                layout="fill"
-                objectFit="cover"
-                className="rounded-lg"
-                loading="lazy"
-              />
-            </div>
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{product.name}</h3>
-            <p className="text-purple-700 font-semibold text-sm sm:text-base">
-              <span className="line-through text-red-600">₦{Number(product.price).toLocaleString()}</span>
-              <span className="ml-2 text-green-600">
-                ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
-              </span>
-            </p>
-          </Link>
-          <div className="flex items-center mt-2">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <FaStar key={star} className="text-yellow-400 text-sm" />
-            ))}
-          </div>
-          {product.is_out_of_stock ? (
-            <span className="text-red-600 text-xs sm:text-sm absolute top-2 right-2 bg-red-100 px-2 py-1 rounded">
-              Out of Stock
-            </span>
-          ) : (
-            <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
-                onClick={() => addToCart({ ...product, quantity: 1 })}
-                className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700"
-                aria-label={`Add ${product.name} to cart`}
-              >
-                <FaShoppingCart />
-              </button>
-              <button
-                onClick={() => toggleWishlist(product.id)}
-                className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700"
-                aria-label={isInWishlist(product.id) ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
-              >
-                {isInWishlist(product.id) ? <FaHeart /> : <FaRegHeart />}
-              </button>
-            </div>
+          {saleProducts.length > 0 && (
+            <section className="mb-12">
+              <h2 className="max-w-7xl mx-auto text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-6">
+                Flash Sale - Limited Time!
+              </h2>
+              <div className="grid grid-cols-1 mx-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
+                {saleProducts.map((product) => (
+                  <div
+                    key={product.id}
+                    className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 relative group"
+                  >
+                    <Link href={`/product/${product.id}`} role="button" aria-label={`View ${product.name} product details`}>
+                      <div className="relative w-full h-40 sm:h-48 mb-4">
+                        <Image
+                          src={product.image_url}
+                          alt={`Image of ${product.name}`}
+                          layout="fill"
+                          objectFit="cover"
+                          className="rounded-lg"
+                          loading="lazy"
+                        />
+                      </div>
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{product.name}</h3>
+                      <p className="text-purple-700 font-semibold text-sm sm:text-base">
+                        <span className="line-through text-red-600">₦{Number(product.price).toLocaleString()}</span>
+                        <span className="ml-2 text-green-600">
+                          ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
+                        </span>
+                      </p>
+                    </Link>
+                    <div className="flex items-center mt-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <FaStar key={star} className="text-yellow-400 text-sm" />
+                      ))}
+                    </div>
+                    {product.is_out_of_stock ? (
+                      <span className="text-red-600 text-xs sm:text-sm absolute top-2 right-2 bg-red-100 px-2 py-1 rounded">
+                        Out of Stock
+                      </span>
+                    ) : (
+                      <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => addToCart({ ...product, quantity: 1 })}
+                          className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700"
+                          aria-label={`Add ${product.name} to cart`}
+                        >
+                          <FaShoppingCart />
+                        </button>
+                        <button
+                          onClick={() => toggleWishlist(product.id)}
+                          className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700"
+                          aria-label={isInWishlist(product.id) ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
+                        >
+                          {isInWishlist(product.id) ? <FaHeart /> : <FaRegHeart />}
+                        </button>
+                      </div>
+                    )}
+                    <span className="absolute top-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded">Sale</span>
+                  </div>
+                ))}
+              </div>
+            </section>
           )}
-          <span className="absolute top-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded">Sale</span>
-        </div>
-      ))}
-    </div>
-  </section>
-)}
 
           {/* Category Tiles */}
-<section className="mb-12">
-  <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-8">
-    Shop by Category
-  </h2>
-  <div className="grid grid-cols-1 mx-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
-    {loading
-      ? Array(4)
-          .fill()
-          .map((_, index) => <SkeletonCategory key={index} />)
-      : categories.map((category) => (
-          <Link
-            key={category.slug}
-            href={`/category/${category?.slug}`}
-            className="bg-white p-4 sm:p-6 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 hover:border-purple-200 relative group"
-            role="button"
-            aria-label={`Shop ${category.name} category`}
-          >
-            <div className="relative w-full h-32 sm:h-40 mb-4">
-              <Image
-                src={category.products?.[0]?.image_url || "/placeholder.jpg"}
-                alt={`${category.name} category`}
-                layout="fill"
-                objectFit="cover"
-                className="rounded-lg group-hover:scale-105 transition-transform"
-                loading="lazy"
-              />
+          <section className="mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-8">
+              Shop by Category
+            </h2>
+            <div className="grid grid-cols-1 mx-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
+              {loading
+                ? Array(4)
+                  .fill()
+                  .map((_, index) => <SkeletonCategory key={index} />)
+                : categories.map((category) => (
+                  <Link
+                    key={category.slug}
+                    href={`/category/${category?.slug}`}
+                    className="bg-white p-4 sm:p-6 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 hover:border-purple-200 relative group"
+                    role="button"
+                    aria-label={`Shop ${category.name} category`}
+                  >
+                    <div className="relative w-full h-32 sm:h-40 mb-4">
+                      <Image
+                        src={category.products?.[0]?.image_url || "/placeholder.jpg"}
+                        alt={`${category.name} category`}
+                        layout="fill"
+                        objectFit="cover"
+                        className="rounded-lg group-hover:scale-105 transition-transform"
+                        loading="lazy"
+                      />
+                    </div>
+                    <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <h3 className="text-lg sm:text-xl font-semibold text-white">{category.name}</h3>
+                    </div>
+                  </Link>
+                ))}
             </div>
-            <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <h3 className="text-lg sm:text-xl font-semibold text-white">{category.name}</h3>
-            </div>
-          </Link>
-        ))}
-  </div>
-</section>
+          </section>
 
           {/* New Arrivals */}
           <section className="mb-12">
-  <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-8">
-    New Arrivals
-  </h2>
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
-    {newArrivals.map((product) => (
-      <div
-        key={product.id}
-        className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 relative group"
-      >
-        <Link href={`/product/${product.id}`} role="button" aria-label={`View ${product.name} product details`}>
-          <div className="relative w-full h-40 sm:h-48 mb-4">
-            <Image
-              src={product.image_url}
-              alt={`Image of ${product.name}`}
-              layout="fill"
-              objectFit="cover"
-              className="rounded-lg"
-              loading="lazy"
-            />
-          </div>
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{product.name}</h3>
-          <p className="text-purple-700 font-semibold text-sm sm:text-base">
-            {product.is_on_sale ? (
-              <>
-                <span className="line-through text-red-600">₦{Number(product.price).toLocaleString()}</span>
-                <span className="ml-2 text-green-600">
-                  ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
-                </span>
-              </>
-            ) : (
-              `₦${Number(product.price).toLocaleString()}`
+            <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 font-playfair-display text-center mb-8">
+              New Arrivals
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
+              {newArrivals.map((product) => (
+                <div
+                  key={product.id}
+                  className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-100 relative group"
+                >
+                  <Link href={`/product/${product.id}`} role="button" aria-label={`View ${product.name} product details`}>
+                    <div className="relative w-full h-40 sm:h-48 mb-4">
+                      <Image
+                        src={product.image_url}
+                        alt={`Image of ${product.name}`}
+                        layout="fill"
+                        objectFit="cover"
+                        className="rounded-lg"
+                        loading="lazy"
+                      />
+                    </div>
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{product.name}</h3>
+                    <p className="text-purple-700 font-semibold text-sm sm:text-base">
+                      {product.is_on_sale ? (
+                        <>
+                          <span className="line-through text-red-600">₦{Number(product.price).toLocaleString()}</span>
+                          <span className="ml-2 text-green-600">
+                            ₦{(product.price * (1 - product.discount_percentage / 100)).toLocaleString()}
+                          </span>
+                        </>
+                      ) : (
+                        `₦${Number(product.price).toLocaleString()}`
+                      )}
+                    </p>
+                  </Link>
+                  <div className="flex items-center mt-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <FaStar key={star} className="text-yellow-400 text-sm" />
+                    ))}
+                  </div>
+                  {product.is_out_of_stock ? (
+                    <span className="text-red-600 text-xs sm:text-sm absolute top-2 right-2 bg-red-100 px-2 py-1 rounded">
+                      Out of Stock
+                    </span>
+                  ) : (
+                    <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => addToCart({ ...product, quantity: 1 })}
+                        className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700"
+                        aria-label={`Add ${product.name} to cart`}
+                      >
+                        <FaShoppingCart />
+                      </button>
+                      <button
+                        onClick={() => toggleWishlist(product.id)}
+                        className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700"
+                        aria-label={isInWishlist(product.id) ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
+                      >
+                        {isInWishlist(product.id) ? <FaHeart /> : <FaRegHeart />}
+                      </button>
+                    </div>
+                  )}
+                  {product.is_new && (
+                    <span className="absolute top-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded">New</span>
+                  )}
+                </div>
+              ))}
+            </div>
+            {isFetchingMore && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mt-6">
+                {Array(4)
+                  .fill()
+                  .map((_, index) => (
+                    <SkeletonProduct key={index} />
+                  ))}
+              </div>
             )}
-          </p>
-        </Link>
-        <div className="flex items-center mt-2">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <FaStar key={star} className="text-yellow-400 text-sm" />
-          ))}
-        </div>
-        {product.is_out_of_stock ? (
-          <span className="text-red-600 text-xs sm:text-sm absolute top-2 right-2 bg-red-100 px-2 py-1 rounded">
-            Out of Stock
-          </span>
-        ) : (
-          <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              onClick={() => addToCart({ ...product, quantity: 1 })}
-              className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700"
-              aria-label={`Add ${product.name} to cart`}
-            >
-              <FaShoppingCart />
-            </button>
-            <button
-              onClick={() => toggleWishlist(product.id)}
-              className="bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700"
-              aria-label={isInWishlist(product.id) ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
-            >
-              {isInWishlist(product.id) ? <FaHeart /> : <FaRegHeart />}
-            </button>
-          </div>
-        )}
-        {product.is_new && (
-          <span className="absolute top-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded">New</span>
-        )}
-      </div>
-    ))}
-  </div>
-  {isFetchingMore && (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mt-6">
-      {Array(4)
-        .fill()
-        .map((_, index) => (
-          <SkeletonProduct key={index} />
-        ))}
-    </div>
-  )}
-</section>
+          </section>
 
           {/* Testimonials */}
           <section className="max-w-7xl mx-auto p-6 sm:p-8 mb-12">
@@ -507,122 +507,122 @@ export default function Home() {
           </section>
 
           {/* about */}
-<section className="bg-gray-200 px-4 py-10 sm:px-8 lg:px-16 rounded-xl mb-20 max-w-7xl mx-auto">
-  {/* Top Section */}
-  <div className="flex flex-col lg:flex-row items-center lg:gap-12">
-    {/* Left */}
-    <div className="lg:w-1/2 text-center lg:text-left space-y-6">
-      <h2 className="text-3xl sm:text-4xl font-bold text-purple-800 font-playfair-display">
-        About Vian Clothing Hub
-      </h2>
-      <p className="text-base sm:text-lg text-gray-600 max-w-xl mx-auto lg:mx-0">
-        <span className="text-purple-700 font-semibold">Vian Clothing Hub</span> is Nigeria’s premier online fashion destination, blending vibrant African prints with modern elegance for every occasion.
-      </p>
-      <div className="flex justify-center lg:justify-start">
-        <Link
-          href="/shop"
-          className="bg-gold-500 text-purple-800 font-semibold px-6 py-3 rounded-lg hover:bg-gold-600 hover:scale-105 transition-transform duration-200"
-          role="button"
-          aria-label="Start shopping at Vian Clothing Hub"
-        >
-          Discover Our Style
-        </Link>
-      </div>
-    </div>
+          <section className="bg-gray-200 px-4 py-10 sm:px-8 lg:px-16 rounded-xl mb-20 max-w-7xl mx-auto">
+            {/* Top Section */}
+            <div className="flex flex-col lg:flex-row items-center lg:gap-12">
+              {/* Left */}
+              <div className="lg:w-1/2 text-center lg:text-left space-y-6">
+                <h2 className="text-3xl sm:text-4xl font-bold text-purple-800 font-playfair-display">
+                  About Vian Clothing Hub
+                </h2>
+                <p className="text-base sm:text-lg text-gray-600 max-w-xl mx-auto lg:mx-0">
+                  <span className="text-purple-700 font-semibold">Vian Clothing Hub</span> is Nigeria’s premier online fashion destination, blending vibrant African prints with modern elegance for every occasion.
+                </p>
+                <div className="flex justify-center lg:justify-start">
+                  <Link
+                    href="/shop"
+                    className="bg-gold-500 text-purple-800 font-semibold px-6 py-3 rounded-lg hover:bg-gold-600 hover:scale-105 transition-transform duration-200"
+                    role="button"
+                    aria-label="Start shopping at Vian Clothing Hub"
+                  >
+                    Discover Our Style
+                  </Link>
+                </div>
+              </div>
 
-    {/* Right: Carousel */}
-    <div className="lg:w-1/2 mt-10 lg:mt-0 max-w-xl mx-auto rounded-lg overflow-hidden shadow-md">
-      <Carousel
-        showThumbs={false}
-        autoPlay
-        infiniteLoop
-        interval={4000}
-        showStatus={false}
-        showArrows={true}
-      >
-        {galleryImages.map((image, index) => (
-          <div key={index} className="relative h-56 sm:h-72 lg:h-80">
-            <Image
-              src={image.src}
-              alt={image.alt}
-              layout="fill"
-              objectFit="cover"
-              className="rounded-lg"
-              loading="lazy"
-            />
-          </div>
-        ))}
-      </Carousel>
-    </div>
-  </div>
+              {/* Right: Carousel */}
+              <div className="lg:w-1/2 mt-10 lg:mt-0 max-w-xl mx-auto rounded-lg overflow-hidden shadow-md">
+                <Carousel
+                  showThumbs={false}
+                  autoPlay
+                  infiniteLoop
+                  interval={4000}
+                  showStatus={false}
+                  showArrows={true}
+                >
+                  {galleryImages.map((image, index) => (
+                    <div key={index} className="relative h-56 sm:h-72 lg:h-80">
+                      <Image
+                        src={image.src}
+                        alt={image.alt}
+                        layout="fill"
+                        objectFit="cover"
+                        className="rounded-lg"
+                        loading="lazy"
+                      />
+                    </div>
+                  ))}
+                </Carousel>
+              </div>
+            </div>
 
-  {/* Features Grid */}
-  <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-    <div className="flex items-start gap-4">
-      <FaShoppingCart className="text-3xl text-purple-700 mt-1 hover:scale-110 transition-transform duration-200" />
-      <div>
-        <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Curated Collections</h3>
-        <p className="text-sm sm:text-base text-gray-600">
-          Shop women’s gowns, men’s traditional attire, unisex streetwear, and African prints like Ankara and Adire.
-        </p>
-      </div>
-    </div>
+            {/* Features Grid */}
+            <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+              <div className="flex items-start gap-4">
+                <FaShoppingCart className="text-3xl text-purple-700 mt-1 hover:scale-110 transition-transform duration-200" />
+                <div>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Curated Collections</h3>
+                  <p className="text-sm sm:text-base text-gray-600">
+                    Shop women’s gowns, men’s traditional attire, unisex streetwear, and African prints like Ankara and Adire.
+                  </p>
+                </div>
+              </div>
 
-    <div className="flex items-start gap-4">
-      <FaRulerCombined className="text-3xl text-purple-700 mt-1 hover:scale-110 transition-transform duration-200" />
-      <div>
-        <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Bespoke Tailoring</h3>
-        <p className="text-sm sm:text-base text-gray-600">
-          Create custom outfits with our expert tailors, crafted to your measurements and style.
-        </p>
-      </div>
-    </div>
+              <div className="flex items-start gap-4">
+                <FaRulerCombined className="text-3xl text-purple-700 mt-1 hover:scale-110 transition-transform duration-200" />
+                <div>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Bespoke Tailoring</h3>
+                  <p className="text-sm sm:text-base text-gray-600">
+                    Create custom outfits with our expert tailors, crafted to your measurements and style.
+                  </p>
+                </div>
+              </div>
 
-    <div className="flex items-start gap-4">
-      <FaShippingFast className="text-3xl text-purple-700 mt-1 hover:scale-110 transition-transform duration-200" />
-      <div>
-        <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Nationwide Delivery</h3>
-        <p className="text-sm sm:text-base text-gray-600">
-          Fast, reliable shipping across Nigeria with flexible payments and easy returns.
-        </p>
-      </div>
-    </div>
-  </div>
+              <div className="flex items-start gap-4">
+                <FaShippingFast className="text-3xl text-purple-700 mt-1 hover:scale-110 transition-transform duration-200" />
+                <div>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Nationwide Delivery</h3>
+                  <p className="text-sm sm:text-base text-gray-600">
+                    Fast, reliable shipping across Nigeria with flexible payments and easy returns.
+                  </p>
+                </div>
+              </div>
+            </div>
 
-  {/* Divider */}
-  <hr className="border-gold-500 w-24 mx-auto my-16" />
+            {/* Divider */}
+            <hr className="border-gold-500 w-24 mx-auto my-16" />
 
-  {/* Unique Selling Points */}
-  <div className="text-center max-w-md mx-auto space-y-4">
-    <h3 className="text-xl font-semibold text-purple-700">Why Choose Vian?</h3>
-    <ul className="list-disc list-inside text-gray-600 text-base space-y-2 text-left">
-      <li>Authentic, high-quality fashion</li>
-      <li>Nationwide delivery to Lagos, Abuja, and beyond</li>
-      <li>Secure payments and 7-day returns</li>
-      <li>Exclusive sales and discounts</li>
-    </ul>
-  </div>
+            {/* Unique Selling Points */}
+            <div className="text-center max-w-md mx-auto space-y-4">
+              <h3 className="text-xl font-semibold text-purple-700">Why Choose Vian?</h3>
+              <ul className="list-disc list-inside text-gray-600 text-base space-y-2 text-left">
+                <li>Authentic, high-quality fashion</li>
+                <li>Nationwide delivery to Lagos, Abuja, and beyond</li>
+                <li>Secure payments and 7-day returns</li>
+                <li>Exclusive sales and discounts</li>
+              </ul>
+            </div>
 
-  {/* Bottom CTAs */}
-  <div className="mt-12 flex flex-col sm:flex-row justify-center gap-6">
-    <Link
-      href="/shop"
-      className="bg-gold-500 text-purple-800 font-semibold px-6 py-3 rounded-lg hover:bg-gold-600 hover:scale-105 transition-transform duration-200 text-center"
-      role="button"
-      aria-label="Start shopping at Vian Clothing Hub"
-    >
-      Shop Now
-    </Link>
-    <Link
-      href="/about"
-      className="border-2 border-purple-700 text-purple-700 font-semibold px-6 py-3 rounded-lg hover:bg-purple-700 hover:text-white transition-colors duration-200 text-center"
-      role="button"
-      aria-label="Learn more about Vian Clothing Hub"
-    >
-      Learn More
-    </Link>
-  </div>
-</section>
+            {/* Bottom CTAs */}
+            <div className="mt-12 flex flex-col sm:flex-row justify-center gap-6">
+              <Link
+                href="/shop"
+                className="bg-gold-500 text-purple-800 font-semibold px-6 py-3 rounded-lg hover:bg-gold-600 hover:scale-105 transition-transform duration-200 text-center"
+                role="button"
+                aria-label="Start shopping at Vian Clothing Hub"
+              >
+                Shop Now
+              </Link>
+              <Link
+                href="/about"
+                className="border-2 border-purple-700 text-purple-700 font-semibold px-6 py-3 rounded-lg hover:bg-purple-700 hover:text-white transition-colors duration-200 text-center"
+                role="button"
+                aria-label="Learn more about Vian Clothing Hub"
+              >
+                Learn More
+              </Link>
+            </div>
+          </section>
 
 
 
