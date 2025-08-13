@@ -331,8 +331,8 @@ export default function Navbar({
             )}
           </button>
 
-          <button
-            onClick={() => router.push("/dashboard")}
+           <button
+            onClick={() => router.push(profile?.is_admin ? "/admin" : "/dashboard")}
             className="text-gray-600 hover:text-purple-700 transition-colors"
           >
             {profile?.avatar_url ? (
