@@ -56,7 +56,8 @@ export default function Home() {
         if (user) {
           const { data: profileData, error: profileError } = await supabase
             .from("profiles")
-    .select("email, avatar_url, is_admin")            .eq("id", user.id)
+            .select("email, avatar_url, is_admin")
+            .eq("id", user.id)
             .maybeSingle();
           if (profileError) throw new Error(profileError.message);
           setProfile(profileData);
