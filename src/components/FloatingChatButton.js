@@ -24,11 +24,10 @@ const FloatingChatButton = ({ cartItemCount }) => {
             <div className="fixed bottom-4 right-4 z-50">
                 <button
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    className="relative bg-purple-700 text-white p-4 rounded-full shadow-xl hover:bg-purple-800 transition-colors duration-300 focus:outline-none focus:ring-4 focus:ring-purple-300"
+                    className="group relative bg-purple-700 text-white p-4 rounded-full shadow-xl hover:bg-purple-800 transition-colors duration-300 focus:outline-none focus:ring-4 focus:ring-purple-300"
                     aria-label="Open contact options"
                 >
-                    <FaPhone className="text-xl" />
-                    <div className="absolute -inset-4 bg-purple-300 bg-opacity-20 rounded-full animate-ping" />
+                    <FaPhone className="text-xl animate-pulse-scale transform transition-transform duration-500 group-hover:rotate-180" />
                 </button>
 
                 {isMenuOpen && (
@@ -51,6 +50,22 @@ const FloatingChatButton = ({ cartItemCount }) => {
                     </div>
                 )}
             </div>
+
+            <style jsx>{`
+            @keyframes pulse-scale {
+                0%, 100% {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+                50% {
+                    opacity: 0.6;
+                    transform: scale(1.2);
+                }
+            }
+            .animate-pulse-scale {
+                animation: pulse-scale 2s infinite ease-in-out;
+            }
+        `}</style>
         </>
     );
 };
