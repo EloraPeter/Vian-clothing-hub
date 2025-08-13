@@ -629,9 +629,9 @@ export default function Home() {
 
           {/* Sticky CTA */}
 
-          {/* <button
+          <button
             onClick={() => setIsCartOpen(true)}
-            className="fixed bottom-4 right-4 bg-purple-600 text-white p-4 rounded-full shadow-lg hover:bg-purple-700 transition-colors z-50"
+            className="fixed bottom-8 right-4 bg-purple-600 text-white p-4 rounded-full shadow-lg hover:bg-purple-700 transition-colors z-50"
             aria-label="Open cart"
           >
             <FaShoppingCart className="text-xl" />
@@ -642,7 +642,7 @@ export default function Home() {
             )}
             <div className="absolute -inset-4 bg-purple-200 bg-opacity-20 rounded-full animate-ping" />
 
-          </button> */}
+          </button>
           <FloatingChatButton cartItemCount={0} /> {/* Replace 0 with actual cart count if available */}
         </div>
 
