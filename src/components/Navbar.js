@@ -278,7 +278,7 @@ export default function Navbar({
           <div className="relative">
             <button
               onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-              className="relative text-purple-700 hover:text-purple-300 transition-colors"
+              className="relative cursor-pointer text-purple-700 hover:text-purple-300 transition-colors"
               aria-label="View notifications"
             >
               <FaBell className="text-lg sm:text-xl" />
@@ -320,7 +320,7 @@ export default function Navbar({
 
           <button
             onClick={onCartClick}
-            className="relative text-purple-700 hover:text-purple-400 transition-colors active:scale-90 transition-transform duration-150"
+            className="relative cursor-pointer text-purple-700 hover:text-purple-400 transition-colors active:scale-90 transition-transform duration-150"
             aria-label="Open cart"
           >
             <FaShoppingCart className="text-lg sm:text-xl" />
@@ -333,7 +333,7 @@ export default function Navbar({
 
            <button
             onClick={() => router.push(profile?.is_admin ? "/admin" : "/dashboard")}
-            className="text-gray-600 hover:text-purple-700 transition-colors"
+            className="text-gray-600 cursor-pointer hover:text-purple-700 transition-colors"
           >
             {profile?.avatar_url ? (
               <img
