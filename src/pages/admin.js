@@ -334,7 +334,7 @@ export default function AdminPage() {
   async function updateCustomOrderStatus(id, newStatus) {
     const price = orderPrices[id] || 0;
     if (newStatus === "in progress" && !price) {
-      alert("Please set a price before marking as in progress.");
+      toast.warning("Please set a price before marking as in progress.");
       return;
     }
 
@@ -352,7 +352,7 @@ export default function AdminPage() {
 
     if (error) {
       console.error("Error updating status:", error.message);
-      alert("Error updating status: " + error.message);
+      toast.error("Error updating status: " + error.message);
       return;
     }
 
@@ -380,7 +380,7 @@ export default function AdminPage() {
 
         if (invoiceError) {
           console.error("Error creating invoice:", invoiceError.message);
-          alert("Error creating invoice: " + invoiceError.message);
+          toast.error("Error creating invoice: " + invoiceError.message);
           return;
         }
 
@@ -391,7 +391,7 @@ export default function AdminPage() {
         const email = order.profiles?.email || order.email;
         if (!email) {
           console.error("No email found for order:", order.id);
-          alert("Failed to send invoice email: No email address found");
+          toast.error("Failed to send invoice email: No email address found");
           return;
         }
 
@@ -484,13 +484,13 @@ export default function AdminPage() {
           const emailResult = await emailResponse.json();
           if (!emailResponse.ok) {
             console.error("Email sending failed:", emailResult.error);
-            alert("Failed to send invoice email: " + emailResult.error);
+            toast.error("Failed to send invoice email: " + emailResult.error);
           } else {
             console.log("Invoice email sent successfully:", emailResult.message);
           }
         } catch (emailError) {
           console.error("Error sending email:", emailError.message);
-          alert("Error sending invoice email: " + emailError.message);
+          toast.error("Error sending invoice email: " + emailError.message);
         }
 
         await createInAppNotification(
@@ -499,7 +499,7 @@ export default function AdminPage() {
         );
       } catch (error) {
         console.error("Error generating PDF or invoice:", error.message);
-        alert("Error generating PDF: " + error.message);
+        toast.error("Error generating PDF: " + error.message);
       }
     }
   }
@@ -511,7 +511,7 @@ export default function AdminPage() {
       .eq("id", id);
 
     if (error) {
-      alert("Error updating status: " + error.message);
+      toast.error("Error updating status: " + error.message);
     } else {
       setProductOrders((prev) =>
         prev.map((order) =>
@@ -558,7 +558,7 @@ export default function AdminPage() {
 
     if (error) {
       console.error("Error updating delivery status:", error.message);
-      alert("Error updating delivery status: " + error.message);
+      toast.error("Error updating delivery status: " + error.message);
       return;
     }
 

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AddProductForm({ products, setProducts, categories, setCategories }) {
   const [productData, setProductData] = useState({
