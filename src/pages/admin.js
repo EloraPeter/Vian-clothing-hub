@@ -693,8 +693,13 @@ export default function AdminPage() {
           {activeSection === "overview" && (
             <section className="bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-2xl p-6 mb-6 shadow-lg">
               <h1 className="text-2xl md:text-3xl font-bold">
-                Welcome, {profile?.email.split("@")[0]}!
+                Welcome, {(
+                  profile?.first_name
+                    ? profile.first_name
+                    : profile?.email.split("@")[0]
+                ).replace(/\b\w/g, char => char.toUpperCase())}!
               </h1>
+
               <p className="mt-2">Manage your products, orders, and shipping fees with ease.</p>
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-white text-purple-800 p-4 rounded-lg shadow">
