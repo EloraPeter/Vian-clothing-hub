@@ -11,7 +11,7 @@ import VariantsModal from "@/components/admin/VariantsModal";
 import ShippingFeesTable from "@/components/admin/ShippingFeesTable";
 import CustomOrdersTable from "@/components/admin/CustomOrdersTable";
 import ProductOrdersTable from "@/components/admin/ProductOrdersTable";
-import { FaUser, FaBox, FaShippingFast, FaTshirt, FaSignOutAlt, FaBars } from "react-icons/fa";
+import { FaUser, FaBox, FaShippingFast, FaTshirt, FaSignOutAlt, FaBars, FaBell } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -27,6 +27,7 @@ export default function AdminPage() {
   const [profile, setProfile] = useState(null);
   const [categories, setCategories] = useState([]);
   const [shippingFees, setShippingFees] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [currentProductPage, setCurrentProductPage] = useState(1);
   const [currentCustomOrderPage, setCurrentCustomOrderPage] = useState(1);
   const [currentProductOrderPage, setCurrentProductOrderPage] = useState(1);
@@ -76,6 +77,7 @@ export default function AdminPage() {
           { data: categoryData, error: categoryError },
           { data: variantsData, error: variantsError },
           { data: shippingFeesData, error: shippingFeesError },
+          { data: notificationsData, error: notificationsError },
         ] = await Promise.all([
           supabase.from("custom_orders").select("*").order("created_at", { ascending: false }),
           supabase.from("orders").select("*, items").order("created_at", { ascending: false }),
@@ -83,6 +85,7 @@ export default function AdminPage() {
           supabase.from("categories").select("id, name, slug"),
           supabase.from("product_variants").select("id, product_id, size, color, stock_quantity, additional_price"),
           supabase.from("shipping_fees").select("id, state_name, shipping_fee"),
+          supabase.from("notifications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
         ]);
         if (customOrderError) setError(customOrderError.message);
         else setOrders(customOrderData || []);
@@ -111,6 +114,9 @@ export default function AdminPage() {
         if (shippingFeesError) setError(shippingFeesError.message);
         else setShippingFees(shippingFeesData || []);
 
+        if (notificationsError) setError(notificationsError.message);
+        else setNotifications(notificationsData || []);
+
         setLoading(false);
       } catch (err) {
         setError(err.message);
@@ -121,6 +127,20 @@ export default function AdminPage() {
     fetchProfile();
     fetchData();
   }, [user]);
+
+  const markNotificationAsRead = async (notificationId) => {
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read: true })
+      .eq("id", notificationId);
+    if (!error) {
+      setNotifications((prev) =>
+        prev.map((notif) =>
+          notif.id === notificationId ? { ...notif, read: true } : notif
+        )
+      );
+    }
+  };
 
   const sendWhatsAppNotification = async (phone, text) => {
     const apiKey = "1999329";
@@ -365,7 +385,7 @@ export default function AdminPage() {
     if (newStatus === "in progress") {
       const order = data;
       try {
-        const { pdfUrl, invoiceId } = await generateInvoicePDF(order, price);
+        const { pdfUrl, invoiceId } = await generateInvoicePDF(order, price, order.user_id, order.profiles?.email || order.email);
         const { error: invoiceError } = await supabase
           .from("invoices")
           .insert([
@@ -425,7 +445,7 @@ export default function AdminPage() {
                 <div style="margin-bottom: 20px;">
                   <p style="font-size: 14px; margin: 5px 0;"><strong>Invoice ID:</strong> ${invoiceId}</p>
                   <p style="font-size: 14px; margin: 5px 0;"><strong>Order ID:</strong> ${order.id}</p>
-                  <p style="font-size: 14px; margin: 5px 0;"><strong>Fabric:</strong> ${order.fabric || "N/A"}</p></p>
+                  <p style="font-size: 14px; margin: 5px 0;"><strong>Fabric:</strong> ${order.fabric || "N/A"}</p>
                   <p style="font-size: 14px; margin: 5px 0;"><strong>Style:</strong> ${order.style || "N/A"}</p>
                   <p style="font-size: 14px; margin: 5px 0;"><strong>Delivery Address:</strong> ${order.address || "N/A"}</p>
                   <p style="font-size: 14px; margin: 5px 0;"><strong style="color: #800080;">Deposit:</strong> ₦${Number(order.deposit || 0).toLocaleString("en-NG")}</p>
@@ -433,7 +453,8 @@ export default function AdminPage() {
                   <p style="font-size: 16px; margin: 5px 0;"><strong style="color: #800080;">Total Amount:</strong> ₦${Number(price).toLocaleString("en-NG")}</p>
                 </div>
                 <!-- Call-to-Action Buttons -->
-               10px 20px; background-color: #800080; color: #fff; text-decoration: none; border-radius: 5px; margin-right: 10px;">View/Download Invoice</a>
+                <div style="text-align: center; margin: 20px 0;">
+                  <a href="${pdfUrl}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #800080; color: #fff; text-decoration: none; border-radius: 5px; margin-right: 10px;">View/Download Invoice</a>
                   <a href="${paymentLink}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #800080; color: #fff; text-decoration: none; border-radius: 5px;">Pay Now</a>
                 </div>
                 <p style="font-size: 14px; margin: 0 0 20px; text-align: center;">
@@ -592,7 +613,7 @@ export default function AdminPage() {
     <main className="min-h-screen bg-gray-50">
       <ToastContainer />
 
-      <Navbar profile={profile} />
+      <Navbar profile={profile} notifications={notifications} />
       <div className="flex">
         {/* Sidebar */}
         <aside className={`fixed inset-y-0 min-h-screen left-0 w-64 bg-white shadow-lg p-6 transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:static lg:translate-x-0 transition-transform duration-300 z-50`}>
@@ -605,6 +626,7 @@ export default function AdminPage() {
           <nav className="space-y-2">
             {[
               { id: "overview", label: "Overview", icon: <FaUser /> },
+              { id: "notifications", label: "Notifications", icon: <FaBell /> },
               { id: "profile", label: "Profile", icon: <FaUser /> },
               { id: "add-product", label: "Add Product", icon: <FaTshirt /> },
               { id: "shipping-fees", label: "Shipping Fees", icon: <FaShippingFast /> },
@@ -618,10 +640,11 @@ export default function AdminPage() {
                   setActiveSection(item.id);
                   setIsSidebarOpen(false);
                 }}
-                className={`w-full flex items-center space-x-2 p-3 rounded-lg text-left transition-colors ${activeSection === item.id
+                className={`w-full flex items-center space-x-2 p-3 rounded-lg text-left transition-colors ${
+                  activeSection === item.id
                     ? "bg-purple-100 text-purple-800"
                     : "text-gray-600 hover:bg-purple-50 hover:text-purple-800"
-                  }`}
+                }`}
               >
                 {item.icon}
                 <span>{item.label}</span>
@@ -673,6 +696,40 @@ export default function AdminPage() {
             </section>
           )}
 
+          {/* Notifications Section */}
+          {activeSection === "notifications" && (
+            <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+              <h2 className="text-xl font-semibold text-purple-800 mb-4">Notifications</h2>
+              {notifications.length === 0 ? (
+                <p className="text-gray-500">No notifications available.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {notifications.map((notif) => (
+                    <li
+                      key={notif.id}
+                      className={`p-4 rounded-lg border transition-all duration-300 ${
+                        notif.read ? "bg-gray-100 border-gray-200" : "bg-purple-50 border-purple-200"
+                      } hover:shadow-md`}
+                    >
+                      <p className="text-gray-700">{notif.message}</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {new Date(notif.created_at).toLocaleString()}
+                      </p>
+                      {!notif.read && (
+                        <button
+                          onClick={() => markNotificationAsRead(notif.id)}
+                          className="mt-2 text-sm text-purple-600 hover:text-purple-800 transition-colors"
+                        >
+                          Mark as Read
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
+
           {/* Profile Section */}
           {activeSection === "profile" && (
             <section className="rounded-2xl shadow-lg p-6 mb-6">
@@ -694,7 +751,7 @@ export default function AdminPage() {
 
           {/* Shipping Fees Section */}
           {activeSection === "shipping-fees" && (
-            <section className=" rounded-2xl shadow-lg p-6 mb-6">
+            <section className="rounded-2xl shadow-lg p-6 mb-6">
               <ShippingFeesTable
                 shippingFees={shippingFees}
                 setShippingFees={setShippingFees}
@@ -704,7 +761,7 @@ export default function AdminPage() {
 
           {/* Products Section */}
           {activeSection === "products" && (
-            <section className=" rounded-2xl shadow-lg p-6 mb-6">
+            <section className="rounded-2xl shadow-lg p-6 mb-6">
               <ProductsTable
                 products={products}
                 setProducts={setProducts}
@@ -721,7 +778,7 @@ export default function AdminPage() {
 
           {/* Custom Orders Section */}
           {activeSection === "custom-orders" && (
-            <section className=" rounded-2xl shadow-lg p-6 mb-6">
+            <section className="rounded-2xl shadow-lg p-6 mb-6">
               <CustomOrdersTable
                 orders={orders}
                 setOrders={setOrders}
