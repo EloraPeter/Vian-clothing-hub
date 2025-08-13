@@ -145,9 +145,9 @@ export default function ProductsTable({ products, setProducts, categories, setCa
             setIsEditModalOpen(false);
             setEditProductData(null);
             setProductPreviewUrl(null);
-            alert("Product updated successfully!");
+            toast.success("Product updated successfully!");
         } catch (error) {
-            alert(error.message);
+            toast.error(error.message);
         } finally {
             setProductUploading(false);
         }
@@ -159,7 +159,7 @@ export default function ProductsTable({ products, setProducts, categories, setCa
         const { error } = await supabase.from("products").delete().eq("id", id);
         if (error) {
             console.error("Error deleting product:", error.message);
-            alert("Error deleting product: " + error.message);
+            toast.error("Error deleting product: " + error.message);
             return;
         }
 
@@ -175,7 +175,7 @@ export default function ProductsTable({ products, setProducts, categories, setCa
     const handleApplyDiscount = async (id) => {
         const discount = parseInt(discountInputs[id], 10);
         if (isNaN(discount) || discount < 0 || discount > 100) {
-            alert("Please enter a valid discount percentage (0-100).");
+            toast.warning("Please enter a valid discount percentage (0-100).");
             return;
         }
 
@@ -186,7 +186,7 @@ export default function ProductsTable({ products, setProducts, categories, setCa
 
         if (error) {
             console.error("Error applying discount:", error.message);
-            alert("Error applying discount: " + error.message);
+            toast.error("Error applying discount: " + error.message);
             return;
         }
 
@@ -194,7 +194,7 @@ export default function ProductsTable({ products, setProducts, categories, setCa
             prev.map((p) => (p.id === id ? { ...p, discount_percentage: discount } : p))
         );
         setDiscountInputs((prev) => ({ ...prev, [id]: "" }));
-        alert("Discount applied successfully!");
+        toast.success("Discount applied successfully!");
     };
 
     const indexOfLastProduct = currentProductPage * itemsPerPage;
@@ -493,4 +493,5 @@ export default function ProductsTable({ products, setProducts, categories, setCa
                     </div>
                 )}
             </section></>
- 
+    );
+}
