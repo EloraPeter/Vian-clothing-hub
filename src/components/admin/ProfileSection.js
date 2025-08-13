@@ -7,6 +7,9 @@ export default function ProfileSection({ profile, setProfile, user }) {
   const [avatarFile, setAvatarFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [showOldPass, setShowOldPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
@@ -56,6 +59,12 @@ export default function ProfileSection({ profile, setProfile, user }) {
     setUploading(false);
   };
 
+   const handleNewPasswordChange = (e) => {
+      const val = e.target.value;
+      setNewPassword(val);
+      setStrengthScore(zxcvbn(val).score);
+    };
+
   return (
     <>
       <ToastContainer />
@@ -95,6 +104,103 @@ export default function ProfileSection({ profile, setProfile, user }) {
             )}
           </div>
         </div>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            let avatar_url = profile.avatar_url;
+
+            if (avatarFile) {
+              setUploading(true);
+              const fileExt = avatarFile.name.split(".").pop();
+              const fileName = `${user.id}.${fileExt}`;
+              const filePath = `${fileName}`;
+
+              const { error: uploadError } = await supabase.storage
+                .from("avatars")
+                .upload(filePath, avatarFile, { upsert: true });
+
+              if (uploadError) {
+                alert("Upload failed: " + uploadError.message);
+                setUploading(false);
+                return;
+              }
+
+              const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
+              avatar_url = data.publicUrl;
+              setUploading(false);
+            }
+
+            const { error } = await supabase
+              .from("profiles")
+              .update({
+                email: profile.email,
+                avatar_url,
+                first_name: profile.first_name,
+                last_name: profile.last_name,
+              })
+              .eq("id", user.id);
+
+            if (error) alert("Update failed: " + error.message);
+            else {
+              alert("Profile updated successfully");
+              setProfile({ ...profile, avatar_url });
+              setAvatarFile(null);
+              setPreviewUrl(null);
+            }
+          }}
+          className="space-y-4"
+        >
+          {/* Email Input */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email Address
+            </label>
+            <input
+              type="email"
+              value={profile?.email || ""}
+              onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              required
+            />
+          </div>
+
+          {/* First Name Input */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              First Name
+            </label>
+            <input
+              type="text"
+              value={profile?.first_name || ""}
+              onChange={(e) => setProfile({ ...profile, first_name: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              required
+            />
+          </div>
+
+          {/* Last Name Input */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Last Name
+            </label>
+            <input
+              type="text"
+              value={profile?.last_name || ""}
+              onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              required
+            />
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            className="w-full bg-purple-600 text-white font-semibold py-2 rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50"
+            disabled={uploading}
+          >
+            {uploading ? "Uploading..." : "Save Changes"}
+          </button>
+        </form>
       </section>
 
       <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
