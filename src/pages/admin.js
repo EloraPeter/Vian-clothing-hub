@@ -56,7 +56,7 @@ export default function AdminPage() {
     async function fetchProfile() {
       const { data, error } = await supabase
         .from("profiles")
-        .select("email, avatar_url")
+        .select("email, avatar_url, is_admin")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -659,8 +659,8 @@ export default function AdminPage() {
                   setIsSidebarOpen(false);
                 }}
                 className={`w-full flex items-center space-x-2 p-3 rounded-lg text-left transition-colors ${activeSection === item.id
-                    ? "bg-purple-100 text-purple-800"
-                    : "text-gray-600 hover:bg-purple-50 hover:text-purple-800"
+                  ? "bg-purple-100 text-purple-800"
+                  : "text-gray-600 hover:bg-purple-50 hover:text-purple-800"
                   }`}
               >
                 {item.icon}

@@ -48,8 +48,7 @@ export default function Product() {
         if (user) {
           const { data: profileData } = await supabase
             .from("profiles")
-            .select("email, avatar_url")
-            .eq("id", user.id)
+    .select("email, avatar_url, is_admin")            .eq("id", user.id)
             .maybeSingle();
           setProfile(profileData);
         }

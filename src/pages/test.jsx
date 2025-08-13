@@ -69,8 +69,7 @@ export default function AdminPage() {
     async function fetchProfile() {
       const { data, error } = await supabase
         .from("profiles")
-        .select("email, avatar_url")
-        .eq("id", user.id)
+.select("email, avatar_url, is_admin")        .eq("id", user.id)
         .maybeSingle();
 
       if (error) {

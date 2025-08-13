@@ -33,8 +33,7 @@ export default function CustomOrderPage() {
         setUser(user);
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("email, avatar_url")
-          .eq("id", user.id)
+  .select("email, avatar_url, is_admin")          .eq("id", user.id)
           .maybeSingle();
 
         if (profileError) {
