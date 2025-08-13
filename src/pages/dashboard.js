@@ -129,6 +129,24 @@ export default function Dashboard() {
     }
   };
 
+  const markAllNotificationsAsRead = async () => {
+  const { error } = await supabase
+    .from("notifications")
+    .update({ read: true })
+    .eq("user_id", user.id)
+    .eq("read", false);
+
+  if (!error) {
+    setNotifications((prev) =>
+      prev.map((notif) => ({ ...notif, read: true }))
+    );
+    toast.success("All notifications marked as read.");
+  } else {
+    console.error("Error marking all notifications as read:", error.message);
+    toast.error("Error marking all notifications as read: " + error.message);
+  }
+};
+
   const sendEmailNotification = async (email, subject, body) => {
     try {
       const response = await fetch("/api/send-email", {
