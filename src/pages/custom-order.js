@@ -86,6 +86,8 @@ export default function CustomOrderPage() {
             <p className="text-lg text-gray-700">Create a unique piece tailored to your style. A non-refundable ₦5,000 deposit is required to confirm your order.</p>
           </div>
           <CustomOrderForm user={user} profile={profile} />
+          <FloatingChatButton cartItemCount={0} /> {/* Replace 0 with actual cart count if available */}
+
         </div>
         <Footer />
       </main>
