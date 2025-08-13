@@ -35,7 +35,7 @@ export default function AddProductForm({ products, setProducts, categories, setC
         !productData.description ||
         productData.imageFiles.length === 0
       ) {
-        alert(
+        toast.warning(
           "Please fill in all required fields and upload at least one image."
         );
         return;
@@ -131,15 +131,18 @@ export default function AddProductForm({ products, setProducts, categories, setC
         });
         setProductPreviewUrl(null);
         setProducts((prev) => [productInsert, ...prev]);
-        alert("Product added successfully!");
+        toast.success("Product added successfully!");
       } catch (error) {
-        alert(error.message);
+        toast.error(error.message);
       } finally {
         setProductUploading(false);
       }
     };
 
   return (
+    <>
+          <ToastContainer />
+
     <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
       <h2 className="text-xl font-semibold text-purple-800 mb-4">Add Product</h2>
       <form onSubmit={handleProductSubmit} className="space-y-4">
@@ -236,6 +239,6 @@ export default function AddProductForm({ products, setProducts, categories, setC
           {productUploading ? "Adding..." : "Add Product"}
         </button>
       </form>
-    </section>
+    </section></>
   );
 }

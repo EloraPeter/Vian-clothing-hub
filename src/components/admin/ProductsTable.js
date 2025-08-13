@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import VariantsModal from "./VariantsModal"; // Assuming VariantsModal.js is in the same directory
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function ProductsTable({ products, setProducts, categories, setCategories, variants, setVariants, itemsPerPage, currentProductPage, setCurrentProductPage }) {
     const [editProductData, setEditProductData] = useState(null);
@@ -39,7 +41,7 @@ export default function ProductsTable({ products, setProducts, categories, setCa
             !editProductData.price ||
             !editProductData.description
         ) {
-            alert("Please fill in all required fields.");
+            toast.warning("Please fill in all required fields.");
             return;
         }
 
@@ -126,16 +128,16 @@ export default function ProductsTable({ products, setProducts, categories, setCa
                 prev.map((product) =>
                     product.id === editProductData.id
                         ? {
-                              ...product,
-                              name: editProductData.name,
-                              price: parseFloat(editProductData.price),
-                              description: editProductData.description,
-                              category_id: categoryId,
-                              categories: categories.find((c) => c.id === categoryId) || null,
-                              is_new: editProductData.is_new,
-                              is_out_of_stock: editProductData.is_out_of_stock,
-                              is_on_sale: editProductData.is_on_sale,
-                          }
+                            ...product,
+                            name: editProductData.name,
+                            price: parseFloat(editProductData.price),
+                            description: editProductData.description,
+                            category_id: categoryId,
+                            categories: categories.find((c) => c.id === categoryId) || null,
+                            is_new: editProductData.is_new,
+                            is_out_of_stock: editProductData.is_out_of_stock,
+                            is_on_sale: editProductData.is_on_sale,
+                        }
                         : product
                 )
             );
@@ -201,292 +203,294 @@ export default function ProductsTable({ products, setProducts, categories, setCa
     const totalProductPages = Math.ceil(products.length / itemsPerPage);
 
     return (
-        <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-            <h2 className="text-xl font-semibold text-purple-800 mb-4">Manage Products</h2>
-            <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount (%)</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variants</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {currentProducts.map((product) => (
-                            <tr key={product.id}>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    {product.image_url ? (
-                                        <img
-                                            src={product.image_url}
-                                            alt={product.name}
-                                            className="w-16 h-16 object-cover rounded-md"
-                                        />
-                                    ) : (
-                                        <span className="text-sm text-gray-500">No Image</span>
-                                    )}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{product.name}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₦{Number(product.price).toLocaleString()}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {product.categories?.name || "None"}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <div className="flex items-center space-x-2">
-                                        <input
-                                            type="number"
-                                            value={discountInputs[product.id] || ""}
-                                            onChange={(e) => handleDiscountChange(product.id, e.target.value)}
-                                            className="w-20 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
-                                            placeholder="0-100"
-                                            min="0"
-                                            max="100"
-                                        />
-                                        <button
-                                            onClick={() => handleApplyDiscount(product.id)}
-                                            className="px-2 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
-                                        >
-                                            Apply
-                                        </button>
-                                    </div>
-                                    <p className="text-xs text-gray-400 mt-1">Current: {product.discount_percentage || 0}%</p>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <div className="flex flex-wrap gap-2">
-                                        {product.is_new && (
-                                            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                                                New
-                                            </span>
-                                        )}
-                                        {product.is_out_of_stock && (
-                                            <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
-                                                Out of Stock
-                                            </span>
-                                        )}
-                                        {product.is_on_sale && (
-                                            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                                                On Sale
-                                            </span>
-                                        )}
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-500">
-                                    <VariantsModal product={product} variants={variants} setVariants={setVariants} />
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button
-                                        onClick={() => handleEditProduct(product)}
-                                        className="text-blue-600 hover:text-blue-800 mr-4"
-                                    >
-                                        Edit
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteProduct(product.id)}
-                                        className="text-red-600 hover:text-red-800"
-                                    >
-                                        Delete
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-            <div className="mt-6 flex justify-center gap-3 items-center">
-                <button
-                    className="px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50"
-                    onClick={() => setCurrentProductPage((prev) => Math.max(prev - 1, 1))}
-                    disabled={currentProductPage === 1}
-                >
-                    Previous
-                </button>
-                <span className="text-gray-600">Page {currentProductPage} of {totalProductPages}</span>
-                <button
-                    className="px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50"
-                    onClick={() => setCurrentProductPage((prev) => Math.min(prev + 1, totalProductPages))}
-                    disabled={currentProductPage === totalProductPages}
-                >
-                    Next
-                </button>
-            </div>
+        <>
+         <ToastContainer /> 
 
-            {isEditModalOpen && (
-                <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-2xl p-6 w-full max-w-md relative">
-                        <button
-                            onClick={() => {
-                                setIsEditModalOpen(false);
-                                setEditProductData(null);
-                                setProductPreviewUrl(null);
-                            }}
-                            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-                        >
-                            ✕
-                        </button>
-                        <h2 className="text-xl font-semibold text-purple-800 mb-4">Edit Product</h2>
-                        <form onSubmit={handleEditProductSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Product Name
-                                </label>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    value={editProductData?.name || ""}
-                                    onChange={handleEditProductChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
-                                    placeholder="Enter product name"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Price (₦)
-                                </label>
-                                <input
-                                    type="number"
-                                    name="price"
-                                    value={editProductData?.price || ""}
-                                    onChange={handleEditProductChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
-                                    placeholder="0"
-                                    min="0"
-                                    step="0.01"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Description
-                                </label>
-                                <textarea
-                                    name="description"
-                                    value={editProductData?.description || ""}
-                                    onChange={handleEditProductChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
-                                    placeholder="Enter product description"
-                                    rows="4"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Category
-                                </label>
-                                <input
-                                    list="category-options"
-                                    name="category_id"
-                                    value={editProductData?.category_id || ""}
-                                    onChange={handleEditProductChange}
-                                    placeholder="Type or select a category"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
-                                />
-                                <datalist id="category-options">
-                                    <option value="none">None</option>
-                                    {categories.map((cat) => (
-                                        <option key={cat.id} value={cat.id}>
-                                            {cat.name}
-                                        </option>
-                                    ))}
-                                </datalist>
-                                <p className="text-sm text-gray-500 mt-1">
-                                    Type a new category name to create it.
-                                </p>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Product Tags
-                                </label>
-                                <div className="flex flex-col gap-2">
-                                    <label className="flex items-center">
-                                        <input
-                                            type="checkbox"
-                                            name="is_new"
-                                            checked={editProductData?.is_new || false}
-                                            onChange={handleEditProductChange}
-                                            className="mr-2 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                                        />
-                                        <span className="text-sm text-gray-700">New</span>
-                                    </label>
-                                    <label className="flex items-center">
-                                        <input
-                                            type="checkbox"
-                                            name="is_out_of_stock"
-                                            checked={editProductData?.is_out_of_stock || false}
-                                            onChange={handleEditProductChange}
-                                            className="mr-2 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                                        />
-                                        <span className="text-sm text-gray-700">Out of Stock</span>
-                                    </label>
-                                    <label className="flex items-center">
-                                        <input
-                                            type="checkbox"
-                                            name="is_on_sale"
-                                            checked={editProductData?.is_on_sale || false}
-                                            onChange={handleEditProductChange}
-                                            className="mr-2 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                                        />
-                                        <span className="text-sm text-gray-700">On Sale</span>
-                                    </label>
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Additional Images
-                                </label>
-                                <input
-                                    type="file"
-                                    name="imageFiles"
-                                    accept="image/*"
-                                    multiple
-                                    onChange={handleEditProductChange}
-                                    className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors"
-                                    disabled={productUploading}
-                                />
-                                {editProductData?.additionalImageFiles?.length > 0 && (
-                                    <div className="mt-3 flex gap-2 flex-wrap">
-                                        {editProductData.additionalImageFiles.map(
-                                            (file, index) => (
-                                                <img
-                                                    key={index}
-                                                    src={URL.createObjectURL(file)}
-                                                    alt={`Preview ${index + 1}`}
-                                                    className="w-24 h-24 object-cover rounded-md border border-gray-200"
-                                                />
-                                            )
+            <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                <h2 className="text-xl font-semibold text-purple-800 mb-4">Manage Products</h2>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount (%)</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variants</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {currentProducts.map((product) => (
+                                <tr key={product.id}>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        {product.image_url ? (
+                                            <img
+                                                src={product.image_url}
+                                                alt={product.name}
+                                                className="w-16 h-16 object-cover rounded-md"
+                                            />
+                                        ) : (
+                                            <span className="text-sm text-gray-500">No Image</span>
                                         )}
-                                    </div>
-                                )}
-                            </div>
-                            <div className="flex justify-between gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setIsEditModalOpen(false);
-                                        setEditProductData(null);
-                                        setProductPreviewUrl(null);
-                                    }}
-                                    className="w-full py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 font-semibold"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={productUploading}
-                                    className={`w-full py-2 rounded-md font-semibold text-white transition-colors ${productUploading ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"}`}
-                                >
-                                    {productUploading ? "Updating..." : "Update Product"}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{product.name}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₦{Number(product.price).toLocaleString()}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {product.categories?.name || "None"}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <div className="flex items-center space-x-2">
+                                            <input
+                                                type="number"
+                                                value={discountInputs[product.id] || ""}
+                                                onChange={(e) => handleDiscountChange(product.id, e.target.value)}
+                                                className="w-20 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                                                placeholder="0-100"
+                                                min="0"
+                                                max="100"
+                                            />
+                                            <button
+                                                onClick={() => handleApplyDiscount(product.id)}
+                                                className="px-2 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
+                                            >
+                                                Apply
+                                            </button>
+                                        </div>
+                                        <p className="text-xs text-gray-400 mt-1">Current: {product.discount_percentage || 0}%</p>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <div className="flex flex-wrap gap-2">
+                                            {product.is_new && (
+                                                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                                                    New
+                                                </span>
+                                            )}
+                                            {product.is_out_of_stock && (
+                                                <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
+                                                    Out of Stock
+                                                </span>
+                                            )}
+                                            {product.is_on_sale && (
+                                                <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                                                    On Sale
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-gray-500">
+                                        <VariantsModal product={product} variants={variants} setVariants={setVariants} />
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button
+                                            onClick={() => handleEditProduct(product)}
+                                            className="text-blue-600 hover:text-blue-800 mr-4"
+                                        >
+                                            Edit
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteProduct(product.id)}
+                                            className="text-red-600 hover:text-red-800"
+                                        >
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
-            )}
-        </section>
-    );
-}
+                <div className="mt-6 flex justify-center gap-3 items-center">
+                    <button
+                        className="px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50"
+                        onClick={() => setCurrentProductPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={currentProductPage === 1}
+                    >
+                        Previous
+                    </button>
+                    <span className="text-gray-600">Page {currentProductPage} of {totalProductPages}</span>
+                    <button
+                        className="px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50"
+                        onClick={() => setCurrentProductPage((prev) => Math.min(prev + 1, totalProductPages))}
+                        disabled={currentProductPage === totalProductPages}
+                    >
+                        Next
+                    </button>
+                </div>
+
+                {isEditModalOpen && (
+                    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-2xl p-6 w-full max-w-md relative">
+                            <button
+                                onClick={() => {
+                                    setIsEditModalOpen(false);
+                                    setEditProductData(null);
+                                    setProductPreviewUrl(null);
+                                }}
+                                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                            >
+                                ✕
+                            </button>
+                            <h2 className="text-xl font-semibold text-purple-800 mb-4">Edit Product</h2>
+                            <form onSubmit={handleEditProductSubmit} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Product Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={editProductData?.name || ""}
+                                        onChange={handleEditProductChange}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                                        placeholder="Enter product name"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Price (₦)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="price"
+                                        value={editProductData?.price || ""}
+                                        onChange={handleEditProductChange}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                                        placeholder="0"
+                                        min="0"
+                                        step="0.01"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Description
+                                    </label>
+                                    <textarea
+                                        name="description"
+                                        value={editProductData?.description || ""}
+                                        onChange={handleEditProductChange}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                                        placeholder="Enter product description"
+                                        rows="4"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Category
+                                    </label>
+                                    <input
+                                        list="category-options"
+                                        name="category_id"
+                                        value={editProductData?.category_id || ""}
+                                        onChange={handleEditProductChange}
+                                        placeholder="Type or select a category"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                                    />
+                                    <datalist id="category-options">
+                                        <option value="none">None</option>
+                                        {categories.map((cat) => (
+                                            <option key={cat.id} value={cat.id}>
+                                                {cat.name}
+                                            </option>
+                                        ))}
+                                    </datalist>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        Type a new category name to create it.
+                                    </p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Product Tags
+                                    </label>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                name="is_new"
+                                                checked={editProductData?.is_new || false}
+                                                onChange={handleEditProductChange}
+                                                className="mr-2 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                                            />
+                                            <span className="text-sm text-gray-700">New</span>
+                                        </label>
+                                        <label className="flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                name="is_out_of_stock"
+                                                checked={editProductData?.is_out_of_stock || false}
+                                                onChange={handleEditProductChange}
+                                                className="mr-2 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                                            />
+                                            <span className="text-sm text-gray-700">Out of Stock</span>
+                                        </label>
+                                        <label className="flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                name="is_on_sale"
+                                                checked={editProductData?.is_on_sale || false}
+                                                onChange={handleEditProductChange}
+                                                className="mr-2 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                                            />
+                                            <span className="text-sm text-gray-700">On Sale</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Additional Images
+                                    </label>
+                                    <input
+                                        type="file"
+                                        name="imageFiles"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={handleEditProductChange}
+                                        className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors"
+                                        disabled={productUploading}
+                                    />
+                                    {editProductData?.additionalImageFiles?.length > 0 && (
+                                        <div className="mt-3 flex gap-2 flex-wrap">
+                                            {editProductData.additionalImageFiles.map(
+                                                (file, index) => (
+                                                    <img
+                                                        key={index}
+                                                        src={URL.createObjectURL(file)}
+                                                        alt={`Preview ${index + 1}`}
+                                                        className="w-24 h-24 object-cover rounded-md border border-gray-200"
+                                                    />
+                                                )
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex justify-between gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsEditModalOpen(false);
+                                            setEditProductData(null);
+                                            setProductPreviewUrl(null);
+                                        }}
+                                        className="w-full py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 font-semibold"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={productUploading}
+                                        className={`w-full py-2 rounded-md font-semibold text-white transition-colors ${productUploading ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"}`}
+                                    >
+                                        {productUploading ? "Updating..." : "Update Product"}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+            </section></>
+ 
