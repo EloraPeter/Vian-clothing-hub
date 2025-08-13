@@ -21,7 +21,7 @@ const FloatingChatButton = ({ cartItemCount }) => {
   return (
     <>
       <ToastContainer />
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-4 right-4 z-50">
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           className="group relative bg-purple-700 text-white p-4 rounded-full shadow-xl hover:bg-purple-800 transition-colors duration-300 focus:outline-none focus:ring-4 focus:ring-purple-300"
@@ -33,7 +33,7 @@ const FloatingChatButton = ({ cartItemCount }) => {
               {cartItemCount}
             </span>
           )}
-          <div className="absolute -inset-4 bg-purple-300 bg-opacity-20 rounded-full animate-ping" />
+          {/* <div className="absolute -inset-4 bg-purple-300 bg-opacity-20 rounded-full animate-ping" /> */}
         </button>
 
         {isMenuOpen && (

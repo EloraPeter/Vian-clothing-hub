@@ -30,7 +30,7 @@ body {
 }
 
 .leaflet-container {
-  border: 1px solid #d1d5db; /* border-gray-300 */
+  border: 1px solid #d1d5db;
 }
 
 @keyframes pulse-scale {
