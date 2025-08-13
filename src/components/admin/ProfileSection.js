@@ -30,7 +30,7 @@ export default function ProfileSection({ profile, setProfile, user }) {
 
     if (uploadError) {
       console.error("Error uploading avatar:", uploadError.message);
-      alert("Error uploading avatar: " + uploadError.message);
+      toast.error("Error uploading avatar: " + uploadError.message);
       setUploading(false);
       return;
     }
@@ -46,7 +46,7 @@ export default function ProfileSection({ profile, setProfile, user }) {
 
     if (updateError) {
       console.error("Error updating profile:", updateError.message);
-      alert("Error updating profile: " + updateError.message);
+      toast.error("Error updating profile: " + updateError.message);
     } else {
       setProfile((prev) => ({ ...prev, avatar_url: publicUrl }));
       setAvatarFile(null);
