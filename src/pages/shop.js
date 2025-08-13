@@ -24,6 +24,8 @@ import Footer from "@/components/footer";
 import CartPanel from "@/components/CartPanel";
 import DressLoader from "@/components/DressLoader";
 import { Helmet } from "react-helmet";
+import FloatingChatButton from "@/components/FloatingChatButton";
+
 
 export default function Shop() {
     const [products, setProducts] = useState([]);
@@ -1438,6 +1440,8 @@ export default function Shop() {
                         </div>
                     </div>
                 )}
+                          <FloatingChatButton cartItemCount={0} /> {/* Replace 0 with actual cart count if available */}
+
             </div>
             <Footer />
         </div>

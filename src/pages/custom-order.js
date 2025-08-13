@@ -6,6 +6,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/footer';
 import DressLoader from '@/components/DressLoader';
 import Head from "next/head";
+import FloatingChatButton from "@/components/FloatingChatButton";
+
 
 // Force dynamic rendering to avoid ISR issues
 export const dynamic = 'force-dynamic';
