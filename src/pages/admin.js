@@ -7,10 +7,11 @@ import { colorMap } from "@/lib/colorMap";
 import ProfileSection from "@/components/admin/ProfileSection";
 import AddProductForm from "@/components/admin/AddProductForm";
 import ProductsTable from "@/components/admin/ProductsTable";
-import VariantsModal from "@/components/admin/VariantsModal"; // Note: This is used inside ProductsTable if needed; adjust if separate section
+import VariantsModal from "@/components/admin/VariantsModal";
 import ShippingFeesTable from "@/components/admin/ShippingFeesTable";
 import CustomOrdersTable from "@/components/admin/CustomOrdersTable";
 import ProductOrdersTable from "@/components/admin/ProductOrdersTable";
+import { FaUser, FaBox, FaShippingFast, FaTshirt, FaSignOutAlt, FaBars } from "react-icons/fa";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -30,8 +31,9 @@ export default function AdminPage() {
   const [itemsPerPage] = useState(5);
   const [orderPrices, setOrderPrices] = useState({});
   const [discountInputs, setDiscountInputs] = useState({});
+  const [activeSection, setActiveSection] = useState("overview");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // useEffects for auth and fetching (unchanged from original)
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_, session) => {
@@ -118,7 +120,6 @@ export default function AdminPage() {
     fetchData();
   }, [user]);
 
-  // Notification and PDF functions (unchanged, but added new delivery status handler)
   const sendWhatsAppNotification = async (phone, text) => {
     const apiKey = "1999329";
     const url = `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=${encodeURIComponent(
@@ -208,7 +209,6 @@ export default function AdminPage() {
         pdfData = result;
       }
 
-      // Insert invoice into database
       const { data: invoice, error: invoiceError } = await supabase
         .from("invoices")
         .insert([
@@ -228,7 +228,6 @@ export default function AdminPage() {
         throw new Error("Failed to create invoice");
       }
 
-      // Send email notification
       const paymentLink = `https://vianclothinghub.com.ng/pay-invoice?invoice_id=${invoice.id}`;
       const emailBody = `
         <!DOCTYPE html>
@@ -319,7 +318,6 @@ export default function AdminPage() {
       const emailResult = await emailResponse.json();
       if (!emailResponse.ok) {
         console.error("Email sending failed:", emailResult.error);
-        // Log the error but don't fail the invoice creation
       } else {
         console.log("Invoice email sent successfully:", emailResult.message);
       }
@@ -347,7 +345,7 @@ export default function AdminPage() {
       .from("custom_orders")
       .update(updates)
       .eq("id", id)
-      .select("*, profiles(email)") // Join with profiles to get email
+      .select("*, profiles(email)")
       .single();
 
     if (error) {
@@ -425,7 +423,7 @@ export default function AdminPage() {
                 <div style="margin-bottom: 20px;">
                   <p style="font-size: 14px; margin: 5px 0;"><strong>Invoice ID:</strong> ${invoiceId}</p>
                   <p style="font-size: 14px; margin: 5px 0;"><strong>Order ID:</strong> ${order.id}</p>
-                  <p style="font-size: 14px; margin: 5px 0;"><strong>Fabric:</strong> ${order.fabric || "N/A"}</p>
+                  <p style="font-size: 14px; margin: 5px 0;"><strong>Fabric:</strong> ${order.fabric || "N/A"}</p></p>
                   <p style="font-size: 14px; margin: 5px 0;"><strong>Style:</strong> ${order.style || "N/A"}</p>
                   <p style="font-size: 14px; margin: 5px 0;"><strong>Delivery Address:</strong> ${order.address || "N/A"}</p>
                   <p style="font-size: 14px; margin: 5px 0;"><strong style="color: #800080;">Deposit:</strong> ₦${Number(order.deposit || 0).toLocaleString("en-NG")}</p>
@@ -433,8 +431,7 @@ export default function AdminPage() {
                   <p style="font-size: 16px; margin: 5px 0;"><strong style="color: #800080;">Total Amount:</strong> ₦${Number(price).toLocaleString("en-NG")}</p>
                 </div>
                 <!-- Call-to-Action Buttons -->
-                <div style="text-align: center; margin: 20px 0;">
-                  <a href="${pdfUrl}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #800080; color: #fff; text-decoration: none; border-radius: 5px; margin-right: 10px;">View/Download Invoice</a>
+               10px 20px; background-color: #800080; color: #fff; text-decoration: none; border-radius: 5px; margin-right: 10px;">View/Download Invoice</a>
                   <a href="${paymentLink}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #800080; color: #fff; text-decoration: none; border-radius: 5px;">Pay Now</a>
                 </div>
                 <p style="font-size: 14px; margin: 0 0 20px; text-align: center;">
@@ -549,7 +546,6 @@ export default function AdminPage() {
     }
   }
 
-  // New: Handler for delivery_status updates
   const updateCustomOrderDeliveryStatus = async (id, newDeliveryStatus) => {
     const { error, data } = await supabase
       .from("custom_orders")
@@ -593,50 +589,165 @@ export default function AdminPage() {
   return (
     <main className="min-h-screen bg-gray-50">
       <Navbar profile={profile} />
-      <div className="container mx-auto px-4 py-8 max-w-full">
-        <h1 className="text-3xl font-bold text-purple-800 mb-8 text-center">Admin Dashboard</h1>
-        <p className="text-lg text-gray-700 text-center mb-8">
-          Welcome, {profile?.email}
-        </p>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 space-y-6">
-            <ProfileSection profile={profile} setProfile={setProfile} user={user} />
-            <AddProductForm products={products} setProducts={setProducts} categories={categories} setCategories={setCategories} />
-            <ShippingFeesTable shippingFees={shippingFees} setShippingFees={setShippingFees} />
-
+      <div className="flex">
+        {/* Sidebar */}
+        <aside className={`fixed inset-y-0 min-h-screen left-0 w-64 bg-white shadow-lg p-6 transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:static lg:translate-x-0 transition-transform duration-300 z-50`}>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-purple-800">Admin Dashboard</h2>
+            <button className="lg:hidden text-gray-600" onClick={() => setIsSidebarOpen(false)}>
+              <FaBars />
+            </button>
           </div>
-          <div className="lg:col-span-2 space-y-6">
-            <ProductsTable
-              products={products} setProducts={setProducts} categories={categories} setCategories={setCategories}
-              variants={variants} setVariants={setVariants} itemsPerPage={itemsPerPage}
-              currentProductPage={currentProductPage} setCurrentProductPage={setCurrentProductPage}
-            />
-            <CustomOrdersTable
-              orders={orders} setOrders={setOrders} itemsPerPage={itemsPerPage}
-              currentCustomOrderPage={currentCustomOrderPage} setCurrentCustomOrderPage={setCurrentCustomOrderPage}
-              updateCustomOrderStatus={updateCustomOrderStatus} updateCustomOrderDeliveryStatus={updateCustomOrderDeliveryStatus}
-              orderPrices={orderPrices} setOrderPrices={setOrderPrices}
-            />
-            <ProductOrdersTable
-              productOrders={productOrders} setProductOrders={setProductOrders} itemsPerPage={itemsPerPage}
-              currentProductOrderPage={currentProductOrderPage} setCurrentProductOrderPage={setCurrentProductOrderPage}
-              updateProductOrderStatus={updateProductOrderStatus}
-            />
-          </div>
-          <div className="text-center mt-8">
+          <nav className="space-y-2">
+            {[
+              { id: "overview", label: "Overview", icon: <FaUser /> },
+              { id: "profile", label: "Profile", icon: <FaUser /> },
+              { id: "add-product", label: "Add Product", icon: <FaTshirt /> },
+              { id: "shipping-fees", label: "Shipping Fees", icon: <FaShippingFast /> },
+              { id: "products", label: "Products", icon: <FaTshirt /> },
+              { id: "custom-orders", label: "Custom Orders", icon: <FaBox /> },
+              { id: "product-orders", label: "Product Orders", icon: <FaBox /> },
+            ].map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActiveSection(item.id);
+                  setIsSidebarOpen(false);
+                }}
+                className={`w-full flex items-center space-x-2 p-3 rounded-lg text-left transition-colors ${
+                  activeSection === item.id
+                    ? "bg-purple-100 text-purple-800"
+                    : "text-gray-600 hover:bg-purple-50 hover:text-purple-800"
+                }`}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </button>
+            ))}
             <button
-              className="bg-red-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-red-700 transition-colors"
               onClick={async () => {
                 await supabase.auth.signOut();
                 router.push("/login");
               }}
+              className="w-full flex items-center space-x-2 p-3 rounded-lg text-left text-red-600 hover:bg-red-50 transition-colors"
             >
-              Log Out
+              <FaSignOutAlt />
+              <span>Log Out</span>
             </button>
-          </div>
+          </nav>
+        </aside>
+
+        {/* Main Content */}
+        <div className="flex-1 container mx-auto px-4 py-8 max-w-8xl">
+          <button
+            className="lg:hidden mb-4 text-purple-600"
+            onClick={() => setIsSidebarOpen(true)}
+          >
+            <FaBars size={24} />
+          </button>
+
+          {/* Overview Section */}
+          {activeSection === "overview" && (
+            <section className="bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-2xl p-6 mb-6 shadow-lg">
+              <h1 className="text-2xl md:text-3xl font-bold">
+                Welcome, {profile?.email.split("@")[0]}!
+              </h1>
+              <p className="mt-2">Manage your products, orders, and shipping fees with ease.</p>
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-white text-purple-800 p-4 rounded-lg shadow">
+                  <p className="text-lg font-semibold">{products.length}</p>
+                  <p className="text-sm">Total Products</p>
+                </div>
+                <div className="bg-white text-purple-800 p-4 rounded-lg shadow">
+                  <p className="text-lg font-semibold">{orders.length}</p>
+                  <p className="text-sm">Custom Orders</p>
+                </div>
+                <div className="bg-white text-purple-800 p-4 rounded-lg shadow">
+                  <p className="text-lg font-semibold">{productOrders.length}</p>
+                  <p className="text-sm">Product Orders</p>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Profile Section */}
+          {activeSection === "profile" && (
+            <section className="rounded-2xl shadow-lg p-6 mb-6">
+              <ProfileSection profile={profile} setProfile={setProfile} user={user} />
+            </section>
+          )}
+
+          {/* Add Product Section */}
+          {activeSection === "add-product" && (
+            <section className="rounded-2xl shadow-lg p-6 mb-6">
+              <AddProductForm
+                products={products}
+                setProducts={setProducts}
+                categories={categories}
+                setCategories={setCategories}
+              />
+            </section>
+          )}
+
+          {/* Shipping Fees Section */}
+          {activeSection === "shipping-fees" && (
+            <section className=" rounded-2xl shadow-lg p-6 mb-6">
+              <ShippingFeesTable
+                shippingFees={shippingFees}
+                setShippingFees={setShippingFees}
+              />
+            </section>
+          )}
+
+          {/* Products Section */}
+          {activeSection === "products" && (
+            <section className=" rounded-2xl shadow-lg p-6 mb-6">
+              <ProductsTable
+                products={products}
+                setProducts={setProducts}
+                categories={categories}
+                setCategories={setCategories}
+                variants={variants}
+                setVariants={setVariants}
+                itemsPerPage={itemsPerPage}
+                currentProductPage={currentProductPage}
+                setCurrentProductPage={setCurrentProductPage}
+              />
+            </section>
+          )}
+
+          {/* Custom Orders Section */}
+          {activeSection === "custom-orders" && (
+            <section className=" rounded-2xl shadow-lg p-6 mb-6">
+              <CustomOrdersTable
+                orders={orders}
+                setOrders={setOrders}
+                itemsPerPage={itemsPerPage}
+                currentCustomOrderPage={currentCustomOrderPage}
+                setCurrentCustomOrderPage={setCurrentCustomOrderPage}
+                updateCustomOrderStatus={updateCustomOrderStatus}
+                updateCustomOrderDeliveryStatus={updateCustomOrderDeliveryStatus}
+                orderPrices={orderPrices}
+                setOrderPrices={setOrderPrices}
+              />
+            </section>
+          )}
+
+          {/* Product Orders Section */}
+          {activeSection === "product-orders" && (
+            <section className="rounded-2xl shadow-lg p-6 mb-6">
+              <ProductOrdersTable
+                productOrders={productOrders}
+                setProductOrders={setProductOrders}
+                itemsPerPage={itemsPerPage}
+                currentProductOrderPage={currentProductOrderPage}
+                setCurrentProductOrderPage={setCurrentProductOrderPage}
+                updateProductOrderStatus={updateProductOrderStatus}
+              />
+            </section>
+          )}
         </div>
       </div>
-
     </main>
   );
 }
