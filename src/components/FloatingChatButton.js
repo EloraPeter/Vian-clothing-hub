@@ -1,11 +1,24 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FaPhone, FaWhatsapp, FaRobot } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-
-const FloatingChatButton = ({ cartItemCount }) => {
+const FloatingChatButton = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const menuRef = useRef(null);
+
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setIsMenuOpen(false);
+            }
+        }
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     const handleWhatsAppClick = () => {
         const phoneNumber = "+2348122123280";
@@ -22,13 +35,13 @@ const FloatingChatButton = ({ cartItemCount }) => {
     return (
         <>
             <ToastContainer />
-            <div className="fixed bottom-4 right-4 z-50">
+            <div ref={menuRef} className="fixed bottom-4 right-4 z-50">
                 <button
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
                     className="group relative bg-purple-700 text-white p-4 rounded-full shadow-xl hover:bg-purple-800 transition-colors duration-300 focus:outline-none focus:ring-4 focus:ring-purple-300"
                     aria-label="Open contact options"
                 >
-                    <FaPhone className="text-xl pulse-scale transform transition-transform duration-500 group-hover:rotate-180" />
+                    <FaPhone className="text-xl transform scale-x-[-1] pulse-scale transition-transform duration-500 group-hover:rotate-260" />
                 </button>
 
                 {isMenuOpen && (
@@ -51,8 +64,6 @@ const FloatingChatButton = ({ cartItemCount }) => {
                     </div>
                 )}
             </div>
-
-            
         </>
     );
 };
