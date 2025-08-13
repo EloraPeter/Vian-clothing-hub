@@ -120,7 +120,7 @@ export default function ProfileSection({ profile, setProfile, user }) {
                 .upload(filePath, avatarFile, { upsert: true });
 
               if (uploadError) {
-                alert("Upload failed: " + uploadError.message);
+                toast.error("Upload failed: " + uploadError.message);
                 setUploading(false);
                 return;
               }
@@ -140,9 +140,9 @@ export default function ProfileSection({ profile, setProfile, user }) {
               })
               .eq("id", user.id);
 
-            if (error) alert("Update failed: " + error.message);
+            if (error) toast.error("Update failed: " + error.message);
             else {
-              alert("Profile updated successfully");
+              toast.success("Profile updated successfully");
               setProfile({ ...profile, avatar_url });
               setAvatarFile(null);
               setPreviewUrl(null);
@@ -215,7 +215,7 @@ export default function ProfileSection({ profile, setProfile, user }) {
             const email = session?.user?.email;
 
             if (!email) {
-              alert("You're not logged in.");
+              toast.error("You're not logged in.");
               return;
             }
 
@@ -225,7 +225,7 @@ export default function ProfileSection({ profile, setProfile, user }) {
             });
 
             if (signInError) {
-              alert("Old password is incorrect.");
+              toast.error("Old password is incorrect.");
               return;
             }
 
@@ -234,9 +234,9 @@ export default function ProfileSection({ profile, setProfile, user }) {
             });
 
             if (updateError) {
-              alert("Password update failed: " + updateError.message);
+              toast.error("Password update failed: " + updateError.message);
             } else {
-              alert("Password updated successfully!");
+              toast.success("Password updated successfully!");
               e.target.reset();
               setNewPassword("");
               setStrengthScore(0);
