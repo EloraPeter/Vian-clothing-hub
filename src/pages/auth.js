@@ -11,7 +11,7 @@ import { FaEye, FaEyeSlash, FaGoogle } from "react-icons/fa";
 export default function Auth() {
   const router = useRouter();
   const [mode, setMode] = useState("login");
-  const [form, setForm] = useState({ email: "", password: "", confirm: "" });
+  const [form, setForm] = useState({ email: "", password: "", confirm: "", full_name: "" });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -20,7 +20,7 @@ export default function Auth() {
 
   const toggleMode = () => {
     setMessage("");
-    setForm({ email: "", password: "", confirm: "" });
+    setForm({ email: "", password: "", confirm: "", full_name: "" });
     setMode(mode === "login" ? "signup" : "login");
     setStrengthScore(0);
   };
@@ -31,19 +31,90 @@ export default function Auth() {
     setMessage("");
 
     if (mode === "signup") {
+      if (!form.full_name.trim()) {
+        setMessage("Full name is required");
+        setLoading(false);
+        return;
+      }
       if (form.password !== form.confirm) {
         setMessage("Passwords do not match");
         setLoading(false);
         return;
       }
 
-      const { error } = await supabase.auth.signUp({
+      // Check for existing profile
+      const { data: existingProfile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", form.email)
+        .maybeSingle();
+
+      if (profileError) {
+        setMessage("Error checking profile: " + profileError.message);
+        setLoading(false);
+        return;
+      }
+
+      if (existingProfile) {
+        const fullNameParts = form.full_name.trim().split(" ");
+        const first_name = fullNameParts[0] || "";
+        const last_name = fullNameParts.length > 1 ? fullNameParts.slice(1).join(" ") : null;
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({ first_name, last_name })
+          .eq("email", form.email);
+
+        if (updateError) {
+          setMessage("Failed to update profile information: " + updateError.message);
+          setLoading(false);
+          return;
+        }
+
+        setMessage("You already have an account. Switching to login...");
+        setTimeout(() => {
+          setMode("login");
+          setForm({ email: "", password: "", confirm: "", full_name: "" });
+          setMessage("");
+        }, 2000);
+        setLoading(false);
+        return;
+      }
+
+      const { data: signUpData, error } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
       });
 
-      if (error) setMessage(error.message);
-      else setMessage("Signup successful! Please check your email to confirm.");
+      if (error) {
+        setMessage(error.message);
+        setLoading(false);
+        return;
+      }
+
+      const fullNameParts = form.full_name.trim().split(" ");
+      const first_name = fullNameParts[0] || "";
+      const last_name = fullNameParts.length > 1 ? fullNameParts.slice(1).join(" ") : null;
+
+      const { error: insertError } = await supabase
+        .from("profiles")
+        .insert([
+          {
+            id: signUpData.user.id,
+            email: form.email,
+            first_name,
+            last_name,
+            is_admin: false,
+            avatar_url: null,
+          },
+        ]);
+
+      if (insertError) {
+        setMessage("Failed to save profile information: " + insertError.message);
+        setLoading(false);
+        return;
+      }
+
+      setMessage("Signup successful! Please check your email to confirm.");
     } else {
       const { error } = await supabase.auth.signInWithPassword({
         email: form.email,
@@ -103,7 +174,6 @@ export default function Auth() {
         />
       </Head>
       <main className="min-h-screen bg-[url('/african-fabric.jpg')] bg-cover bg-center relative overflow-hidden">
-
         {loading && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50">
             <DressLoader />
@@ -148,6 +218,26 @@ export default function Auth() {
                   aria-required="true"
                 />
               </div>
+
+              {mode === "signup" && (
+                <div className="relative">
+                  <label htmlFor="full-name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Full Name
+                  </label>
+                  <input
+                    id="full-name"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
+                    type="text"
+                    placeholder="Enter your full name (e.g., John Doe)"
+                    value={form.full_name}
+                    onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                    required
+                    aria-required="true"
+                    aria-label="Full name"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Please enter your first name first (e.g., John Doe).</p>
+                </div>
+              )}
 
               <div className="relative">
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
