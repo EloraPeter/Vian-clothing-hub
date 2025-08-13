@@ -13,6 +13,7 @@ import Image from 'next/image';
 import DressLoader from "@/components/DressLoader";
 import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
+import FloatingChatButton from "@/components/FloatingChatButton";
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -642,6 +643,7 @@ export default function Home() {
             <div className="absolute -inset-4 bg-purple-200 bg-opacity-20 rounded-full animate-ping" />
 
           </button>
+          <FloatingChatButton cartItemCount={0} /> {/* Replace 0 with actual cart count if available */}
         </div>
 
         <Footer />
