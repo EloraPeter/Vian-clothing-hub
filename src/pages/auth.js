@@ -56,20 +56,6 @@ export default function Auth() {
       }
 
       if (existingProfile) {
-        const fullNameParts = form.full_name.trim().split(" ");
-        const first_name = fullNameParts[0] || "";
-        const last_name = fullNameParts.length > 1 ? fullNameParts.slice(1).join(" ") : null;
-        const { error: updateError } = await supabase
-          .from("profiles")
-          .update({ first_name, last_name })
-          .eq("email", form.email);
-
-        if (updateError) {
-          setMessage("Failed to update profile information: " + updateError.message);
-          setLoading(false);
-          return;
-        }
-
         setMessage("You already have an account. Switching to login...");
         setTimeout(() => {
           setMode("login");
@@ -80,36 +66,24 @@ export default function Auth() {
         return;
       }
 
-      const { data: signUpData, error } = await supabase.auth.signUp({
-        email: form.email,
-        password: form.password,
-      });
-
-      if (error) {
-        setMessage(error.message);
-        setLoading(false);
-        return;
-      }
-
+      // Split full name for metadata
       const fullNameParts = form.full_name.trim().split(" ");
       const first_name = fullNameParts[0] || "";
       const last_name = fullNameParts.length > 1 ? fullNameParts.slice(1).join(" ") : null;
 
-      const { error: insertError } = await supabase
-        .from("profiles")
-        .insert([
-          {
-            id: signUpData.user.id,
-            email: form.email,
+      const { data: signUpData, error } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: {
+          userMetadata: {
             first_name,
             last_name,
-            is_admin: false,
-            avatar_url: null,
           },
-        ]);
+        },
+      });
 
-      if (insertError) {
-        setMessage("Failed to save profile information: " + insertError.message);
+      if (error) {
+        setMessage(error.message);
         setLoading(false);
         return;
       }
