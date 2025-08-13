@@ -27,7 +27,7 @@ const FloatingChatButton = ({ cartItemCount }) => {
           className="group relative bg-purple-700 text-white p-4 rounded-full shadow-xl hover:bg-purple-800 transition-colors duration-300 focus:outline-none focus:ring-4 focus:ring-purple-300"
           aria-label="Open contact options"
         >
-          <FaPhone className="text-xl pulse-scale" />
+          <FaPhone className="text-xl pulse-scale group-hover:rotate-icon transform scale-x-[-1]" />
           {cartItemCount > 0 && (
             <span className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full text-xs w-6 h-6 flex items-center justify-center font-medium">
               {cartItemCount}

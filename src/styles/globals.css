@@ -48,7 +48,7 @@ body {
   animation: pulse-scale 2s infinite ease-in-out;
 }
 
-.group:hover .pulse-scale {
+.group:hover .rotate-icon {
   animation-play-state: paused;
   transform: rotate(180deg);
   transition: transform 0.3s ease-in-out;
