@@ -143,22 +143,22 @@ export default function AdminPage() {
   };
 
   const markAllNotificationsAsRead = async () => {
-  const { error } = await supabase
-    .from("notifications")
-    .update({ read: true })
-    .eq("user_id", user.id)
-    .eq("read", false);
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read: true })
+      .eq("user_id", user.id)
+      .eq("read", false);
 
-  if (!error) {
-    setNotifications((prev) =>
-      prev.map((notif) => ({ ...notif, read: true }))
-    );
-    toast.success("All notifications marked as read.");
-  } else {
-    console.error("Error marking all notifications as read:", error.message);
-    toast.error("Error marking all notifications as read: " + error.message);
-  }
-};
+    if (!error) {
+      setNotifications((prev) =>
+        prev.map((notif) => ({ ...notif, read: true }))
+      );
+      toast.success("All notifications marked as read.");
+    } else {
+      console.error("Error marking all notifications as read:", error.message);
+      toast.error("Error marking all notifications as read: " + error.message);
+    }
+  };
 
   const sendWhatsAppNotification = async (phone, text) => {
     const apiKey = "1999329";
@@ -658,11 +658,10 @@ export default function AdminPage() {
                   setActiveSection(item.id);
                   setIsSidebarOpen(false);
                 }}
-                className={`w-full flex items-center space-x-2 p-3 rounded-lg text-left transition-colors ${
-                  activeSection === item.id
+                className={`w-full flex items-center space-x-2 p-3 rounded-lg text-left transition-colors ${activeSection === item.id
                     ? "bg-purple-100 text-purple-800"
                     : "text-gray-600 hover:bg-purple-50 hover:text-purple-800"
-                }`}
+                  }`}
               >
                 {item.icon}
                 <span>{item.label}</span>
@@ -719,12 +718,12 @@ export default function AdminPage() {
             <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
               <h2 className="text-xl font-semibold text-purple-800 mb-4">Notifications</h2>
               <button
-  onClick={markAllNotificationsAsRead}
-  className="mb-4 bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors"
-  disabled={notifications.every((notif) => notif.read)}
->
-  Mark All as Read
-</button>
+                onClick={markAllNotificationsAsRead}
+                className="mb-4 bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors"
+                disabled={notifications.every((notif) => notif.read)}
+              >
+                Mark All as Read
+              </button>
               {notifications.length === 0 ? (
                 <p className="text-gray-500">No notifications available.</p>
               ) : (
@@ -732,9 +731,8 @@ export default function AdminPage() {
                   {notifications.map((notif) => (
                     <li
                       key={notif.id}
-                      className={`p-4 rounded-lg border transition-all duration-300 ${
-                        notif.read ? "bg-gray-100 border-gray-200" : "bg-purple-50 border-purple-200"
-                      } hover:shadow-md`}
+                      className={`p-4 rounded-lg border transition-all duration-300 ${notif.read ? "bg-gray-100 border-gray-200" : "bg-purple-50 border-purple-200"
+                        } hover:shadow-md`}
                     >
                       <p className="text-gray-700">{notif.message}</p>
                       <p className="text-sm text-gray-500 mt-1">

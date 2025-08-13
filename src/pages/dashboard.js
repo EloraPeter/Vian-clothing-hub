@@ -130,22 +130,22 @@ export default function Dashboard() {
   };
 
   const markAllNotificationsAsRead = async () => {
-  const { error } = await supabase
-    .from("notifications")
-    .update({ read: true })
-    .eq("user_id", user.id)
-    .eq("read", false);
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read: true })
+      .eq("user_id", user.id)
+      .eq("read", false);
 
-  if (!error) {
-    setNotifications((prev) =>
-      prev.map((notif) => ({ ...notif, read: true }))
-    );
-    toast.success("All notifications marked as read.");
-  } else {
-    console.error("Error marking all notifications as read:", error.message);
-    toast.error("Error marking all notifications as read: " + error.message);
-  }
-};
+    if (!error) {
+      setNotifications((prev) =>
+        prev.map((notif) => ({ ...notif, read: true }))
+      );
+      toast.success("All notifications marked as read.");
+    } else {
+      console.error("Error marking all notifications as read:", error.message);
+      toast.error("Error marking all notifications as read: " + error.message);
+    }
+  };
 
   const sendEmailNotification = async (email, subject, body) => {
     try {
@@ -467,6 +467,13 @@ export default function Dashboard() {
             {activeSection === "notifications" && (
               <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
                 <h2 className="text-xl font-semibold text-purple-800 mb-4">Notifications</h2>
+                <button
+                  onClick={markAllNotificationsAsRead}
+                  className="mb-4 bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors"
+                  disabled={notifications.every((notif) => notif.read)}
+                >
+                  Mark All as Read
+                </button>
                 {notifications.length === 0 ? (
                   <p className="text-gray-500">No notifications available.</p>
                 ) : (
