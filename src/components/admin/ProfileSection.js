@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+ import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function ProfileSection({ profile, setProfile, user }) {
   const [avatarFile, setAvatarFile] = useState(null);
@@ -55,6 +57,8 @@ export default function ProfileSection({ profile, setProfile, user }) {
   };
 
   return (
+    <>
+    <ToastContainer />
     <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
       <h2 className="text-xl font-semibold text-purple-800 mb-4">Admin Profile</h2>
       <div className="flex items-center space-x-4">
@@ -92,6 +96,6 @@ export default function ProfileSection({ profile, setProfile, user }) {
           )}
         </div>
       </div>
-    </section>
+    </section></>
   );
 }

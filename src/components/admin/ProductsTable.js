@@ -166,6 +166,9 @@ export default function ProductsTable({ products, setProducts, categories, setCa
         setProducts((prev) => prev.filter((p) => p.id !== id));
         delete variants[id];
         setVariants({ ...variants });
+
+        toast.success("Product deleted successfully.");
+
     };
 
     const handleDiscountChange = (id, value) => {
@@ -204,7 +207,7 @@ export default function ProductsTable({ products, setProducts, categories, setCa
 
     return (
         <>
-         <ToastContainer /> 
+            <ToastContainer />
 
             <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
                 <h2 className="text-xl font-semibold text-purple-800 mb-4">Manage Products</h2>
