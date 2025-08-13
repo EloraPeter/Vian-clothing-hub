@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
- import { toast, ToastContainer } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function ProfileSection({ profile, setProfile, user }) {
@@ -58,162 +58,161 @@ export default function ProfileSection({ profile, setProfile, user }) {
 
   return (
     <>
-    <ToastContainer />
-    <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-      <h2 className="text-xl font-semibold text-purple-800 mb-4">Admin Profile</h2>
-      <div className="flex items-center space-x-4">
-        <img
-          src={profile?.avatar_url || "/default-avatar.png"}
-          alt="Admin Avatar"
-          className="w-16 h-16 rounded-full object-cover border-2 border-purple-600"
-        />
-        <div>
-          <p className="font-medium text-gray-700">{profile?.email}</p>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleAvatarChange}
-            className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors"
-            disabled={uploading}
+      <ToastContainer />
+      <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+        <h2 className="text-xl font-semibold text-purple-800 mb-4">Admin Profile</h2>
+        <div className="flex items-center space-x-4">
+          <img
+            src={profile?.avatar_url || "/default-avatar.png"}
+            alt="Admin Avatar"
+            className="w-16 h-16 rounded-full object-cover border-2 border-purple-600"
           />
-          {previewUrl && (
-            <div className="mt-2">
-              <img
-                src={previewUrl}
-                alt="Avatar Preview"
-                className="w-16 h-16 rounded-full object-cover border-2 border-purple-600"
+          <div>
+            <p className="font-medium text-gray-700">{profile?.email}</p>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarChange}
+              className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors"
+              disabled={uploading}
+            />
+            {previewUrl && (
+              <div className="mt-2">
+                <img
+                  src={previewUrl}
+                  alt="Avatar Preview"
+                  className="w-16 h-16 rounded-full object-cover border-2 border-purple-600"
+                />
+                <button
+                  onClick={handleUploadAvatar}
+                  disabled={uploading}
+                  className={`mt-2 px-3 py-1 rounded-md font-semibold text-white transition-colors ${uploading ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"
+                    }`}
+                >
+                  {uploading ? "Uploading..." : "Upload Avatar"}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+        <h2 className="text-xl font-semibold text-purple-800 mb-4">Change Password</h2>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            const oldPassword = e.target.old_password.value;
+            const newPassword = e.target.new_password.value;
+
+            const { data: { session } } = await supabase.auth.getSession();
+            const email = session?.user?.email;
+
+            if (!email) {
+              alert("You're not logged in.");
+              return;
+            }
+
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+              email,
+              password: oldPassword,
+            });
+
+            if (signInError) {
+              alert("Old password is incorrect.");
+              return;
+            }
+
+            const { error: updateError } = await supabase.auth.updateUser({
+              password: newPassword,
+            });
+
+            if (updateError) {
+              alert("Password update failed: " + updateError.message);
+            } else {
+              alert("Password updated successfully!");
+              e.target.reset();
+              setNewPassword("");
+              setStrengthScore(0);
+            }
+          }}
+          className="space-y-4"
+        >
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Old Password
+            </label>
+            <div className="relative">
+              <input
+                type={showOldPass ? "text" : "password"}
+                name="old_password"
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="Enter old password"
               />
               <button
-                onClick={handleUploadAvatar}
-                disabled={uploading}
-                className={`mt-2 px-3 py-1 rounded-md font-semibold text-white transition-colors ${
-                  uploading ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"
-                }`}
+                type="button"
+                onClick={() => setShowOldPass(!showOldPass)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
               >
-                {uploading ? "Uploading..." : "Upload Avatar"}
+                {showOldPass ? "Hide" : "Show"}
               </button>
             </div>
-          )}
-        </div>
-      </div>
-    </section>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              New Password
+            </label>
+            <div className="relative">
+              <input
+                type={showNewPass ? "text" : "password"}
+                name="new_password"
+                value={newPassword}
+                onChange={handleNewPasswordChange}
+                required
+                minLength={6}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="Enter new password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPass(!showNewPass)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showNewPass ? "Hide" : "Show"}
+              </button>
+            </div>
+            {newPassword && (
+              <div className="mt-2">
+                <p
+                  className="text-sm font-medium"
+                  style={{
+                    color: ["#ef4444", "#f97316", "#facc15", "#4ade80", "#22c55e"][strengthScore],
+                  }}
+                >
+                  Password Strength: {["Very Weak", "Weak", "Fair", "Good", "Strong"][strengthScore]}
+                </p>
+                <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                  <div
+                    className="h-2 rounded-full transition-all duration-300"
+                    style={{
+                      width: `${(strengthScore + 1) * 20}%`,
+                      backgroundColor: ["#ef4444", "#f97316", "#facc15", "#4ade80", "#22c55e"][strengthScore],
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-purple-600 text-white font-semibold py-2 rounded-md hover:bg-purple-700 transition-colors"
+          >
+            Change Password
+          </button>
+        </form>
+      </section>
 
-     <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-                    <h2 className="text-xl font-semibold text-purple-800 mb-4">Change Password</h2>
-                    <form
-                      onSubmit={async (e) => {
-                        e.preventDefault();
-                        const oldPassword = e.target.old_password.value;
-                        const newPassword = e.target.new_password.value;
-    
-                        const { data: { session } } = await supabase.auth.getSession();
-                        const email = session?.user?.email;
-    
-                        if (!email) {
-                          alert("You're not logged in.");
-                          return;
-                        }
-    
-                        const { error: signInError } = await supabase.auth.signInWithPassword({
-                          email,
-                          password: oldPassword,
-                        });
-    
-                        if (signInError) {
-                          alert("Old password is incorrect.");
-                          return;
-                        }
-    
-                        const { error: updateError } = await supabase.auth.updateUser({
-                          password: newPassword,
-                        });
-    
-                        if (updateError) {
-                          alert("Password update failed: " + updateError.message);
-                        } else {
-                          alert("Password updated successfully!");
-                          e.target.reset();
-                          setNewPassword("");
-                          setStrengthScore(0);
-                        }
-                      }}
-                      className="space-y-4"
-                    >
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Old Password
-                        </label>
-                        <div className="relative">
-                          <input
-                            type={showOldPass ? "text" : "password"}
-                            name="old_password"
-                            required
-                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            placeholder="Enter old password"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowOldPass(!showOldPass)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                          >
-                            {showOldPass ? "Hide" : "Show"}
-                          </button>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          New Password
-                        </label>
-                        <div className="relative">
-                          <input
-                            type={showNewPass ? "text" : "password"}
-                            name="new_password"
-                            value={newPassword}
-                            onChange={handleNewPasswordChange}
-                            required
-                            minLength={6}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            placeholder="Enter new password"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowNewPass(!showNewPass)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                          >
-                            {showNewPass ? "Hide" : "Show"}
-                          </button>
-                        </div>
-                        {newPassword && (
-                          <div className="mt-2">
-                            <p
-                              className="text-sm font-medium"
-                              style={{
-                                color: ["#ef4444", "#f97316", "#facc15", "#4ade80", "#22c55e"][strengthScore],
-                              }}
-                            >
-                              Password Strength: {["Very Weak", "Weak", "Fair", "Good", "Strong"][strengthScore]}
-                            </p>
-                            <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                              <div
-                                className="h-2 rounded-full transition-all duration-300"
-                                style={{
-                                  width: `${(strengthScore + 1) * 20}%`,
-                                  backgroundColor: ["#ef4444", "#f97316", "#facc15", "#4ade80", "#22c55e"][strengthScore],
-                                }}
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      <button
-                        type="submit"
-                        className="w-full bg-purple-600 text-white font-semibold py-2 rounded-md hover:bg-purple-700 transition-colors"
-                      >
-                        Change Password
-                      </button>
-                    </form>
-                  </section>
-    
     </>
   );
 }
