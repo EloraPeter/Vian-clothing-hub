@@ -28,7 +28,7 @@ export default function AdminPage() {
   const [currentProductPage, setCurrentProductPage] = useState(1);
   const [currentCustomOrderPage, setCurrentCustomOrderPage] = useState(1);
   const [currentProductOrderPage, setCurrentProductOrderPage] = useState(1);
-  const [itemsPerPage] = useState(5);
+  const [itemsPerPage] = useState(10);
   const [orderPrices, setOrderPrices] = useState({});
   const [discountInputs, setDiscountInputs] = useState({});
   const [activeSection, setActiveSection] = useState("overview");
