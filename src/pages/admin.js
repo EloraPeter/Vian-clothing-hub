@@ -12,6 +12,8 @@ import ShippingFeesTable from "@/components/admin/ShippingFeesTable";
 import CustomOrdersTable from "@/components/admin/CustomOrdersTable";
 import ProductOrdersTable from "@/components/admin/ProductOrdersTable";
 import { FaUser, FaBox, FaShippingFast, FaTshirt, FaSignOutAlt, FaBars } from "react-icons/fa";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -588,6 +590,8 @@ export default function AdminPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
+      <ToastContainer />
+
       <Navbar profile={profile} />
       <div className="flex">
         {/* Sidebar */}
@@ -614,11 +618,10 @@ export default function AdminPage() {
                   setActiveSection(item.id);
                   setIsSidebarOpen(false);
                 }}
-                className={`w-full flex items-center space-x-2 p-3 rounded-lg text-left transition-colors ${
-                  activeSection === item.id
+                className={`w-full flex items-center space-x-2 p-3 rounded-lg text-left transition-colors ${activeSection === item.id
                     ? "bg-purple-100 text-purple-800"
                     : "text-gray-600 hover:bg-purple-50 hover:text-purple-800"
-                }`}
+                  }`}
               >
                 {item.icon}
                 <span>{item.label}</span>
