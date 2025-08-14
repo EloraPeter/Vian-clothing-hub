@@ -59,18 +59,18 @@ export default function ProfileSection({ profile, setProfile, user }) {
     setUploading(false);
   };
 
-   const handleNewPasswordChange = (e) => {
-      const val = e.target.value;
-      setNewPassword(val);
-      setStrengthScore(zxcvbn(val).score);
-    };
+  const handleNewPasswordChange = (e) => {
+    const val = e.target.value;
+    setNewPassword(val);
+    setStrengthScore(zxcvbn(val).score);
+  };
 
   return (
     <>
       <ToastContainer />
       <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
         <h2 className="text-xl font-semibold text-purple-800 mb-4">Admin Profile</h2>
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-col sm:flex-row items-center sm:space-x-4 space-y-4 sm:space-y-0">
           <img
             src={profile?.avatar_url || "/default-avatar.png"}
             alt="Admin Avatar"

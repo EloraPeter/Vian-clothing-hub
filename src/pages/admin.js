@@ -853,42 +853,47 @@ export default function AdminPage() {
 
           {/* Notifications Section */}
           {activeSection === "notifications" && (
-            <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-              <h2 className="text-xl font-semibold text-purple-800 mb-4">Notifications</h2>
-              <button
-                onClick={markAllNotificationsAsRead}
-                className="mb-4 bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors"
-                disabled={notifications.every((notif) => notif.read)}
-              >
-                Mark All as Read
-              </button>
-              {notifications.length === 0 ? (
-                <p className="text-gray-500">No notifications available.</p>
-              ) : (
-                <ul className="space-y-3">
-                  {notifications.map((notif) => (
-                    <li
-                      key={notif.id}
-                      className={`p-4 rounded-lg border transition-all duration-300 ${notif.read ? "bg-gray-100 border-gray-200" : "bg-purple-50 border-purple-200"
-                        } hover:shadow-md`}
-                    >
-                      <p className="text-gray-700">{notif.message}</p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {new Date(notif.created_at).toLocaleString()}
-                      </p>
-                      {!notif.read && (
-                        <button
-                          onClick={() => markNotificationAsRead(notif.id)}
-                          className="mt-2 text-sm text-purple-600 hover:text-purple-800 transition-colors"
-                        >
-                          Mark as Read
-                        </button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+           <section className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mb-6">
+  <h2 className="text-lg sm:text-xl font-semibold text-purple-800 mb-3 sm:mb-4">
+    Notifications
+  </h2>
+
+  <button
+    onClick={markAllNotificationsAsRead}
+    className="w-full sm:w-auto mb-3 sm:mb-4 bg-purple-600 text-white px-3 py-2 rounded-md hover:bg-purple-700 transition-colors text-sm sm:text-base"
+    disabled={notifications.every((notif) => notif.read)}
+  >
+    Mark All as Read
+  </button>
+
+  {notifications.length === 0 ? (
+    <p className="text-gray-500 text-sm sm:text-base">No notifications available.</p>
+  ) : (
+    <ul className="space-y-2 sm:space-y-3">
+      {notifications.map((notif) => (
+        <li
+          key={notif.id}
+          className={`p-3 sm:p-4 rounded-lg border transition-all duration-300 ${notif.read ? "bg-gray-100 border-gray-200" : "bg-purple-50 border-purple-200"} hover:shadow-md`}
+        >
+          <p className="text-gray-700 text-sm sm:text-base">{notif.message}</p>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">
+            {new Date(notif.created_at).toLocaleString()}
+          </p>
+
+          {!notif.read && (
+            <button
+              onClick={() => markNotificationAsRead(notif.id)}
+              className="mt-2 text-sm sm:text-base text-purple-600 hover:text-purple-800 transition-colors"
+            >
+              Mark as Read
+            </button>
+          )}
+        </li>
+      ))}
+    </ul>
+  )}
+</section>
+
           )}
 
           {/* Profile Section */}
