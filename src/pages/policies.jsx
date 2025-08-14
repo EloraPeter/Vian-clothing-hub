@@ -154,7 +154,7 @@ export default function Policies({ profile }) {
           </p>
           <h2 className="text-xl font-semibold text-purple-700">5. Contact Us</h2>
           <p>
-            For questions about returns, contact us via our <Link href="/contact" className="text-purple-600 hover:underline">Contact Page</Link> or at supportinghub.com.
+            For questions about returns, contact us via our <Link href="/contact" className="text-purple-600 hover:underline">Contact Page</Link> or on <Link href="https://wa.me/+2348122123280" className="text-purple-600 hover:underline">Whatsapp</Link>.
           </p>
         </div>
       ),
