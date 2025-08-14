@@ -980,6 +980,8 @@ export default function AdminPage() {
                         <th className="py-2 px-4 border-b text-left text-purple-800">ID</th>
                         <th className="py-2 px-4 border-b text-left text-purple-800">Name</th>
                         <th className="py-2 px-4 border-b text-left text-purple-800">Email</th>
+                        < th className="py-2 px-4 border-b text-left text-purple-800" > Phone </th>
+
                         <th className="py-2 px-4 border-b text-left text-purple-800">Subject</th>
                         <th className="py-2 px-4 border-b text-left text-purple-800">Message</th>
                         <th className="py-2 px-4 border-b text-left text-purple-800">Created At</th>
@@ -993,6 +995,8 @@ export default function AdminPage() {
                           <td className="py-2 px-4 border-b text-gray-700">{inquiry.id}</td>
                           <td className="py-2 px-4 border-b text-gray-700">{inquiry.name}</td>
                           <td className="py-2 px-4 border-b text-gray-700">{inquiry.email}</td>
+                          < td className="py-2 px-4 border-b text-gray-700" > {inquiry.phone || "N/A"} </td>
+
                           <td className="py-2 px-4 border-b text-gray-700">{inquiry.subject}</td>
                           <td className="py-2 px-4 border-b text-gray-700">{inquiry.message}</td>
                           <td className="py-2 px-4 border-b text-gray-700">
