@@ -98,18 +98,20 @@ export default function AdminPage() {
                     `).order("created_at", { ascending: false }),
           // Fetch product orders with customer details and join profiles for email
           supabase.from("orders").select(`
-                      id,
-                      user_id,
-                      full_name,
-                      phone_number,
-                      address,
-                      items,
-                      total,
-                      status,
-                      profiles (
-                        email
-                      )
-                    `).order("created_at", { ascending: false }),
+  id,
+  user_id,
+  full_name,
+  phone_number,
+  address,
+  items,
+  total,
+  status,
+  profiles (
+    email,
+    first_name,
+    last_name
+  )
+`).order("created_at", { ascending: false })
           supabase.from("custom_orders").select("*").order("created_at", { ascending: false }),
           supabase.from("orders").select("*, items").order("created_at", { ascending: false }),
           supabase.from("products").select("*, categories(name)").order("created_at", { ascending: false }),
@@ -121,42 +123,42 @@ export default function AdminPage() {
 
         ]);
 
-        
+
 
         if (customOrderError) {
-                  setError(customOrderError.message);
-                  toast.error("Error fetching custom orders: " + customOrderError.message);
-                } else {
-                  // Map custom orders to include customer details
-                  setOrders(customOrderData.map(order => ({
-                    ...order,
-                    customer: {
-                      full_name: order.full_name || "N/A",
-                      phone: order.phone || "N/A",
-                      email: order.email || "N/A",
-                      address: order.address || "N/A"
-                    }
-                  })) || []);
-                }
+          setError(customOrderError.message);
+          toast.error("Error fetching custom orders: " + customOrderError.message);
+        } else {
+          // Map custom orders to include customer details
+          setOrders(customOrderData.map(order => ({
+            ...order,
+            customer: {
+              full_name: order.full_name || "N/A",
+              phone: order.phone || "N/A",
+              email: order.email || "N/A",
+              address: order.address || "N/A"
+            }
+          })) || []);
+        }
 
-        
+
 
         if (productOrderError) {
-                  setError(productOrderError.message);
-                  toast.error("Error fetching product orders: " + productOrderError.message);
-                } else {
-                  // Map product orders to include customer details
-                  setProductOrders(productOrderData.map(order => ({
-                    ...order,
-                    customer: {
-                      full_name: order.full_name || "N/A",
-                      phone: order.phone_number || "N/A",
-                      email: order.profiles?.email || "N/A",
-                      address: order.address || "N/A"
-                    }
-                  })) || []);
-                }
-        
+          setError(productOrderError.message);
+          toast.error("Error fetching product orders: " + productOrderError.message);
+        } else {
+          // Map product orders to include customer details
+          setProductOrders(productOrderData.map(order => ({
+            ...order,
+            customer: {
+              full_name: order.full_name || "N/A",
+              phone: order.phone_number || "N/A",
+              email: order.profiles?.email || "N/A",
+              address: order.address || "N/A"
+            }
+          })) || []);
+        }
+
 
         if (productError) {
           setError(productError.message);
