@@ -200,17 +200,8 @@ export default function AdminPage() {
           setShippingFees(shippingFeesData || []);
         }
 
-        if (notificationsError) {
-          setError(notificationsError.message);
-          toast.error("Error fetching notifications: " + notificationsError.message);
-        } else {
-          setNotifications(
-            notificationsData.map((notif) => ({
-              ...notif,
-              created_at: new Date(notif.created_at).toISOString(), // Convert to ISO 8601
-            })) || []
-          );
-        }
+        if (notificationsError) setError(notificationsError.message);
+        else setNotifications(notificationsData || []);
 
         if (contactInquiriesError) {
           setError(contactInquiriesError.message);
