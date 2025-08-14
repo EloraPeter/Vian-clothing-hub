@@ -606,7 +606,7 @@ export default function Shop() {
                     content={`Shop ${selectedCategories.length ? selectedCategories.join(", ") : "stylish"} fashion at Vian Clothing Hub. Fast delivery across Nigeria.`}
                 />
                 <meta name="robots" content="index, follow" />
-
+                <link rel="canonical" href="https://vianclothinghub.com.ng/shop" />
                 <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
                 <script
                     type="application/ld+json"
