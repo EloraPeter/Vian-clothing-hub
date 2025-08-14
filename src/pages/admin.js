@@ -96,14 +96,32 @@ export default function AdminPage() {
           setError(customOrderError.message);
           toast.error("Error fetching custom orders: " + customOrderError.message);
         } else {
-          setOrders(customOrderData || []);
+          // Map custom orders to include customer details
+          setOrders(customOrderData.map(order => ({
+            ...order,
+            customer: {
+              full_name: order.full_name || "N/A",
+              phone: order.phone || "N/A",
+              email: order.email || "N/A",
+              address: order.address || "N/A"
+            }
+          })) || []);
         }
 
         if (productOrderError) {
           setError(productOrderError.message);
           toast.error("Error fetching product orders: " + productOrderError.message);
         } else {
-          setProductOrders(productOrderData || []);
+          // Map product orders to include customer details
+          setProductOrders(productOrderData.map(order => ({
+            ...order,
+            customer: {
+              full_name: order.full_name || "N/A",
+              phone: order.phone_number || "N/A",
+              email: order.profiles?.email || "N/A",
+              address: order.address || "N/A"
+            }
+          })) || []);
         }
 
         if (productError) {
