@@ -10,6 +10,8 @@ export default function ProductsTable({ products, setProducts, categories, setCa
     const [productPreviewUrl, setProductPreviewUrl] = useState(null);
     const [productUploading, setProductUploading] = useState(false);
     const [discountInputs, setDiscountInputs] = useState({});
+    // New state for search term
+    const [searchTerm, setSearchTerm] = useState("");
 
     const handleEditProductChange = (e) => {
         const { name, value, files, type, checked } = e.target;
@@ -200,10 +202,30 @@ export default function ProductsTable({ products, setProducts, categories, setCa
         toast.success("Discount applied successfully!");
     };
 
+    // Filter products based on search term (case-insensitive, checks multiple fields)
+    const filteredProducts = products.filter((product) => {
+      const term = searchTerm.toLowerCase();
+      const tags = [];
+      if (product.is_new) tags.push("new");
+      if (product.is_out_of_stock) tags.push("out of stock");
+      if (product.is_on_sale) tags.push("on sale");
+
+      return (
+        (product.name?.toLowerCase() || "").includes(term) || // Name
+        product.price?.toString().includes(term) || // Price
+        (product.categories?.name?.toLowerCase() || "").includes(term) || // Category
+        product.discount_percentage?.toString().includes(term) || // Discount
+        tags.some((tag) => tag.includes(term)) // Tags
+        // Add ID if available, e.g.: product.id.toString().includes(term)
+        // Add date if available, e.g.: new Date(product.created_at).toLocaleString().toLowerCase().includes(term)
+      );
+    });
+
+    // Use filteredProducts for pagination instead of original products
     const indexOfLastProduct = currentProductPage * itemsPerPage;
     const indexOfFirstProduct = indexOfLastProduct - itemsPerPage;
-    const currentProducts = products.slice(indexOfFirstProduct, indexOfLastProduct);
-    const totalProductPages = Math.ceil(products.length / itemsPerPage);
+    const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
+    const totalProductPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
     return (
         <>
@@ -211,6 +233,19 @@ export default function ProductsTable({ products, setProducts, categories, setCa
 
             <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
                 <h2 className="text-xl font-semibold text-purple-800 mb-4">Manage Products</h2>
+                {/* New search bar */}
+                <div className="mb-4">
+                    <input
+                        type="text"
+                        placeholder="Search by name, category, price, discount, tags, etc."
+                        value={searchTerm}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            setCurrentProductPage(1); // Reset to page 1 on search
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+                    />
+                </div>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
@@ -495,6 +530,7 @@ export default function ProductsTable({ products, setProducts, categories, setCa
                         </div>
                     </div>
                 )}
-            </section></>
+            </section>
+        </>
     );
 }
