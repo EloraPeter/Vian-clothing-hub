@@ -878,7 +878,7 @@ export default function AdminPage() {
                           : "bg-purple-50 border-purple-200"
                         } hover:shadow-md`}
                     >
-                      <div className="flex-1">
+                      <div className="flex-1 w-full max-w-full">
                         <p className="text-gray-700 text-sm sm:text-base whitespace-pre-wrap break-words">{notif.message}</p>
                         <p className="text-xs sm:text-sm text-gray-500 mt-1">
                           {new Date(notif.created_at).toLocaleString()}
