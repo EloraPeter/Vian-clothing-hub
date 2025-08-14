@@ -603,7 +603,7 @@ export default function Shop() {
                 <title>Shop Fashion - Explore Dresses, Shirts, and More</title>
                 <meta
                     name="description"
-                    content="Discover a wide range of fashion items including dresses, shirts, and accessories. Shop now for exclusive deals and new arrivals!"
+                    content={`Shop ${selectedCategories.length ? selectedCategories.join(", ") : "stylish"} fashion at Vian Clothing Hub. Fast delivery across Nigeria.`}
                 />
                 <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
                 <script
