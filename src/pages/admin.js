@@ -148,15 +148,20 @@ export default function AdminPage() {
           toast.error("Error fetching product orders: " + productOrderError.message);
         } else {
           // Map product orders to include customer details
-          setProductOrders(productOrderData.map(order => ({
-            ...order,
-            customer: {
-              full_name: order.full_name || "N/A",
-              phone: order.phone_number || "N/A",
-              email: order.profiles?.email || "N/A",
-              address: order.address || "N/A"
-            }
-          })) || []);
+          setProductOrders(
+            productOrderData.map(order => ({
+              ...order,
+              customer: {
+                full_name:
+                  order.profiles?.first_name || order.profiles?.last_name
+                    ? `${order.profiles.first_name || ""} ${order.profiles.last_name || ""}`.trim() || "N/A"
+                    : order.full_name || "N/A",
+                phone: order.phone_number || "N/A",
+                email: order.profiles?.email || "N/A",
+                address: order.address || "N/A"
+              }
+            })) || []
+          );
         }
 
 
