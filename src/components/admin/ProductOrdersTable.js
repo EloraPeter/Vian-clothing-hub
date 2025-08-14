@@ -2,26 +2,26 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function ProductOrdersTable({ productOrders, setProductOrders, itemsPerPage, currentProductOrderPage, setCurrentProductOrderPage, updateProductOrderStatus }) {
-  // New state for search term
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Filter productOrders based on search term (case-insensitive, checks multiple fields)
+  // Filter productOrders based on search term
   const filteredProductOrders = productOrders.filter((order) => {
     const term = searchTerm.toLowerCase();
     return (
       order.id.toString().includes(term) || // ID
-      (order.user_id?.toLowerCase() || "").includes(term) || // Customer (user_id)
-      order.items?.some((item) => // Items (name or quantity)
+      (order.customer?.full_name?.toLowerCase() || "").includes(term) || // Customer name
+      (order.customer?.phone?.toLowerCase() || "").includes(term) || // Customer phone
+      (order.customer?.email?.toLowerCase() || "").includes(term) || // Customer email
+      (order.customer?.address?.toLowerCase() || "").includes(term) || // Customer address
+      order.items?.some((item) => // Items
         (item.name?.toLowerCase() || "").includes(term) ||
         item.quantity?.toString().includes(term)
       ) ||
       order.total?.toString().includes(term) || // Total
       (order.status?.toLowerCase() || "").includes(term) // Status
-      // Add date if available, e.g.: new Date(order.created_at).toLocaleString().toLowerCase().includes(term)
     );
   });
 
-  // Use filteredProductOrders for pagination instead of original productOrders
   const indexOfLastProductOrder = currentProductOrderPage * itemsPerPage;
   const indexOfFirstProductOrder = indexOfLastProductOrder - itemsPerPage;
   const currentProductOrders = filteredProductOrders.slice(indexOfFirstProductOrder, indexOfLastProductOrder);
@@ -30,11 +30,10 @@ export default function ProductOrdersTable({ productOrders, setProductOrders, it
   return (
     <section className="bg-white rounded-2xl shadow-lg p-6">
       <h2 className="text-xl font-semibold text-purple-800 mb-4">Product Orders</h2>
-      {/* New search bar */}
       <div className="mb-4">
         <input
           type="text"
-          placeholder="Search by ID, customer, item name, status, etc."
+          placeholder="Search by ID, customer name, phone, email, address, item name, status, etc."
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
@@ -48,7 +47,10 @@ export default function ProductOrdersTable({ productOrders, setProductOrders, it
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Name</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total (₦)</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -57,8 +59,11 @@ export default function ProductOrdersTable({ productOrders, setProductOrders, it
           <tbody className="bg-white divide-y divide-gray-200">
             {currentProductOrders.map((order) => (
               <tr key={order.id}>
-                <td className="px-6 py-4 whitespace-wrap text-sm text-gray-900">{order.id}</td>
-                <td className="px-6 py-4 whitespace-wrap text-sm text-gray-500">{order.user_id}</td> {/* Assume user_id for customer */}
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.id}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.customer?.full_name || "N/A"}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.customer?.phone || "N/A"}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.customer?.email || "N/A"}</td>
+                <td className="px-6 py-4 whitespace-wrap text-sm text-gray-500">{order.customer?.address || "N/A"}</td>
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {order.items?.map((item) => (
                     <div key={item.id}>{item.name} x {item.quantity}</div>
