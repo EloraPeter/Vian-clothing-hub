@@ -638,10 +638,6 @@ export default function Dashboard() {
                 </form>
 
               </section>
-            )}
-
-            {/* Password Change Section */}
-            {activeSection === "password" && (
               <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
                 <h2 className="text-xl font-semibold text-purple-800 mb-4">Change Password</h2>
                 <form
@@ -757,6 +753,11 @@ export default function Dashboard() {
                   </button>
                 </form>
               </section>
+            )}
+
+            {/* Password Change Section */}
+            {activeSection === "password" && (
+              
             )}
 
             {/* Invoices Section */}
