@@ -1135,6 +1135,7 @@ export default function Shop() {
                         <h2 className="text-3xl font-extrabold text-gray-900 mb-6">
                             Shop {catName}
                         </h2>
+                        <p className="text-gray-600 mb-4">Explore our {catName} collection featuring bold African designs.</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             {categoryGroups[catName].slice(0, 4).map((product) => (
                                 <div

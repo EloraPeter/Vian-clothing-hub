@@ -593,6 +593,9 @@ export default function Home() {
                 <h2 className="text-3xl sm:text-4xl font-bold text-purple-800 font-playfair-display">
                   About Vian Clothing Hub
                 </h2>
+                <p className="text-base sm:text-lg text-gray-600">
+                  Discover Nigerian fashion with Vian Clothing Hub’s curated African prints, including Ankara dresses and Adire streetwear, delivered to Lagos, Abuja, and beyond.
+                </p>
                 <p className="text-base sm:text-lg text-gray-600 max-w-xl mx-auto lg:mx-0">
                   <span className="text-purple-700 font-semibold">Vian Clothing Hub</span> is Nigeria’s premier online fashion destination, blending vibrant African prints with modern elegance for every occasion.
                 </p>
