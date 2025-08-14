@@ -276,7 +276,7 @@ export default function Contact({ profile }) {
                             <div className="bg-white rounded-xl shadow-md p-6 md:p-8">
                                 <h2 className="text-2xl font-semibold text-purple-700 mb-6">Our Location</h2>
                                 <iframe
-                                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3964.0000000000005!2d3.379205614770957!3d6.524379295283!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103b8b2ae682f50b%3A0x9d4e0b26b3cc4b1d!2sLagos%2C%20Nigeria!5e0!3m2!1sen!2sus!4v1620000000000!5m2!1sen!2sus"
+                                    src="<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3940.249749709716!2d7.500898275995539!3d9.040967888799447!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x104e0beca8cf9473%3A0xe0d27cf270cbda9d!2sGimbiya%20St%2C%20Garki%2C%20Abuja%20900103%2C%20Federal%20Capital%20Territory!5e0!3m2!1sen!2sng!4v1755188792480!5m2!1sen!2sng"></iframe>"
                                     width="100%"
                                     height="250"
                                     style={{ border: 0 }}
