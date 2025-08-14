@@ -11,7 +11,7 @@ import VariantsModal from "@/components/admin/VariantsModal";
 import ShippingFeesTable from "@/components/admin/ShippingFeesTable";
 import CustomOrdersTable from "@/components/admin/CustomOrdersTable";
 import ProductOrdersTable from "@/components/admin/ProductOrdersTable";
-import { FaUser, FaBox, FaShippingFast, FaTshirt, FaSignOutAlt, FaBars, FaBell } from "react-icons/fa";
+import { FaUser, FaBox, FaShippingFast, FaTshirt, FaSignOutAlt, FaBars, FaBell, FaEnvelope } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -28,6 +28,7 @@ export default function AdminPage() {
   const [categories, setCategories] = useState([]);
   const [shippingFees, setShippingFees] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [contactInquiries, setContactInquiries] = useState([]);
   const [currentProductPage, setCurrentProductPage] = useState(1);
   const [currentCustomOrderPage, setCurrentCustomOrderPage] = useState(1);
   const [currentProductOrderPage, setCurrentProductOrderPage] = useState(1);
@@ -78,6 +79,7 @@ export default function AdminPage() {
           { data: variantsData, error: variantsError },
           { data: shippingFeesData, error: shippingFeesError },
           { data: notificationsData, error: notificationsError },
+          { data: contactInquiriesData, error: contactInquiriesError },
         ] = await Promise.all([
           supabase.from("custom_orders").select("*").order("created_at", { ascending: false }),
           supabase.from("orders").select("*, items").order("created_at", { ascending: false }),
@@ -86,6 +88,7 @@ export default function AdminPage() {
           supabase.from("product_variants").select("id, product_id, size, color, stock_quantity, additional_price"),
           supabase.from("shipping_fees").select("id, state_name, shipping_fee"),
           supabase.from("notifications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+          supabase.from("contact_inquiries").select("*").order("created_at", { ascending: false }),
         ]);
         if (customOrderError) setError(customOrderError.message);
         else setOrders(customOrderData || []);
@@ -116,6 +119,9 @@ export default function AdminPage() {
 
         if (notificationsError) setError(notificationsError.message);
         else setNotifications(notificationsData || []);
+
+        if (contactInquiriesError) setError(contactInquiriesError.message);
+        else setContactInquiries(contactInquiriesData || []);
 
         setLoading(false);
       } catch (err) {
@@ -651,6 +657,7 @@ export default function AdminPage() {
               { id: "products", label: "Products", icon: <FaTshirt /> },
               { id: "custom-orders", label: "Custom Orders", icon: <FaBox /> },
               { id: "product-orders", label: "Product Orders", icon: <FaBox /> },
+              { id: "contact-inquiries", label: "Contact Inquiries", icon: <FaEnvelope /> },
             ].map((item) => (
               <button
                 key={item.id}
@@ -832,6 +839,45 @@ export default function AdminPage() {
                 setCurrentProductOrderPage={setCurrentProductOrderPage}
                 updateProductOrderStatus={updateProductOrderStatus}
               />
+            </section>
+          )}
+
+          {/* Contact Inquiries Section */}
+          {activeSection === "contact-inquiries" && (
+            <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+              <h2 className="text-xl font-semibold text-purple-800 mb-4">Contact Inquiries</h2>
+              {contactInquiries.length === 0 ? (
+                <p className="text-gray-500">No contact inquiries available.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full bg-white border border-gray-200">
+                    <thead>
+                      <tr className="bg-purple-100">
+                        <th className="py-2 px-4 border-b text-left text-purple-800">ID</th>
+                        <th className="py-2 px-4 border-b text-left text-purple-800">Name</th>
+                        <th className="py-2 px-4 border-b text-left text-purple-800">Email</th>
+                        <th className="py-2 px-4 border-b text-left text-purple-800">Subject</th>
+                        <th className="py-2 px-4 border-b text-left text-purple-800">Message</th>
+                        <th className="py-2 px-4 border-b text-left text-purple-800">Created At</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {contactInquiries.map((inquiry) => (
+                        <tr key={inquiry.id} className="hover:bg-purple-50">
+                          <td className="py-2 px-4 border-b text-gray-700">{inquiry.id}</td>
+                          <td className="py-2 px-4 border-b text-gray-700">{inquiry.name}</td>
+                          <td className="py-2 px-4 border-b text-gray-700">{inquiry.email}</td>
+                          <td className="py-2 px-4 border-b text-gray-700">{inquiry.subject}</td>
+                          <td className="py-2 px-4 border-b text-gray-700">{inquiry.message}</td>
+                          <td className="py-2 px-4 border-b text-gray-700">
+                            {new Date(inquiry.created_at).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </section>
           )}
         </div>
