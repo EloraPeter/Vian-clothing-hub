@@ -165,6 +165,7 @@ export default function Auth() {
               : "Create your Vian Clothing Hub account to explore bold and authentic African fashion tailored to your vibe."
           }
         />
+        <meta name="robots" content="index, follow" />
         <meta name="author" content="Vian Clothing Hub" />
         <meta name="keywords" content="Vian Clothing Hub, Login, Signup, African fashion, User account" />
         <meta

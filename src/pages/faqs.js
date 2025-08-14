@@ -82,6 +82,8 @@ export default function FAQs({ profile }) {
         name="description"
         content="Find answers to frequently asked questions about ordering, delivery, payment methods, custom orders, and more at Vian Clothing Hub."
       />
+      <meta name="robots" content="index, follow" />
+
       <meta name="keywords" content="Vian Clothing Hub FAQ, Fashion Questions, Delivery, Payment, Returns, Custom Orders" />
       <meta name="author" content="Vian Clothing Hub" />
       <meta property="og:title" content="FAQs - Vian Clothing Hub | Your Fashion Questions Answered" />

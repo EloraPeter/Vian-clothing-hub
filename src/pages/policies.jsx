@@ -248,6 +248,8 @@ export default function Policies({ profile }) {
           name="description"
           content="Review Vian Clothing Hub's policies, including Cookies, Terms of Service, Terms and Conditions, Returns, and Refunds."
         />
+        <meta name="robots" content="index, follow" />
+
         <meta name="keywords" content="policies, cookies, terms of service, terms and conditions, returns, refunds, Vian Clothing Hub" />
         <meta name="author" content="Vian Clothing Hub" />
         <meta property="og:title" content="Policies - Vian Clothing Hub" />
@@ -276,8 +278,8 @@ export default function Policies({ profile }) {
                   <button
                     onClick={() => setActivePolicy(policy.id)}
                     className={`w-full text-left py-2 px-4 rounded-lg ${activePolicy === policy.id
-                        ? 'bg-purple-100 text-purple-700 font-semibold'
-                        : 'text-gray-600 hover:bg-purple-50 hover:text-purple-600'
+                      ? 'bg-purple-100 text-purple-700 font-semibold'
+                      : 'text-gray-600 hover:bg-purple-50 hover:text-purple-600'
                       } transition-colors`}
                   >
                     {policy.title}

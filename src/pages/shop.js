@@ -605,6 +605,8 @@ export default function Shop() {
                     name="description"
                     content={`Shop ${selectedCategories.length ? selectedCategories.join(", ") : "stylish"} fashion at Vian Clothing Hub. Fast delivery across Nigeria.`}
                 />
+                <meta name="robots" content="index, follow" />
+
                 <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
                 <script
                     type="application/ld+json"

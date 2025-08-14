@@ -295,6 +295,8 @@ export default function Home() {
           property="og:description"
           content="Explore our latest collection of stylish ready-to-wear fashion with fast delivery across Nigeria."
         />
+        <meta name="robots" content="index, follow" />
+
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(homeSchema) }}
