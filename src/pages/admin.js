@@ -83,7 +83,7 @@ export default function AdminPage() {
           { data: contactInquiriesData, error: contactInquiriesError },
         ] = await Promise.all([
           supabase.from("custom_orders").select("*").order("created_at", { ascending: false }),
-          supabase.from("orders").select("*, items, profiles (*)").order("created_at", { ascending: false }),
+          supabase.from("orders").select("*, items, profiles(*)").order("created_at", { ascending: false }),
           supabase.from("products").select("*, categories(name)").order("created_at", { ascending: false }),
           supabase.from("categories").select("id, name, slug"),
           supabase.from("product_variants").select("id, product_id, size, color, stock_quantity, additional_price"),
