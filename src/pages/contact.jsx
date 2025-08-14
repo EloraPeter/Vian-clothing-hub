@@ -143,7 +143,7 @@ export default function Contact({ profile }) {
                             ) : (
                                 <form onSubmit={handleSubmit} className="space-y-4">
                                     <div>
-                                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                                        <label htmlFor="name" className="block text-sm font-medium text-gray-900 mb-1">
                                             Full Name
                                         </label>
                                         <input
@@ -152,7 +152,7 @@ export default function Contact({ profile }) {
                                             type="text"
                                             value={formData.name}
                                             onChange={handleChange}
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+                                            className="w-full text-black px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
                                             placeholder="Enter your full name"
                                             required
                                             aria-required="true"
@@ -168,7 +168,7 @@ export default function Contact({ profile }) {
                                             type="email"
                                             value={formData.email}
                                             onChange={handleChange}
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+                                            className="w-full text-black px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
                                             placeholder="Enter your email"
                                             required
                                             aria-required="true"
@@ -184,7 +184,7 @@ export default function Contact({ profile }) {
                                             type="text"
                                             value={formData.subject}
                                             onChange={handleChange}
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+                                            className="w-full text-black px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
                                             placeholder="e.g., Order Inquiry"
                                             required
                                             aria-required="true"
@@ -199,7 +199,7 @@ export default function Contact({ profile }) {
                                             name="message"
                                             value={formData.message}
                                             onChange={handleChange}
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+                                            className="w-full text-black px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
                                             rows="5"
                                             placeholder="Tell us how we can help"
                                             required
