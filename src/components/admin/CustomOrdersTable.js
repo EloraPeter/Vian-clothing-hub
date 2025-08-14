@@ -2,14 +2,46 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function CustomOrdersTable({ orders, setOrders, itemsPerPage, currentCustomOrderPage, setCurrentCustomOrderPage, updateCustomOrderStatus, updateCustomOrderDeliveryStatus, orderPrices, setOrderPrices }) {
+  // New state for search term
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Filter orders based on search term (case-insensitive, checks multiple fields)
+  const filteredOrders = orders.filter((order) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      order.id.toString().includes(term) || // ID
+      (order.full_name?.toLowerCase() || "").includes(term) || // Customer name
+      (order.fabric?.toLowerCase() || "").includes(term) || // Fabric
+      (order.style?.toLowerCase() || "").includes(term) || // Style
+      (order.status?.toLowerCase() || "").includes(term) || // Status
+      (order.delivery_status?.toLowerCase() || "").includes(term) || // Delivery status
+      (orderPrices[order.id]?.toString() || order.price?.toString() || "").includes(term) // Price
+      // Add date if available, e.g.: new Date(order.created_at).toLocaleString().toLowerCase().includes(term)
+    );
+  });
+
+  // Use filteredOrders for pagination instead of original orders
   const indexOfLastCustomOrder = currentCustomOrderPage * itemsPerPage;
   const indexOfFirstCustomOrder = indexOfLastCustomOrder - itemsPerPage;
-  const currentCustomOrders = orders.slice(indexOfFirstCustomOrder, indexOfLastCustomOrder);
-  const totalCustomOrderPages = Math.ceil(orders.length / itemsPerPage);
+  const currentCustomOrders = filteredOrders.slice(indexOfFirstCustomOrder, indexOfLastCustomOrder);
+  const totalCustomOrderPages = Math.ceil(filteredOrders.length / itemsPerPage);
 
   return (
     <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
       <h2 className="text-xl font-semibold text-purple-800 mb-4">Custom Orders</h2>
+      {/* New search bar */}
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search by ID, customer, fabric/style, status, etc."
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentCustomOrderPage(1); // Reset to page 1 on search
+          }}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900"
+        />
+      </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
