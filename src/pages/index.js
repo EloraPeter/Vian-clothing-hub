@@ -203,6 +203,77 @@ export default function Home() {
     </div>
   );
 
+  const homeSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Vian Clothing Hub",
+    "url": "https://vianclothinghub.com.ng/",
+    "description": "Shop Ready-to-Wear Fashion - Vian Clothing Hub Nigeria. Discover trendy dresses, tops, and accessories with nationwide delivery.",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Vian Clothing Hub",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://vianclothinghub.com.ng/logo.svg"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+234-123-456-7890", // Add real phone
+        "contactType": "Customer Service"
+      }
+    },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://vianclothinghub.com.ng/"
+        }
+      ]
+    },
+    "hasPart": [
+      {
+        "@type": "ItemList",
+        "name": "New Arrivals",
+        "itemListElement": newArrivals.slice(0, 5).map((product, index) => ({
+          "@type": "ListItem",
+          "position": index + 1,
+          "item": {
+            "@type": "Product",
+            "name": product.name,
+            "image": product.image_url,
+            "url": `https://vianclothinghub.com.ng/product/${product.id}`,
+            "offers": {
+              "@type": "Offer",
+              "price": product.price,
+              "priceCurrency": "NGN",
+              "availability": product.is_out_of_stock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock"
+            }
+          }
+        }))
+      },
+      {
+        "@type": "ItemList",
+        "name": "Testimonials",
+        "itemListElement": testimonials.map((testimonial, index) => ({
+          "@type": "ListItem",
+          "position": index + 1,
+          "item": {
+            "@type": "Review",
+            "reviewBody": testimonial.quote,
+            "author": testimonial.name,
+            "reviewRating": {
+              "@type": "Rating",
+              "ratingValue": testimonial.rating
+            }
+          }
+        }))
+      }
+    ]
+  };
+
   return (
     <>
       <Head>
@@ -223,6 +294,10 @@ export default function Home() {
         <meta
           property="og:description"
           content="Explore our latest collection of stylish ready-to-wear fashion with fast delivery across Nigeria."
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(homeSchema) }}
         />
       </Head>
 

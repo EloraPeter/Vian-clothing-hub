@@ -193,6 +193,53 @@ export default function Policies({ profile }) {
     },
   ];
 
+  const policiesSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Policies - Vian Clothing Hub",
+    "description": "Review Vian Clothing Hub's policies, including Cookies, Terms of Service, Terms and Conditions, Returns, and Refunds.",
+    "url": "https://yourdomain.com/policies",
+    "hasPart": policies.map((policy) => ({
+      "@type": "WebPageElement",
+      "name": policy.title,
+      "text": policy.content.props.children.find((child) => typeof child === 'string' && child.startsWith('Last Updated')) // Extract summary if needed
+    })),
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://yourdomain.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Policies"
+        }
+      ]
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Vian Clothing Hub"
+    }
+  };
+
+  // Add ReturnPolicy specifically for returns/refunds sections
+  const returnPolicySchema = {
+    "@context": "https://schema.org",
+    "@type": "ReturnPolicy",
+    "name": "Vian Clothing Hub Return Policy",
+    "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+    "merchantReturnDays": 7,
+    "returnMethod": "https://schema.org/ReturnByMail",
+    "applicableCountry": "NG",
+    "returnFees": "https://schema.org/ReturnFeesCustomerResponsibility" // Unless defective
+  };
+
+
+
   return (
     <>
       <Head>
@@ -208,6 +255,14 @@ export default function Policies({ profile }) {
           property="og:description"
           content="Understand our policies governing your use of Vian Clothing Hub's website and services."
         />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(policiesSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(returnPolicySchema) }}
+        />
       </Head>
       <div className="min-h-screen bg-gray-100">
         <Navbar profile={profile} />
@@ -220,11 +275,10 @@ export default function Policies({ profile }) {
                 <li key={policy.id}>
                   <button
                     onClick={() => setActivePolicy(policy.id)}
-                    className={`w-full text-left py-2 px-4 rounded-lg ${
-                      activePolicy === policy.id
+                    className={`w-full text-left py-2 px-4 rounded-lg ${activePolicy === policy.id
                         ? 'bg-purple-100 text-purple-700 font-semibold'
                         : 'text-gray-600 hover:bg-purple-50 hover:text-purple-600'
-                    } transition-colors`}
+                      } transition-colors`}
                   >
                     {policy.title}
                   </button>

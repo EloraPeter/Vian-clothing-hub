@@ -60,6 +60,21 @@ export default function FAQs({ profile }) {
     },
   ];
 
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map((faq) => ({
+      "@type": "Question",
+      "name": faq.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.answer
+      }
+    }))
+  };
+
+
+
   return (
     <><Head>
       <title>FAQs - Vian Clothing Hub | Your Fashion Questions Answered</title>
@@ -71,6 +86,10 @@ export default function FAQs({ profile }) {
       <meta name="author" content="Vian Clothing Hub" />
       <meta property="og:title" content="FAQs - Vian Clothing Hub | Your Fashion Questions Answered" />
       <meta property="og:description" content="Get detailed answers to your common questions about shopping at Vian Clothing Hub." />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
     </Head>
       <div className="min-h-screen bg-gray-100">
         <Navbar profile={profile} />
