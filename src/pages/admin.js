@@ -116,7 +116,10 @@ export default function AdminPage() {
           setProductOrders(productOrderData.map(order => ({
             ...order,
             customer: {
-              full_name: order.full_name || "N/A",
+              full_name: order.full_name
+                || (order.profiles?.first_name || order.profiles?.last_name
+                  ? `${order.profiles?.first_name || ""} ${order.profiles?.last_name || ""}`.trim()
+                  : "N/A"),
               phone: order.phone_number || "N/A",
               email: order.profiles?.email || "N/A",
               address: order.address || "N/A"
