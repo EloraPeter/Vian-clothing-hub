@@ -159,7 +159,7 @@ export default function ProfileSection({ profile, setProfile, user }) {
               type="email"
               value={profile?.email || ""}
               onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
               required
             />
           </div>
@@ -173,7 +173,7 @@ export default function ProfileSection({ profile, setProfile, user }) {
               type="text"
               value={profile?.first_name || ""}
               onChange={(e) => setProfile({ ...profile, first_name: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
               required
             />
           </div>
@@ -187,7 +187,7 @@ export default function ProfileSection({ profile, setProfile, user }) {
               type="text"
               value={profile?.last_name || ""}
               onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
               required
             />
           </div>
@@ -253,7 +253,7 @@ export default function ProfileSection({ profile, setProfile, user }) {
                 type={showOldPass ? "text" : "password"}
                 name="old_password"
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                 placeholder="Enter old password"
               />
               <button
@@ -277,7 +277,7 @@ export default function ProfileSection({ profile, setProfile, user }) {
                 onChange={handleNewPasswordChange}
                 required
                 minLength={6}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                 placeholder="Enter new password"
               />
               <button

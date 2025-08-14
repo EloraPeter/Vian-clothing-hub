@@ -11,7 +11,7 @@ import Script from "next/script";
 import DressLoader from "@/components/DressLoader";
 import Link from "next/link";
 import { initiatePayment } from "@/lib/payment";
-import { FaUser, FaBox, FaFileInvoice, FaReceipt, FaHeart, FaSignOutAlt, FaBars } from "react-icons/fa";
+import { FaUser, FaBell, FaBox, FaFileInvoice, FaReceipt, FaHeart, FaSignOutAlt, FaBars } from "react-icons/fa";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -396,9 +396,8 @@ export default function Dashboard() {
             <nav className="space-y-2">
               {[
                 { id: "overview", label: "Overview", icon: <FaUser /> },
-                { id: "notifications", label: "Notifications", icon: <FaUser /> },
+                { id: "notifications", label: "Notifications", icon: <FaBell /> },
                 { id: "profile", label: "Profile", icon: <FaUser /> },
-                { id: "password", label: "Change Password", icon: <FaUser /> },
                 { id: "invoices", label: "Invoices", icon: <FaFileInvoice /> },
                 { id: "receipts", label: "Receipts", icon: <FaReceipt /> },
                 { id: "wishlist", label: "Wishlist", icon: <FaHeart /> },
@@ -595,7 +594,7 @@ export default function Dashboard() {
                         type="email"
                         value={profile?.email || ""}
                         onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                         required
                       />
                     </div>
@@ -609,7 +608,7 @@ export default function Dashboard() {
                         type="text"
                         value={profile?.first_name || ""}
                         onChange={(e) => setProfile({ ...profile, first_name: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                         required
                       />
                     </div>
@@ -623,7 +622,7 @@ export default function Dashboard() {
                         type="text"
                         value={profile?.last_name || ""}
                         onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                         required
                       />
                     </div>
@@ -681,7 +680,7 @@ export default function Dashboard() {
                     className="space-y-4"
                   >
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-900 mb-1">
                         Old Password
                       </label>
                       <div className="relative">
@@ -689,7 +688,7 @@ export default function Dashboard() {
                           type={showOldPass ? "text" : "password"}
                           name="old_password"
                           required
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 text-gray-700 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                           placeholder="Enter old password"
                         />
                         <button
@@ -713,7 +712,7 @@ export default function Dashboard() {
                           onChange={handleNewPasswordChange}
                           required
                           minLength={6}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="w-full text-gray-700 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                           placeholder="Enter new password"
                         />
                         <button
@@ -756,11 +755,6 @@ export default function Dashboard() {
                 </section>
               </>
             )}
-
-            {/* Password Change Section
-            {activeSection === "password" && (
-              
-            )} */}
 
             {/* Invoices Section */}
             {activeSection === "invoices" && (
