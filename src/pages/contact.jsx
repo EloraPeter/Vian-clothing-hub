@@ -229,7 +229,7 @@ export default function Contact({ profile }) {
                   </div>
                   <div className="flex items-center gap-3">
                     <FaPhone className="text-purple-600 text-xl" />
-                    <p className="text-gray-700">+234 123 456 7890</p>
+                    <p className="text-gray-700">+234 812 212 3280</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <FaEnvelope className="text-purple-600 text-xl" />
@@ -247,7 +247,7 @@ export default function Contact({ profile }) {
                   <a href="https://instagram.com/vianclothinghub" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-800 text-3xl" aria-label="Instagram">
                     <FaInstagram />
                   </a>
-                  <a href="https://wa.me/2341234567890" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-800 text-3xl" aria-label="WhatsApp">
+                  <a href="https://wa.me/+2348122123280" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-800 text-3xl" aria-label="WhatsApp">
                     <FaWhatsapp />
                   </a>
                   <a href="https://facebook.com/vianclothinghub" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-800 text-3xl" aria-label="Facebook">
