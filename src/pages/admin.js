@@ -63,6 +63,7 @@ export default function AdminPage() {
 
       if (error) {
         setError(error.message);
+        toast.error("Error fetching profile: " + error.message);
       } else {
         setProfile(data || { email: user.email, avatar_url: null });
       }
@@ -90,20 +91,39 @@ export default function AdminPage() {
           supabase.from("notifications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
           supabase.from("contact_inquiries").select("*").order("created_at", { ascending: false }),
         ]);
-        if (customOrderError) setError(customOrderError.message);
-        else setOrders(customOrderData || []);
 
-        if (productOrderError) setError(productOrderError.message);
-        else setProductOrders(productOrderData || []);
+        if (customOrderError) {
+          setError(customOrderError.message);
+          toast.error("Error fetching custom orders: " + customOrderError.message);
+        } else {
+          setOrders(customOrderData || []);
+        }
 
-        if (productError) setError(productError.message);
-        else setProducts(productData || []);
+        if (productOrderError) {
+          setError(productOrderError.message);
+          toast.error("Error fetching product orders: " + productOrderError.message);
+        } else {
+          setProductOrders(productOrderData || []);
+        }
 
-        if (categoryError) setError(categoryError.message);
-        else setCategories(categoryData || []);
+        if (productError) {
+          setError(productError.message);
+          toast.error("Error fetching products: " + productError.message);
+        } else {
+          setProducts(productData || []);
+        }
 
-        if (variantsError) setError(variantsError.message);
-        else {
+        if (categoryError) {
+          setError(categoryError.message);
+          toast.error("Error fetching categories: " + categoryError.message);
+        } else {
+          setCategories(categoryData || []);
+        }
+
+        if (variantsError) {
+          setError(variantsError.message);
+          toast.error("Error fetching variants: " + variantsError.message);
+        } else {
           const variantsByProduct = {};
           variantsData.forEach((variant) => {
             if (!variantsByProduct[variant.product_id]) {
@@ -114,24 +134,58 @@ export default function AdminPage() {
           setVariants(variantsByProduct);
         }
 
-        if (shippingFeesError) setError(shippingFeesError.message);
-        else setShippingFees(shippingFeesData || []);
+        if (shippingFeesError) {
+          setError(shippingFeesError.message);
+          toast.error("Error fetching shipping fees: " + shippingFeesError.message);
+        } else {
+          setShippingFees(shippingFeesData || []);
+        }
 
-        if (notificationsError) setError(notificationsError.message);
-        else setNotifications(notificationsData || []);
+        if (notificationsError) {
+          setError(notificationsError.message);
+          toast.error("Error fetching notifications: " + notificationsError.message);
+        } else {
+          setNotifications(notificationsData || []);
+        }
 
-        if (contactInquiriesError) setError(contactInquiriesError.message);
-        else setContactInquiries(contactInquiriesData || []);
+        if (contactInquiriesError) {
+          setError(contactInquiriesError.message);
+          toast.error("Error fetching contact inquiries: " + contactInquiriesError.message);
+        } else {
+          setContactInquiries(contactInquiriesData || []);
+        }
 
         setLoading(false);
       } catch (err) {
         setError(err.message);
+        toast.error("Error fetching data: " + err.message);
+        setLoading(false);
       }
-      setLoading(false);
     }
+
+    // Subscribe to real-time contact inquiries
+    const subscription = supabase
+      .channel("contact_inquiries_channel")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "contact_inquiries" },
+        (payload) => {
+          setContactInquiries((prev) => [payload.new, ...prev]);
+          createInAppNotification(
+            user.id,
+            `New contact inquiry from ${payload.new.name}: ${payload.new.subject}`
+          );
+          toast.info(`New inquiry from ${payload.new.name}`);
+        }
+      )
+      .subscribe();
 
     fetchProfile();
     fetchData();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, [user]);
 
   const markNotificationAsRead = async (notificationId) => {
@@ -145,6 +199,9 @@ export default function AdminPage() {
           notif.id === notificationId ? { ...notif, read: true } : notif
         )
       );
+      toast.success("Notification marked as read.");
+    } else {
+      toast.error("Error marking notification as read: " + error.message);
     }
   };
 
@@ -161,8 +218,24 @@ export default function AdminPage() {
       );
       toast.success("All notifications marked as read.");
     } else {
-      console.error("Error marking all notifications as read:", error.message);
       toast.error("Error marking all notifications as read: " + error.message);
+    }
+  };
+
+  const markInquiryAsRead = async (inquiryId) => {
+    const { error } = await supabase
+      .from("contact_inquiries")
+      .update({ read: true })
+      .eq("id", inquiryId);
+    if (!error) {
+      setContactInquiries((prev) =>
+        prev.map((inquiry) =>
+          inquiry.id === inquiryId ? { ...inquiry, read: true } : inquiry
+        )
+      );
+      toast.success("Inquiry marked as read.");
+    } else {
+      toast.error("Error marking inquiry as read: " + error.message);
     }
   };
 
@@ -174,22 +247,34 @@ export default function AdminPage() {
     try {
       const response = await fetch(url);
       if (!response.ok) {
-        console.error(
-          "Failed to send WhatsApp notification:",
-          response.statusText
-        );
+        toast.error("Failed to send WhatsApp message: " + response.statusText);
+        return false;
       }
+      toast.success("WhatsApp message sent successfully.");
+      return true;
     } catch (error) {
-      console.error("Error sending WhatsApp notification:", error);
+      toast.error("Error sending WhatsApp message: " + error.message);
+      return false;
     }
   };
 
   const sendEmailNotification = async (email, subject, body) => {
-    const { error } = await supabase.functions.invoke("send-email", {
-      body: { to: email, subject, html: body },
-    });
-    if (error) {
-      console.error("Error sending email:", error.message);
+    try {
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: email, subject, html: body }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        toast.error("Failed to send email: " + result.error);
+        return false;
+      }
+      toast.success("Email sent successfully.");
+      return true;
+    } catch (error) {
+      toast.error("Error sending email: " + error.message);
+      return false;
     }
   };
 
@@ -203,8 +288,36 @@ export default function AdminPage() {
       },
     ]);
     if (error) {
-      console.error("Error creating in-app notification:", error.message);
+      toast.error("Error creating in-app notification: " + error.message);
+    } else {
+      setNotifications((prev) => [
+        {
+          user_id: userId,
+          message,
+          created_at: new Date().toISOString(),
+          read: false,
+        },
+        ...prev,
+      ]);
     }
+  };
+
+  const handleReplyEmail = async (inquiry) => {
+    const subject = `Re: ${inquiry.subject}`;
+    const body = `
+      <h2>Response to Your Inquiry</h2>
+      <p>Dear ${inquiry.name},</p>
+      <p>Thank you for reaching out to Vian Clothing Hub. We have received your inquiry regarding "${inquiry.subject}".</p>
+      <p><strong>Your Message:</strong> ${inquiry.message}</p>
+      <p>We will address your concern as soon as possible. For further assistance, please contact us at <a href="mailto:support@vianclothinghub.com.ng">support@vianclothinghub.com.ng</a>.</p>
+      <p>Best regards,<br>Vian Clothing Hub Team</p>
+    `;
+    await sendEmailNotification(inquiry.email, subject, body);
+  };
+
+  const handleReplyWhatsApp = async (inquiry) => {
+    const message = `Dear ${inquiry.name}, thank you for your inquiry regarding "${inquiry.subject}". We have received your message: "${inquiry.message}". We will address your concern soon. Contact us at +234 808 752 2801 for further assistance. - Vian Clothing Hub`;
+    await sendWhatsAppNotification(inquiry.phone || "+2348087522801", message);
   };
 
   const generateInvoicePDF = async (order, amount, userId, email) => {
@@ -270,7 +383,7 @@ export default function AdminPage() {
         .single();
 
       if (invoiceError) {
-        console.error("Invoice creation failed:", invoiceError.message);
+        toast.error("Failed to create invoice: " + invoiceError.message);
         throw new Error("Failed to create invoice");
       }
 
@@ -361,16 +474,16 @@ export default function AdminPage() {
         }),
       });
 
-      const emailResult = await emailResponse.json();
+      const emailResult = await response.json();
       if (!emailResponse.ok) {
-        console.error("Email sending failed:", emailResult.error);
+        toast.error("Email sending failed: " + emailResult.error);
       } else {
         console.log("Invoice email sent successfully:", emailResult.message);
       }
 
       return { pdfUrl: pdfData.pdfUrl, invoiceId: invoiceData.INVOICEID, invoice };
     } catch (error) {
-      console.error("Error in generateInvoicePDF:", error.message);
+      toast.error("Invoice generation failed: " + error.message);
       throw new Error(`Invoice generation failed: ${error.message}`);
     }
   };
@@ -395,7 +508,6 @@ export default function AdminPage() {
       .single();
 
     if (error) {
-      console.error("Error updating status:", error.message);
       toast.error("Error updating status: " + error.message);
       return;
     }
@@ -423,7 +535,6 @@ export default function AdminPage() {
           ]);
 
         if (invoiceError) {
-          console.error("Error creating invoice:", invoiceError.message);
           toast.error("Error creating invoice: " + invoiceError.message);
           return;
         }
@@ -434,7 +545,6 @@ export default function AdminPage() {
 
         const email = order.profiles?.email || order.email;
         if (!email) {
-          console.error("No email found for order:", order.id);
           toast.error("Failed to send invoice email: No email address found");
           return;
         }
@@ -528,13 +638,11 @@ export default function AdminPage() {
 
           const emailResult = await emailResponse.json();
           if (!emailResponse.ok) {
-            console.error("Email sending failed:", emailResult.error);
             toast.error("Failed to send invoice email: " + emailResult.error);
           } else {
             console.log("Invoice email sent successfully:", emailResult.message);
           }
         } catch (emailError) {
-          console.error("Error sending email:", emailError.message);
           toast.error("Error sending invoice email: " + emailError.message);
         }
 
@@ -543,7 +651,6 @@ export default function AdminPage() {
           `Your order (ID: ${order.id}) is now in progress. Check your dashboard for the invoice: ${paymentLink}`
         );
       } catch (error) {
-        console.error("Error generating PDF or invoice:", error.message);
         toast.error("Error generating PDF: " + error.message);
       }
     }
@@ -602,7 +709,6 @@ export default function AdminPage() {
       .single();
 
     if (error) {
-      console.error("Error updating delivery status:", error.message);
       toast.error("Error updating delivery status: " + error.message);
       return;
     }
@@ -859,11 +965,13 @@ export default function AdminPage() {
                         <th className="py-2 px-4 border-b text-left text-purple-800">Subject</th>
                         <th className="py-2 px-4 border-b text-left text-purple-800">Message</th>
                         <th className="py-2 px-4 border-b text-left text-purple-800">Created At</th>
+                        <th className="py-2 px-4 border-b text-left text-purple-800">Status</th>
+                        <th className="py-2 px-4 border-b text-left text-purple-800">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {contactInquiries.map((inquiry) => (
-                        <tr key={inquiry.id} className="hover:bg-purple-50">
+                        <tr key={inquiry.id} className={`hover:bg-purple-50 ${inquiry.read ? "bg-gray-50" : "bg-purple-50"}`}>
                           <td className="py-2 px-4 border-b text-gray-700">{inquiry.id}</td>
                           <td className="py-2 px-4 border-b text-gray-700">{inquiry.name}</td>
                           <td className="py-2 px-4 border-b text-gray-700">{inquiry.email}</td>
@@ -871,6 +979,33 @@ export default function AdminPage() {
                           <td className="py-2 px-4 border-b text-gray-700">{inquiry.message}</td>
                           <td className="py-2 px-4 border-b text-gray-700">
                             {new Date(inquiry.created_at).toLocaleString()}
+                          </td>
+                          <td className="py-2 px-4 border-b text-gray-700">
+                            {inquiry.read ? "Read" : "Unread"}
+                          </td>
+                          <td className="py-2 px-4 border-b text-gray-700">
+                            <div className="flex space-x-2">
+                              {!inquiry.read && (
+                                <button
+                                  onClick={() => markInquiryAsRead(inquiry.id)}
+                                  className="text-sm text-purple-600 hover:text-purple-800"
+                                >
+                                  Mark as Read
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleReplyEmail(inquiry)}
+                                className="text-sm text-blue-600 hover:text-blue-800"
+                              >
+                                Reply via Email
+                              </button>
+                              <button
+                                onClick={() => handleReplyWhatsApp(inquiry)}
+                                className="text-sm text-green-600 hover:text-green-800"
+                              >
+                                Reply via WhatsApp
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
