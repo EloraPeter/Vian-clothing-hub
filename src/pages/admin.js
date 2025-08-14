@@ -98,20 +98,18 @@ export default function AdminPage() {
                     `).order("created_at", { ascending: false }),
           // Fetch product orders with customer details and join profiles for email
           supabase.from("orders").select(`
-  id,
-  user_id,
-  full_name,
-  phone_number,
-  address,
-  items,
-  total,
-  status,
-  profiles (
-    email,
-    first_name,
-    last_name
-  )
-`).order("created_at", { ascending: false }),
+                      id,
+                      user_id,
+                      full_name,
+                      phone_number,
+                      address,
+                      items,
+                      total,
+                      status,
+                      profiles (
+                        email
+                      )
+                    `).order("created_at", { ascending: false }),
           supabase.from("custom_orders").select("*").order("created_at", { ascending: false }),
           supabase.from("orders").select("*, items").order("created_at", { ascending: false }),
           supabase.from("products").select("*, categories(name)").order("created_at", { ascending: false }),
@@ -123,47 +121,42 @@ export default function AdminPage() {
 
         ]);
 
-
+        
 
         if (customOrderError) {
-          setError(customOrderError.message);
-          toast.error("Error fetching custom orders: " + customOrderError.message);
-        } else {
-          // Map custom orders to include customer details
-          setOrders(customOrderData.map(order => ({
-            ...order,
-            customer: {
-              full_name: order.full_name || "N/A",
-              phone: order.phone || "N/A",
-              email: order.email || "N/A",
-              address: order.address || "N/A"
-            }
-          })) || []);
-        }
+                  setError(customOrderError.message);
+                  toast.error("Error fetching custom orders: " + customOrderError.message);
+                } else {
+                  // Map custom orders to include customer details
+                  setOrders(customOrderData.map(order => ({
+                    ...order,
+                    customer: {
+                      full_name: order.full_name || "N/A",
+                      phone: order.phone || "N/A",
+                      email: order.email || "N/A",
+                      address: order.address || "N/A"
+                    }
+                  })) || []);
+                }
 
-
+        
 
         if (productOrderError) {
-          setError(productOrderError.message);
-          toast.error("Error fetching product orders: " + productOrderError.message);
-        } else {
-          // Map product orders to include customer details
-          setProductOrders(
-            productOrderData.map(order => ({
-              ...order,
-              customer: {
-                full_name:
-                  order.profiles?.first_name || order.profiles?.last_name
-                    ? `${order.profiles.first_name || ""} ${order.profiles.last_name || ""}`.trim() || "N/A"
-                    : order.full_name || "N/A",
-                phone: order.phone_number || "N/A",
-                email: order.profiles?.email || "N/A",
-                address: order.address || "N/A"
-              }
-            })) || []
-          );
-        }
-
+                  setError(productOrderError.message);
+                  toast.error("Error fetching product orders: " + productOrderError.message);
+                } else {
+                  // Map product orders to include customer details
+                  setProductOrders(productOrderData.map(order => ({
+                    ...order,
+                    customer: {
+                      full_name: order.full_name || "N/A",
+                      phone: order.phone_number || "N/A",
+                      email: order.profiles?.email || "N/A",
+                      address: order.address || "N/A"
+                    }
+                  })) || []);
+                }
+        
 
         if (productError) {
           setError(productError.message);
@@ -204,36 +197,22 @@ export default function AdminPage() {
           setError(notificationsError.message);
           toast.error("Error fetching notifications: " + notificationsError.message);
         } else {
-          setNotifications(
-            notificationsData.map((notif) => {
-              const parsedDate = notif.created_at ? new Date(notif.created_at) : null;
-              const isValidDate = parsedDate && !isNaN(parsedDate.getTime());
-              console.log(`Notification ${notif.id} created_at:`, notif.created_at, 'Parsed:', isValidDate ? parsedDate.toISOString() : 'Invalid');
-              return {
-                ...notif,
-                created_at: isValidDate ? parsedDate.toISOString() : new Date().toISOString(),
-              };
-            }) || []
-          );
+          setNotifications(notificationsData || []);
         }
 
         if (contactInquiriesError) {
           setError(contactInquiriesError.message);
           toast.error("Error fetching contact inquiries: " + contactInquiriesError.message);
         } else {
-          setContactInquiries(
-            contactInquiriesData.map((inquiry) => {
-              const parsedDate = inquiry.created_at ? new Date(inquiry.created_at) : null;
-              const isValidDate = parsedDate && !isNaN(parsedDate.getTime());
-              return {
-                ...inquiry,
-                created_at: isValidDate ? parsedDate.toISOString() : new Date().toISOString(),
-              };
-            }) || []
-          );
+          setContactInquiries(contactInquiriesData || []);
         }
 
-
+        if (contactInquiriesError) {
+          setError(contactInquiriesError.message);
+          toast.error("Error fetching contact inquiries: " + contactInquiriesError.message);
+        } else {
+          setContactInquiries(contactInquiriesData || []);
+        }
 
         setLoading(false);
       } catch (err) {
@@ -368,7 +347,17 @@ export default function AdminPage() {
       },
     ]);
     if (error) {
-      console.error("Error creating in-app notification:", error.message);
+      toast.error("Error creating in-app notification: " + error.message);
+    } else {
+      setNotifications((prev) => [
+        {
+          user_id: userId,
+          message,
+          created_at: new Date().toISOString(),
+          read: false,
+        },
+        ...prev,
+      ]);
     }
   };
 
