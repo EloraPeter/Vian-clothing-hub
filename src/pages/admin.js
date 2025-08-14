@@ -344,12 +344,15 @@ export default function AdminPage() {
     }
   };
 
+  const timestamp = new Date().toISOString();
+
+
   const createInAppNotification = async (userId, message) => {
     const { error } = await supabase.from("notifications").insert([
       {
         user_id: userId,
         message,
-        created_at: new Date().toISOString(),
+        created_at: timestamp,
         read: false,
       },
     ]);
