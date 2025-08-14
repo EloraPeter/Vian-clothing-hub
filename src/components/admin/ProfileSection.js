@@ -76,8 +76,8 @@ export default function ProfileSection({ profile, setProfile, user }) {
             alt="Admin Avatar"
             className="w-16 h-16 rounded-full object-cover border-2 border-purple-600"
           />
-          <div>
-            <p className="font-medium text-gray-700">{profile?.email}</p>
+          <div className="flex flex-col sm:flex-row items-center">
+            <p className="font-medium text-gray-700 whitespace-pre-wrap break-words">{profile?.email}</p>
             <input
               type="file"
               accept="image/*"
