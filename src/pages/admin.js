@@ -82,34 +82,6 @@ export default function AdminPage() {
           { data: notificationsData, error: notificationsError },
           { data: contactInquiriesData, error: contactInquiriesError },
         ] = await Promise.all([
-          // Fetch custom orders with all customer details
-          supabase.from("custom_orders").select(`
-                      id,
-                      user_id,
-                      full_name,
-                      phone,
-                      email,
-                      address,
-                      fabric,
-                      style,
-                      price,
-                      status,
-                      delivery_status
-                    `).order("created_at", { ascending: false }),
-          // Fetch product orders with customer details and join profiles for email
-          supabase.from("orders").select(`
-                      id,
-                      user_id,
-                      full_name,
-                      phone_number,
-                      address,
-                      items,
-                      total,
-                      status,
-                      profiles (
-                        email
-                      )
-                    `).order("created_at", { ascending: false }),
           supabase.from("custom_orders").select("*").order("created_at", { ascending: false }),
           supabase.from("orders").select("*, items").order("created_at", { ascending: false }),
           supabase.from("products").select("*, categories(name)").order("created_at", { ascending: false }),
@@ -117,46 +89,22 @@ export default function AdminPage() {
           supabase.from("product_variants").select("id, product_id, size, color, stock_quantity, additional_price"),
           supabase.from("shipping_fees").select("id, state_name, shipping_fee"),
           supabase.from("notifications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
-          supabase.from("contact_inquiries").select("id, name, email, subject, message, phone, read, created_at").order("created_at", { ascending: false }),
-
+          supabase.from("contact_inquiries").select("*").order("created_at", { ascending: false }),
         ]);
 
-        
-
         if (customOrderError) {
-                  setError(customOrderError.message);
-                  toast.error("Error fetching custom orders: " + customOrderError.message);
-                } else {
-                  // Map custom orders to include customer details
-                  setOrders(customOrderData.map(order => ({
-                    ...order,
-                    customer: {
-                      full_name: order.full_name || "N/A",
-                      phone: order.phone || "N/A",
-                      email: order.email || "N/A",
-                      address: order.address || "N/A"
-                    }
-                  })) || []);
-                }
-
-        
+          setError(customOrderError.message);
+          toast.error("Error fetching custom orders: " + customOrderError.message);
+        } else {
+          setOrders(customOrderData || []);
+        }
 
         if (productOrderError) {
-                  setError(productOrderError.message);
-                  toast.error("Error fetching product orders: " + productOrderError.message);
-                } else {
-                  // Map product orders to include customer details
-                  setProductOrders(productOrderData.map(order => ({
-                    ...order,
-                    customer: {
-                      full_name: order.full_name || "N/A",
-                      phone: order.phone_number || "N/A",
-                      email: order.profiles?.email || "N/A",
-                      address: order.address || "N/A"
-                    }
-                  })) || []);
-                }
-        
+          setError(productOrderError.message);
+          toast.error("Error fetching product orders: " + productOrderError.message);
+        } else {
+          setProductOrders(productOrderData || []);
+        }
 
         if (productError) {
           setError(productError.message);
@@ -207,13 +155,6 @@ export default function AdminPage() {
           setContactInquiries(contactInquiriesData || []);
         }
 
-        if (contactInquiriesError) {
-          setError(contactInquiriesError.message);
-          toast.error("Error fetching contact inquiries: " + contactInquiriesError.message);
-        } else {
-          setContactInquiries(contactInquiriesData || []);
-        }
-
         setLoading(false);
       } catch (err) {
         setError(err.message);
@@ -229,7 +170,7 @@ export default function AdminPage() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "contact_inquiries" },
         (payload) => {
-          setContactInquiries((prev) => [{ ...payload.new, read: payload.new.read ?? false }, ...prev]);
+          setContactInquiries((prev) => [payload.new, ...prev]);
           createInAppNotification(
             user.id,
             `New contact inquiry from ${payload.new.name}: ${payload.new.subject}`
@@ -375,9 +316,8 @@ export default function AdminPage() {
   };
 
   const handleReplyWhatsApp = async (inquiry) => {
-    const phone = inquiry.phone && inquiry.phone.trim() !== "" ? inquiry.phone : "+2348087522801";
-    const message = `Dear ${inquiry.name}, thank you for your inquiry regarding "${inquiry.subject}". We have received your message: "${inquiry.message}". We will address your concern soon. Contact us at +2348087522801 for further assistance. - Vian Clothing Hub`;
-    await sendWhatsAppNotification(phone, message);
+    const message = `Dear ${inquiry.name}, thank you for your inquiry regarding "${inquiry.subject}". We have received your message: "${inquiry.message}". We will address your concern soon. Contact us at +234 808 752 2801 for further assistance. - Vian Clothing Hub`;
+    await sendWhatsAppNotification(inquiry.phone || "+2348087522801", message);
   };
 
   const generateInvoicePDF = async (order, amount, userId, email) => {
@@ -1022,7 +962,6 @@ export default function AdminPage() {
                         <th className="py-2 px-4 border-b text-left text-purple-800">ID</th>
                         <th className="py-2 px-4 border-b text-left text-purple-800">Name</th>
                         <th className="py-2 px-4 border-b text-left text-purple-800">Email</th>
-                        <th className="py-2 px-4 border-b text-left text-purple-800">Phone</th>
                         <th className="py-2 px-4 border-b text-left text-purple-800">Subject</th>
                         <th className="py-2 px-4 border-b text-left text-purple-800">Message</th>
                         <th className="py-2 px-4 border-b text-left text-purple-800">Created At</th>
@@ -1036,7 +975,6 @@ export default function AdminPage() {
                           <td className="py-2 px-4 border-b text-gray-700">{inquiry.id}</td>
                           <td className="py-2 px-4 border-b text-gray-700">{inquiry.name}</td>
                           <td className="py-2 px-4 border-b text-gray-700">{inquiry.email}</td>
-                          <td className="py-2 px-4 border-b text-gray-700">{inquiry.phone || "N/A"}</td>
                           <td className="py-2 px-4 border-b text-gray-700">{inquiry.subject}</td>
                           <td className="py-2 px-4 border-b text-gray-700">{inquiry.message}</td>
                           <td className="py-2 px-4 border-b text-gray-700">
