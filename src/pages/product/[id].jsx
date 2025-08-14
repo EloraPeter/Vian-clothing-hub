@@ -244,7 +244,11 @@ export default function Product() {
     <>
       <Head>
         <title>{product?.name} - Vian Clothing Hub</title>
-        <meta name="description" content={product?.description} />
+        <meta
+          name="description"
+          content={`${product?.name}: ${product?.description?.substring(0, 150)}... Shop stylish African fashion at Vian Clothing Hub with fast Nigeria delivery.`}
+        />
+        <meta name="keywords" content={`${product?.name}, ${product?.categories?.name}, African fashion, Nigeria dresses, Vian Clothing Hub`} />        
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}

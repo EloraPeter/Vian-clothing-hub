@@ -85,13 +85,13 @@ export default function Category() {
           .from('products')
           .select('id, name, image_url, price, is_on_sale, discount_percentage, is_out_of_stock, category_id')
           .in('category_id', descendantIds);
-        
+
         // Fetch filter options from product_variants
         const { data: variantsData } = await supabase
           .from('product_variants')
           .select('size, color')
           .in('product_id', productsData.map(p => p.id));
-        
+
         const sizes = [...new Set(variantsData.map(v => v.size))].filter(Boolean);
         const colors = [...new Set(variantsData.map(v => v.color))].filter(Boolean);
         const prices = productsData.map(p => p.price);
@@ -130,7 +130,7 @@ export default function Category() {
       result = result.filter(p => {
         const variants = variantsData.filter(v => v.product_id === p.id);
         return (!filters.size || variants.some(v => v.size === filters.size)) &&
-               (!filters.color || variants.some(v => v.color === filters.color));
+          (!filters.color || variants.some(v => v.color === filters.color));
       });
     }
     if (filters.price) {
@@ -143,12 +143,68 @@ export default function Category() {
   if (loading) return <DressLoader />;
   if (error) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
 
+  const categorySchema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": category?.name,
+    "description": `Shop ${category?.name} at Vian Clothing Hub. Discover trendy African and contemporary fashion with options for ${filterOptions.sizes.join(", ")} sizes and ${filterOptions.colors.join(", ")} colors.`,
+    "url": `https://vianclothinghub.com.ng/category/${category?.slug}`,
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://vianclothinghub.com.ng/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": category?.name
+        }
+      ]
+    },
+    "mainEntity": {
+      "@type": "ItemList",
+      "itemListElement": filteredProducts.slice(0, 10).map((product, index) => ({ // Limit to top 10 for performance
+        "@type": "ListItem",
+        "position": index + 1,
+        "item": {
+          "@type": "Product",
+          "name": product.name,
+          "image": product.image_url,
+          "url": `https://vianclothinghub.com.ng/product/${product.id}`,
+          "offers": {
+            "@type": "Offer",
+            "price": product.price,
+            "priceCurrency": "NGN",
+            "availability": product.is_out_of_stock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock"
+          }
+        }
+      }))
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Vian Clothing Hub",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://vianclothinghub.com.ng/logo.svg"
+      }
+    },
+    "datePublished": "2025-08-14"
+  };
 
-  
+
+
   return (
     <>
       <Head>
         <title>{category?.name} - Vian Clothing Hub</title>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(categorySchema) }}
+        />
         <meta name="description" content={`Shop ${category?.name} at Vian Clothing Hub. Discover trendy African and contemporary fashion.`} />
       </Head>
       <main className="min-h-screen bg-gray-100">
@@ -193,9 +249,8 @@ export default function Category() {
                     <button
                       type="button"
                       onClick={() => handleFilterChange('color', '')}
-                      className={`px-3 py-1 rounded-lg text-sm ${
-                        filters.color === '' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      }`}
+                      className={`px-3 py-1 rounded-lg text-sm ${filters.color === '' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
                       aria-label="Clear color filter"
                     >
                       All Colors
@@ -205,9 +260,8 @@ export default function Category() {
                         key={color}
                         type="button"
                         onClick={() => handleFilterChange('color', color)}
-                        className={`w-8 h-8 rounded-full border-2 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                          filters.color === color ? 'border-purple-500' : 'border-gray-300'
-                        }`}
+                        className={`w-8 h-8 rounded-full border-2 focus:outline-none focus:ring-2 focus:ring-purple-500 ${filters.color === color ? 'border-purple-500' : 'border-gray-300'
+                          }`}
                         style={{ backgroundColor: colorMap[color] || '#000000' }}
                         aria-label={`Filter by color ${color}`}
                         title={`${color} (${variantsData.filter(v => v.color === color).length})`}
