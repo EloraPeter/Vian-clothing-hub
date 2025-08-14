@@ -11,6 +11,7 @@ export default function Contact({ profile }) {
     const [formData, setFormData] = useState({
         name: "",
         email: "",
+        phone: "",
         subject: "",
         message: "",
     });
@@ -31,6 +32,7 @@ export default function Contact({ profile }) {
             const { error } = await supabase.from("contact_inquiries").insert({
                 name: formData.name,
                 email: formData.email,
+                phone: formData.phone, 
                 subject: formData.subject,
                 message: formData.message,
                 created_at: new Date().toISOString(),
