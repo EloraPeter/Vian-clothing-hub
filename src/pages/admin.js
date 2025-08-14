@@ -204,7 +204,12 @@ export default function AdminPage() {
           setError(notificationsError.message);
           toast.error("Error fetching notifications: " + notificationsError.message);
         } else {
-          setNotifications(notificationsData || []);
+          setNotifications(
+            notificationsData.map((notif) => ({
+              ...notif,
+              created_at: new Date(notif.created_at).toISOString(), // Convert to ISO 8601
+            })) || []
+          );
         }
 
         if (contactInquiriesError) {
