@@ -344,10 +344,9 @@ export default function AdminPage() {
     }
   };
 
-  const timestamp = new Date().toISOString();
-
-
   const createInAppNotification = async (userId, message) => {
+    const timestamp = new Date().toISOString(); // Generate timestamp for this specific notification
+
     const { error } = await supabase.from("notifications").insert([
       {
         user_id: userId,
@@ -356,6 +355,7 @@ export default function AdminPage() {
         read: false,
       },
     ]);
+
     if (error) {
       toast.error("Error creating in-app notification: " + error.message);
     } else {
@@ -363,7 +363,7 @@ export default function AdminPage() {
         {
           user_id: userId,
           message,
-          created_at: new Date().toISOString(),
+          created_at: timestamp, // Reuse the same timestamp
           read: false,
         },
         ...prev,
