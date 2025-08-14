@@ -125,7 +125,7 @@ export default function Auth() {
     "@type": "WebPage",
     "name": mode === "login" ? "Login - Vian Clothing Hub" : "Sign Up - Vian Clothing Hub",
     "description": mode === "login" ? "Login to your Vian Clothing Hub account and access stylish collections, exclusive deals, and order tracking." : "Create your Vian Clothing Hub account to explore bold and authentic African fashion tailored to your vibe.",
-    "url": "https://vianclothinghub.com.ng/auth", // Replace with actual URL
+    "url": "https://vianclothinghub.com.ng/auth",
     "breadcrumb": {
       "@type": "BreadcrumbList",
       "itemListElement": [
@@ -133,7 +133,7 @@ export default function Auth() {
           "@type": "ListItem",
           "position": 1,
           "name": "Home",
-          "item": "https://yourdomain.com/"
+          "item": "https://vianclothinghub.com.ng/"
         },
         {
           "@type": "ListItem",
@@ -147,7 +147,7 @@ export default function Auth() {
       "name": "Vian Clothing Hub",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://yourdomain.com/logo.svg"
+        "url": "https://vianclothinghub.com.ng/logo.svg"
       }
     }
   };
