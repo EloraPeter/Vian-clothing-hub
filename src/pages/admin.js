@@ -879,7 +879,7 @@ export default function AdminPage() {
                         } hover:shadow-md`}
                     >
                       <div className="flex-1">
-                        <p className="text-gray-700 text-sm sm:text-base">{notif.message}</p>
+                        <p className="text-gray-700 text-sm sm:text-sm">{notif.message}</p>
                         <p className="text-xs sm:text-sm text-gray-500 mt-1">
                           {new Date(notif.created_at).toLocaleString()}
                         </p>
