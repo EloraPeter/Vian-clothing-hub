@@ -340,37 +340,19 @@ export default function AdminPage() {
     }
   };
 
-  const createInAppNotification = async (userId, message) => {
-    const timestamp = new Date().toISOString(); // Fresh timestamp for each notification
-
-    const { data, error } = await supabase
-      .from("notifications")
-      .insert([
+   const createInAppNotification = async (userId, message) => {
+      const { error } = await supabase.from("notifications").insert([
         {
           user_id: userId,
           message,
-          created_at: timestamp,
+          created_at: new Date().toISOString(),
           read: false,
         },
-      ])
-      .select()
-      .single();
-
-    if (error) {
-      toast.error("Error creating in-app notification: " + error.message);
-    } else {
-      setNotifications((prev) => [
-        {
-          id: data.id, // Include the notification ID
-          user_id: userId,
-          message,
-          created_at: timestamp,
-          read: false,
-        },
-        ...prev,
       ]);
-    }
-  };
+      if (error) {
+        console.error("Error creating in-app notification:", error.message);
+      }
+    };
 
   const handleReplyEmail = async (inquiry) => {
     const subject = `Re: ${inquiry.subject}`;
@@ -902,7 +884,7 @@ export default function AdminPage() {
             </section>
           )}
 
-          {/* Notifications Section */}
+           {/* Notifications Section */}
           {activeSection === "notifications" && (
             <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
               <h2 className="text-xl font-semibold text-purple-800 mb-4">Notifications</h2>
