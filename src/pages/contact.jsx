@@ -32,7 +32,7 @@ export default function Contact({ profile }) {
             const { error } = await supabase.from("contact_inquiries").insert({
                 name: formData.name,
                 email: formData.email,
-                phone: formData.phone, 
+                phone: formData.phone,
                 subject: formData.subject,
                 message: formData.message,
                 created_at: new Date().toISOString(),
@@ -174,6 +174,22 @@ export default function Contact({ profile }) {
                                             placeholder="Enter your email"
                                             required
                                             aria-required="true"
+                                        />
+                                    </div>
+                                    {/* Phone */}
+                                    <div>
+                                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                                            Phone Number
+                                        </label>
+                                        <input
+                                            id="phone"
+                                            name="phone"
+                                            type="tel"
+                                            value={formData.phone}
+                                            onChange={handleChange}
+                                            className="w-full text-black px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+                                            placeholder="+234 801 234 5678"
+                                            required
                                         />
                                     </div>
                                     <div>
