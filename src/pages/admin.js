@@ -89,8 +89,11 @@ export default function AdminPage() {
           supabase.from("product_variants").select("id, product_id, size, color, stock_quantity, additional_price"),
           supabase.from("shipping_fees").select("id, state_name, shipping_fee"),
           supabase.from("notifications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
-          supabase.from("contact_inquiries").select("*").order("created_at", { ascending: false }),
-        ]);
+          { data: contactInquiriesData, error: contactInquiriesError } = await supabase
+            .from("contact_inquiries")
+            .select("id, name, email, subject, message, phone, read, created_at")
+            .order("created_at", { ascending: false }),
+          ]);
 
         if (customOrderError) {
           setError(customOrderError.message);
