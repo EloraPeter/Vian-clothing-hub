@@ -93,7 +93,7 @@ export default function AdminPage() {
             .from("contact_inquiries")
             .select("id, name, email, subject, message, phone, read, created_at")
             .order("created_at", { ascending: false }),
-          ]);
+        ]);
 
         if (customOrderError) {
           setError(customOrderError.message);
@@ -173,7 +173,7 @@ export default function AdminPage() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "contact_inquiries" },
         (payload) => {
-          setContactInquiries((prev) => [payload.new, ...prev]);
+          setContactInquiries((prev) => [{ ...payload.new, read: payload.new.read ?? false }, ...prev]);
           createInAppNotification(
             user.id,
             `New contact inquiry from ${payload.new.name}: ${payload.new.subject}`
@@ -319,8 +319,9 @@ export default function AdminPage() {
   };
 
   const handleReplyWhatsApp = async (inquiry) => {
-    const message = `Dear ${inquiry.name}, thank you for your inquiry regarding "${inquiry.subject}". We have received your message: "${inquiry.message}". We will address your concern soon. Contact us at +234 808 752 2801 for further assistance. - Vian Clothing Hub`;
-    await sendWhatsAppNotification(inquiry.phone || "+2348087522801", message);
+    const phone = inquiry.phone && inquiry.phone.trim() !== "" ? inquiry.phone : "+2348087522801";
+    const message = `Dear ${inquiry.name}, thank you for your inquiry regarding "${inquiry.subject}". We have received your message: "${inquiry.message}". We will address your concern soon. Contact us at +2348087522801 for further assistance. - Vian Clothing Hub`;
+    await sendWhatsAppNotification(phone, message);
   };
 
   const generateInvoicePDF = async (order, amount, userId, email) => {
@@ -965,6 +966,7 @@ export default function AdminPage() {
                         <th className="py-2 px-4 border-b text-left text-purple-800">ID</th>
                         <th className="py-2 px-4 border-b text-left text-purple-800">Name</th>
                         <th className="py-2 px-4 border-b text-left text-purple-800">Email</th>
+                        <th className="py-2 px-4 border-b text-left text-purple-800">Phone</th>
                         <th className="py-2 px-4 border-b text-left text-purple-800">Subject</th>
                         <th className="py-2 px-4 border-b text-left text-purple-800">Message</th>
                         <th className="py-2 px-4 border-b text-left text-purple-800">Created At</th>
@@ -978,6 +980,7 @@ export default function AdminPage() {
                           <td className="py-2 px-4 border-b text-gray-700">{inquiry.id}</td>
                           <td className="py-2 px-4 border-b text-gray-700">{inquiry.name}</td>
                           <td className="py-2 px-4 border-b text-gray-700">{inquiry.email}</td>
+                          <td className="py-2 px-4 border-b text-gray-700">{inquiry.phone || "N/A"}</td>
                           <td className="py-2 px-4 border-b text-gray-700">{inquiry.subject}</td>
                           <td className="py-2 px-4 border-b text-gray-700">{inquiry.message}</td>
                           <td className="py-2 px-4 border-b text-gray-700">
