@@ -171,72 +171,72 @@ export default function Product() {
   if (loading) return <DressLoader />;
 
   const productSchema = {
-  "@context": "https://schema.org",
-  "@type": "Product",
-  "name": product?.name,
-  "image": [product?.image_url, ...additionalImages],
-  "description": product?.description,
-  "sku": product?.id.toString(),
-  "offers": {
-    "@type": "Offer",
-    "url": `https://vianclothinghub.com.ng/product/${product?.id}`,
-    "priceCurrency": "NGN",
-    "price": getCurrentPrice(),
-    "availability": product?.is_out_of_stock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
-    "itemCondition": "https://schema.org/NewCondition",
-    "hasMerchantReturnPolicy": {
-      "@type": "MerchantReturnPolicy",
-      "applicableCountry": "NG",
-      "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
-      "merchantReturnDays": 7
-    }
-  },
-  "brand": {
-    "@type": "Brand",
-    "name": "Vian Clothing Hub"
-  },
-  "review": reviews.map((review) => ({
-    "@type": "Review",
-    "reviewRating": {
-      "@type": "Rating",
-      "ratingValue": review.rating
-    },
-    "author": {
-      "@type": "Person",
-      "name": "Customer" 
-    },
-    "reviewBody": review.comment,
-    "datePublished": new Date(review.created_at).toISOString()
-  })),
-  "aggregateRating": {
-    "@type": "AggregateRating",
-    "ratingValue": (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) || 0,
-    "reviewCount": reviews.length
-  },
-  "breadcrumb": {
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "Home",
-        "item": "https://vianclothinghub.com.ng/"
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "name": product?.categories?.name,
-        "item": `https://vianclothinghub.com.ng/category/${product?.categories?.slug}`
-      },
-      {
-        "@type": "ListItem",
-        "position": 3,
-        "name": product?.name
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": product?.name,
+    "image": [product?.image_url, ...additionalImages],
+    "description": product?.description,
+    "sku": product?.id.toString(),
+    "offers": {
+      "@type": "Offer",
+      "url": `https://vianclothinghub.com.ng/product/${product?.id}`,
+      "priceCurrency": "NGN",
+      "price": getCurrentPrice(),
+      "availability": product?.is_out_of_stock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "hasMerchantReturnPolicy": {
+        "@type": "MerchantReturnPolicy",
+        "applicableCountry": "NG",
+        "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+        "merchantReturnDays": 7
       }
-    ]
-  },
-  "datePublished": "2025-08-14" // Use current date or product creation date
-};
+    },
+    "brand": {
+      "@type": "Brand",
+      "name": "Vian Clothing Hub"
+    },
+    "review": reviews.map((review) => ({
+      "@type": "Review",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": review.rating
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Customer"
+      },
+      "reviewBody": review.comment,
+      "datePublished": new Date(review.created_at).toISOString()
+    })),
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) || 0,
+      "reviewCount": reviews.length
+    },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://vianclothinghub.com.ng/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": product?.categories?.name,
+          "item": `https://vianclothinghub.com.ng/category/${product?.categories?.slug}`
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": product?.name
+        }
+      ]
+    },
+    "datePublished": "2025-08-14"
+  };
 
 
 
@@ -245,10 +245,10 @@ export default function Product() {
       <Head>
         <title>{product?.name} - Vian Clothing Hub</title>
         <meta name="description" content={product?.description} />
-    <script
-  type="application/ld+json"
-  dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
-/>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+        />
       </Head>
       <main className="min-h-screen relative mb-0 bg-gray-100 pb-0">
         <Navbar

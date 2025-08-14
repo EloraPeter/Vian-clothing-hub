@@ -143,6 +143,8 @@ export default function Category() {
   if (loading) return <DressLoader />;
   if (error) return <p className="p-6 text-center text-red-600">Error: {error}</p>;
 
+
+  
   return (
     <>
       <Head>
