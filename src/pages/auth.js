@@ -120,6 +120,39 @@ export default function Auth() {
   const strengthText = ["Very Weak", "Weak", "Fair", "Good", "Strong"];
   const strengthColor = ["#ef4444", "#f97316", "#facc15", "#4ade80", "#22c55e"];
 
+  const authSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": mode === "login" ? "Login - Vian Clothing Hub" : "Sign Up - Vian Clothing Hub",
+    "description": mode === "login" ? "Login to your Vian Clothing Hub account and access stylish collections, exclusive deals, and order tracking." : "Create your Vian Clothing Hub account to explore bold and authentic African fashion tailored to your vibe.",
+    "url": "https://vianclothinghub.com.ng/auth", // Replace with actual URL
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://yourdomain.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": mode === "login" ? "Login" : "Sign Up"
+        }
+      ]
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Vian Clothing Hub",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://yourdomain.com/logo.svg"
+      }
+    }
+  };
+
+
   return (
     <>
       <Head>
@@ -145,6 +178,10 @@ export default function Auth() {
               ? "Access your Vian Clothing Hub account and keep up with the style."
               : "Join Vian Clothing Hub and step into your fashion era."
           }
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(authSchema) }}
         />
       </Head>
       <main className="min-h-screen bg-[url('/african-fabric.jpg')] bg-cover bg-center relative overflow-hidden">
