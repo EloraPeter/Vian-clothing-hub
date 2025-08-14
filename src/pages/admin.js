@@ -82,6 +82,34 @@ export default function AdminPage() {
           { data: notificationsData, error: notificationsError },
           { data: contactInquiriesData, error: contactInquiriesError },
         ] = await Promise.all([
+          // Fetch custom orders with all customer details
+                    supabase.from("custom_orders").select(`
+                                id,
+                                user_id,
+                                full_name,
+                                phone,
+                                email,
+                                address,
+                                fabric,
+                                style,
+                                price,
+                                status,
+                                delivery_status
+                              `).order("created_at", { ascending: false }),
+                    // Fetch product orders with customer details and join profiles for email
+                    supabase.from("orders").select(`
+                                id,
+                                user_id,
+                                full_name,
+                                phone_number,
+                                address,
+                                items,
+                                total,
+                                status,
+                                profiles (
+                                  email
+                                )
+                              `).order("created_at", { ascending: false }),
           supabase.from("custom_orders").select("*").order("created_at", { ascending: false }),
           supabase.from("orders").select("*, items").order("created_at", { ascending: false }),
           supabase.from("products").select("*, categories(name)").order("created_at", { ascending: false }),
