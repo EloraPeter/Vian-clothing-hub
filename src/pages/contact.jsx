@@ -82,7 +82,7 @@ export default function Contact({ profile }) {
             "contactPoint": [
                 {
                     "@type": "ContactPoint",
-                    "telephone": "+234-123-456-7890",
+                    "telephone": "+234 812 212 3280",
                     "contactType": "Customer Service",
                     "areaServed": "NG",
                     "availableLanguage": "English"
@@ -95,9 +95,9 @@ export default function Contact({ profile }) {
             ],
             "address": {
                 "@type": "PostalAddress",
-                "streetAddress": "123 Fashion Street",
-                "addressLocality": "Lagos",
-                "addressRegion": "Lagos State",
+                "streetAddress": "Gimbiya street",
+                "addressLocality": "Area 11",
+                "addressRegion": "Abuja State, F.C.T",
                 "postalCode": "100001",
                 "addressCountry": "NG"
             }
@@ -225,7 +225,7 @@ export default function Contact({ profile }) {
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-3">
                                         <FaMapMarkerAlt className="text-purple-600 text-xl" />
-                                        <p className="text-gray-700">123 Fashion Street, Lagos, Nigeria</p>
+                                        <p className="text-gray-700">Gimbiya street, Area 11, Abuja, Nigeria</p>
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <FaPhone className="text-purple-600 text-xl" />
