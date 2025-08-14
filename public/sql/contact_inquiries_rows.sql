@@ -1,0 +1,1 @@
+INSERT INTO "public"."contact_inquiries" ("id", "name", "email", "subject", "message", "created_at") VALUES ('01196d53-308b-4a3c-8c78-240ef714e45b', 'florence ofuokwu', 'florenceonyi09@gmail.com', 'order', 'i havent gotten my product since 3 weeks ago', '2025-08-14 09:48:34.101+00');
