@@ -111,7 +111,7 @@ export default function AdminPage() {
     first_name,
     last_name
   )
-`).order("created_at", { ascending: false })
+`).order("created_at", { ascending: false }),
           supabase.from("custom_orders").select("*").order("created_at", { ascending: false }),
           supabase.from("orders").select("*, items").order("created_at", { ascending: false }),
           supabase.from("products").select("*, categories(name)").order("created_at", { ascending: false }),
