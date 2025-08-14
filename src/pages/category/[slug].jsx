@@ -205,8 +205,11 @@ export default function Category() {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(categorySchema) }}
         />
-        <meta name="description" content={`Shop ${category?.name} at Vian Clothing Hub. Discover trendy African and contemporary fashion.`} />
-      </Head>
+        <meta
+          name="description"
+          content={`Browse ${category?.name} collection at Vian Clothing Hub. Filter by sizes (${filterOptions.sizes.join(", ")}), colors (${filterOptions.colors.join(", ")}), and prices. Nationwide delivery in Nigeria.`}
+        />
+        <meta name="keywords" content={`${category?.name}, African prints, Nigerian fashion, Vian Clothing Hub, ${filterOptions.colors.join(", ")}`} />      </Head>
       <main className="min-h-screen bg-gray-100">
         <Navbar
           profile={profile}
