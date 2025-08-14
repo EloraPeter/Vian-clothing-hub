@@ -200,22 +200,40 @@ export default function AdminPage() {
           setShippingFees(shippingFeesData || []);
         }
 
-        if (notificationsError) setError(notificationsError.message);
-        else setNotifications(notificationsData || []);
-
-        if (contactInquiriesError) {
-          setError(contactInquiriesError.message);
-          toast.error("Error fetching contact inquiries: " + contactInquiriesError.message);
+        if (notificationsError) {
+          setError(notificationsError.message);
+          toast.error("Error fetching notifications: " + notificationsError.message);
         } else {
-          setContactInquiries(contactInquiriesData || []);
+          setNotifications(
+            notificationsData.map((notif) => {
+              const parsedDate = notif.created_at ? new Date(notif.created_at) : null;
+              const isValidDate = parsedDate && !isNaN(parsedDate.getTime());
+              console.log(`Notification ${notif.id} created_at:`, notif.created_at, 'Parsed:', isValidDate ? parsedDate.toISOString() : 'Invalid');
+              return {
+                ...notif,
+                created_at: isValidDate ? parsedDate.toISOString() : new Date().toISOString(),
+              };
+            }) || []
+          );
         }
 
         if (contactInquiriesError) {
           setError(contactInquiriesError.message);
           toast.error("Error fetching contact inquiries: " + contactInquiriesError.message);
         } else {
-          setContactInquiries(contactInquiriesData || []);
+          setContactInquiries(
+            contactInquiriesData.map((inquiry) => {
+              const parsedDate = inquiry.created_at ? new Date(inquiry.created_at) : null;
+              const isValidDate = parsedDate && !isNaN(parsedDate.getTime());
+              return {
+                ...inquiry,
+                created_at: isValidDate ? parsedDate.toISOString() : new Date().toISOString(),
+              };
+            }) || []
+          );
         }
+
+
 
         setLoading(false);
       } catch (err) {
