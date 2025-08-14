@@ -198,7 +198,7 @@ export default function Policies({ profile }) {
     "@type": "WebPage",
     "name": "Policies - Vian Clothing Hub",
     "description": "Review Vian Clothing Hub's policies, including Cookies, Terms of Service, Terms and Conditions, Returns, and Refunds.",
-    "url": "https://yourdomain.com/policies",
+    "url": "https://vianclothinghub.com.ng/policies",
     "hasPart": policies.map((policy) => ({
       "@type": "WebPageElement",
       "name": policy.title,
@@ -211,7 +211,7 @@ export default function Policies({ profile }) {
           "@type": "ListItem",
           "position": 1,
           "name": "Home",
-          "item": "https://yourdomain.com/"
+          "item": "https://vianclothinghub.com.ng/"
         },
         {
           "@type": "ListItem",

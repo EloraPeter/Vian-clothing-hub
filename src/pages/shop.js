@@ -545,6 +545,58 @@ export default function Shop() {
     const availableColors = [...new Set(variants.map((v) => v.color).filter(Boolean))];
     const availableMaterials = [...new Set(variants.map((v) => v.material).filter(Boolean))];
 
+    const shopSchema = {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": "Shop - Vian Clothing Hub",
+        "description": "Browse our collection of stylish ready-to-wear fashion with fast delivery across Nigeria.",
+        "url": "https://yourdomain.com/shop",
+        "breadcrumb": {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Home",
+                    "item": "https://yourdomain.com/"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "Shop"
+                }
+            ]
+        },
+        "mainEntity": {
+            "@type": "ItemList",
+            "itemListElement": displayedProducts.slice(0, 10).map((product, index) => ({ // Limit to top 10 for performance
+                "@type": "ListItem",
+                "position": index + 1,
+                "item": {
+                    "@type": "Product",
+                    "name": product.name,
+                    "image": product.image_url,
+                    "url": `https://yourdomain.com/product/${product.id}`,
+                    "description": product.description?.substring(0, 200) || "Stylish fashion item from Vian Clothing Hub.",
+                    "sku": product.id.toString(),
+                    "offers": {
+                        "@type": "Offer",
+                        "price": product.price,
+                        "priceCurrency": "NGN",
+                        "availability": product.is_out_of_stock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock"
+                    },
+                    "aggregateRating": {
+                        "@type": "AggregateRating",
+                        "ratingValue": getAverageRating(product.id),
+                        "reviewCount": reviews.filter((r) => r.product_id === product.id).length
+                    }
+                }
+            }))
+        }
+    };
+
+
+
     return (
         <div className="min-h-screen bg-gray-100 font-sans">
             <Helmet>
@@ -554,6 +606,10 @@ export default function Shop() {
                     content="Discover a wide range of fashion items including dresses, shirts, and accessories. Shop now for exclusive deals and new arrivals!"
                 />
                 <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(shopSchema) }}
+                />
             </Helmet>
             <ToastContainer />
             <Navbar
@@ -1301,7 +1357,7 @@ export default function Shop() {
                                     <img
                                         src={
                                             quickViewProduct.product_images?.[currentImageIndex]?.image_url ||
-                                            quickViewProduct.image_url.startsWith("data:image")
+                                                quickViewProduct.image_url.startsWith("data:image")
                                                 ? "/placeholder.jpg"
                                                 : quickViewProduct.image_url
                                         }
@@ -1440,7 +1496,7 @@ export default function Shop() {
                         </div>
                     </div>
                 )}
-                          <FloatingChatButton cartItemCount={0} /> {/* Replace 0 with actual cart count if available */}
+                <FloatingChatButton cartItemCount={0} /> {/* Replace 0 with actual cart count if available */}
 
             </div>
             <Footer />
