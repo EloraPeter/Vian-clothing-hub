@@ -511,254 +511,256 @@ export default function Dashboard() {
 
             {/* Profile Section */}
             {activeSection === "profile" && (
-              <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-                <h2 className="text-xl font-semibold text-purple-800 mb-4">Update Profile</h2>
-                <div className="flex items-center space-x-4 mb-6">
-                  {previewUrl || profile?.avatar_url ? (
-                    <img
-                      src={previewUrl || profile.avatar_url}
-                      alt="Avatar"
-                      className="w-20 h-20 rounded-full object-cover border-2 border-purple-200"
+              <>
+                <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                  <h2 className="text-xl font-semibold text-purple-800 mb-4">Update Profile</h2>
+                  <div className="flex items-center space-x-4 mb-6">
+                    {previewUrl || profile?.avatar_url ? (
+                      <img
+                        src={previewUrl || profile.avatar_url}
+                        alt="Avatar"
+                        className="w-20 h-20 rounded-full object-cover border-2 border-purple-200"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-medium">
+                        No Pic
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setAvatarFile(file);
+                          setPreviewUrl(URL.createObjectURL(file));
+                        }
+                      }}
+                      className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 transition-colors"
+                      disabled={uploading}
                     />
-                  ) : (
-                    <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-medium">
-                      No Pic
-                    </div>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        setAvatarFile(file);
-                        setPreviewUrl(URL.createObjectURL(file));
+                  </div>
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      let avatar_url = profile.avatar_url;
+
+                      if (avatarFile) {
+                        setUploading(true);
+                        const fileExt = avatarFile.name.split(".").pop();
+                        const fileName = `${user.id}.${fileExt}`;
+                        const filePath = `${fileName}`;
+
+                        const { error: uploadError } = await supabase.storage
+                          .from("avatars")
+                          .upload(filePath, avatarFile, { upsert: true });
+
+                        if (uploadError) {
+                          alert("Upload failed: " + uploadError.message);
+                          setUploading(false);
+                          return;
+                        }
+
+                        const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
+                        avatar_url = data.publicUrl;
+                        setUploading(false);
+                      }
+
+                      const { error } = await supabase
+                        .from("profiles")
+                        .update({
+                          email: profile.email,
+                          avatar_url,
+                          first_name: profile.first_name,
+                          last_name: profile.last_name,
+                        })
+                        .eq("id", user.id);
+
+                      if (error) alert("Update failed: " + error.message);
+                      else {
+                        alert("Profile updated successfully");
+                        setProfile({ ...profile, avatar_url });
+                        setAvatarFile(null);
+                        setPreviewUrl(null);
                       }
                     }}
-                    className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 transition-colors"
-                    disabled={uploading}
-                  />
-                </div>
-                <form
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    let avatar_url = profile.avatar_url;
+                    className="space-y-4"
+                  >
+                    {/* Email Input */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        value={profile?.email || ""}
+                        onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        required
+                      />
+                    </div>
 
-                    if (avatarFile) {
-                      setUploading(true);
-                      const fileExt = avatarFile.name.split(".").pop();
-                      const fileName = `${user.id}.${fileExt}`;
-                      const filePath = `${fileName}`;
+                    {/* First Name Input */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        First Name
+                      </label>
+                      <input
+                        type="text"
+                        value={profile?.first_name || ""}
+                        onChange={(e) => setProfile({ ...profile, first_name: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        required
+                      />
+                    </div>
 
-                      const { error: uploadError } = await supabase.storage
-                        .from("avatars")
-                        .upload(filePath, avatarFile, { upsert: true });
+                    {/* Last Name Input */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Last Name
+                      </label>
+                      <input
+                        type="text"
+                        value={profile?.last_name || ""}
+                        onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        required
+                      />
+                    </div>
 
-                      if (uploadError) {
-                        alert("Upload failed: " + uploadError.message);
-                        setUploading(false);
+                    {/* Submit Button */}
+                    <button
+                      type="submit"
+                      className="w-full bg-purple-600 text-white font-semibold py-2 rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50"
+                      disabled={uploading}
+                    >
+                      {uploading ? "Uploading..." : "Save Changes"}
+                    </button>
+                  </form>
+
+                </section>
+                <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                  <h2 className="text-xl font-semibold text-purple-800 mb-4">Change Password</h2>
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      const oldPassword = e.target.old_password.value;
+                      const newPassword = e.target.new_password.value;
+
+                      const { data: { session } } = await supabase.auth.getSession();
+                      const email = session?.user?.email;
+
+                      if (!email) {
+                        alert("You're not logged in.");
                         return;
                       }
 
-                      const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
-                      avatar_url = data.publicUrl;
-                      setUploading(false);
-                    }
+                      const { error: signInError } = await supabase.auth.signInWithPassword({
+                        email,
+                        password: oldPassword,
+                      });
 
-                    const { error } = await supabase
-                      .from("profiles")
-                      .update({
-                        email: profile.email,
-                        avatar_url,
-                        first_name: profile.first_name,
-                        last_name: profile.last_name,
-                      })
-                      .eq("id", user.id);
+                      if (signInError) {
+                        alert("Old password is incorrect.");
+                        return;
+                      }
 
-                    if (error) alert("Update failed: " + error.message);
-                    else {
-                      alert("Profile updated successfully");
-                      setProfile({ ...profile, avatar_url });
-                      setAvatarFile(null);
-                      setPreviewUrl(null);
-                    }
-                  }}
-                  className="space-y-4"
-                >
-                  {/* Email Input */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      value={profile?.email || ""}
-                      onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      required
-                    />
-                  </div>
+                      const { error: updateError } = await supabase.auth.updateUser({
+                        password: newPassword,
+                      });
 
-                  {/* First Name Input */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      First Name
-                    </label>
-                    <input
-                      type="text"
-                      value={profile?.first_name || ""}
-                      onChange={(e) => setProfile({ ...profile, first_name: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      required
-                    />
-                  </div>
-
-                  {/* Last Name Input */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Last Name
-                    </label>
-                    <input
-                      type="text"
-                      value={profile?.last_name || ""}
-                      onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      required
-                    />
-                  </div>
-
-                  {/* Submit Button */}
-                  <button
-                    type="submit"
-                    className="w-full bg-purple-600 text-white font-semibold py-2 rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50"
-                    disabled={uploading}
+                      if (updateError) {
+                        alert("Password update failed: " + updateError.message);
+                      } else {
+                        alert("Password updated successfully!");
+                        e.target.reset();
+                        setNewPassword("");
+                        setStrengthScore(0);
+                      }
+                    }}
+                    className="space-y-4"
                   >
-                    {uploading ? "Uploading..." : "Save Changes"}
-                  </button>
-                </form>
-
-              </section>
-              <section className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-                <h2 className="text-xl font-semibold text-purple-800 mb-4">Change Password</h2>
-                <form
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    const oldPassword = e.target.old_password.value;
-                    const newPassword = e.target.new_password.value;
-
-                    const { data: { session } } = await supabase.auth.getSession();
-                    const email = session?.user?.email;
-
-                    if (!email) {
-                      alert("You're not logged in.");
-                      return;
-                    }
-
-                    const { error: signInError } = await supabase.auth.signInWithPassword({
-                      email,
-                      password: oldPassword,
-                    });
-
-                    if (signInError) {
-                      alert("Old password is incorrect.");
-                      return;
-                    }
-
-                    const { error: updateError } = await supabase.auth.updateUser({
-                      password: newPassword,
-                    });
-
-                    if (updateError) {
-                      alert("Password update failed: " + updateError.message);
-                    } else {
-                      alert("Password updated successfully!");
-                      e.target.reset();
-                      setNewPassword("");
-                      setStrengthScore(0);
-                    }
-                  }}
-                  className="space-y-4"
-                >
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Old Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showOldPass ? "text" : "password"}
-                        name="old_password"
-                        required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        placeholder="Enter old password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowOldPass(!showOldPass)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                      >
-                        {showOldPass ? "Hide" : "Show"}
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      New Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showNewPass ? "text" : "password"}
-                        name="new_password"
-                        value={newPassword}
-                        onChange={handleNewPasswordChange}
-                        required
-                        minLength={6}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        placeholder="Enter new password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowNewPass(!showNewPass)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                      >
-                        {showNewPass ? "Hide" : "Show"}
-                      </button>
-                    </div>
-                    {newPassword && (
-                      <div className="mt-2">
-                        <p
-                          className="text-sm font-medium"
-                          style={{
-                            color: ["#ef4444", "#f97316", "#facc15", "#4ade80", "#22c55e"][strengthScore],
-                          }}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Old Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showOldPass ? "text" : "password"}
+                          name="old_password"
+                          required
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          placeholder="Enter old password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowOldPass(!showOldPass)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                         >
-                          Password Strength: {["Very Weak", "Weak", "Fair", "Good", "Strong"][strengthScore]}
-                        </p>
-                        <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                          <div
-                            className="h-2 rounded-full transition-all duration-300"
-                            style={{
-                              width: `${(strengthScore + 1) * 20}%`,
-                              backgroundColor: ["#ef4444", "#f97316", "#facc15", "#4ade80", "#22c55e"][strengthScore],
-                            }}
-                          />
-                        </div>
+                          {showOldPass ? "Hide" : "Show"}
+                        </button>
                       </div>
-                    )}
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full bg-purple-600 text-white font-semibold py-2 rounded-md hover:bg-purple-700 transition-colors"
-                  >
-                    Change Password
-                  </button>
-                </form>
-              </section>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        New Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showNewPass ? "text" : "password"}
+                          name="new_password"
+                          value={newPassword}
+                          onChange={handleNewPasswordChange}
+                          required
+                          minLength={6}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          placeholder="Enter new password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPass(!showNewPass)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        >
+                          {showNewPass ? "Hide" : "Show"}
+                        </button>
+                      </div>
+                      {newPassword && (
+                        <div className="mt-2">
+                          <p
+                            className="text-sm font-medium"
+                            style={{
+                              color: ["#ef4444", "#f97316", "#facc15", "#4ade80", "#22c55e"][strengthScore],
+                            }}
+                          >
+                            Password Strength: {["Very Weak", "Weak", "Fair", "Good", "Strong"][strengthScore]}
+                          </p>
+                          <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                            <div
+                              className="h-2 rounded-full transition-all duration-300"
+                              style={{
+                                width: `${(strengthScore + 1) * 20}%`,
+                                backgroundColor: ["#ef4444", "#f97316", "#facc15", "#4ade80", "#22c55e"][strengthScore],
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full bg-purple-600 text-white font-semibold py-2 rounded-md hover:bg-purple-700 transition-colors"
+                    >
+                      Change Password
+                    </button>
+                  </form>
+                </section>
+              </>
             )}
 
-            {/* Password Change Section */}
+            {/* Password Change Section
             {activeSection === "password" && (
               
-            )}
+            )} */}
 
             {/* Invoices Section */}
             {activeSection === "invoices" && (
