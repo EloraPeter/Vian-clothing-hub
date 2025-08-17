@@ -181,55 +181,49 @@ export default function ResetPassword() {
   };
 
   const handleResetPassword = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
+  e.preventDefault();
+  setLoading(true);
+  setMessage("");
 
+  if (newPassword !== confirmPassword) {
+    setMessage("Passwords do not match");
+    setLoading(false);
+    return;
+  }
 
-    if (newPassword !== confirmPassword) {
-      setMessage("Passwords do not match");
+  if (newPassword.length < 6) {
+    setMessage("Password must be at least 6 characters long");
+    setLoading(false);
+    return;
+  }
+
+  try {
+    // Call server-side endpoint to update password
+    const response = await fetch('/api/update-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp, newPassword }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      console.error('Password update error:', data.error);
+      setMessage(`Error resetting password: ${data.error || 'Unknown error'}`);
       setLoading(false);
       return;
     }
 
-    if (newPassword.length < 6) {
-      setMessage("Password must be at least 6 characters long");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      // Update password using Supabase
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-
-      if (error) {
-        console.error("Password update error:", error);
-        setMessage(`Error resetting password: ${error.message || "Unknown error"}`);
-        setLoading(false);
-        return;
-      }
-
-      // Delete used OTP
-      const { error: deleteError } = await supabase.from("otps").delete().eq("email", email);
-
-      if (deleteError) {
-        console.error("OTP deletion error:", deleteError);
-        // Log error but don't block success
-      }
-
-      setMessage("Password reset successful! Redirecting to login...");
-      setTimeout(() => {
-        router.push("/auth");
-      }, 2000);
-    } catch (err) {
-      console.error("Unexpected error in handleResetPassword:", err);
-      setMessage(`An unexpected error occurred: ${err.message || "Unknown error"}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setMessage("Password reset successful! Redirecting to login...");
+    setTimeout(() => {
+      router.push("/auth");
+    }, 2000);
+  } catch (err) {
+    console.error("Unexpected error in handleResetPassword:", err);
+    setMessage(`An unexpected error occurred: ${err.message || 'Unknown error'}`);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const resetSchema = {
     "@context": "https://schema.org",
