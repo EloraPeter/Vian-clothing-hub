@@ -6,7 +6,7 @@ import zxcvbn from "zxcvbn";
 import Spinner from "@/components/Spinner";
 import DressLoader from "@/components/DressLoader";
 import Head from "next/head";
-import { FaEye, FaEyeSlash, FaGoogle } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaGoogle, FaFacebook } from "react-icons/fa";
 
 export default function Auth() {
   const router = useRouter();
@@ -104,7 +104,10 @@ export default function Auth() {
 
   const handleOAuth = async (provider) => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({ provider });
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: 'https://vianclothinghub.com.ng/dashboard' },
+    });
     if (error) {
       setMessage(error.message);
       setLoading(false);
@@ -151,7 +154,6 @@ export default function Auth() {
       }
     }
   };
-
 
   return (
     <>
@@ -215,13 +217,24 @@ export default function Auth() {
                 Continue with Google
               </button>
 
+              <button
+                type="button"
+                onClick={() => handleOAuth("facebook")}
+                className="flex items-center justify-center w-full bg-white border border-gray-300 text-gray-700 px-4 py-3 rounded-lg shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-300"
+                aria-label="Sign in with Facebook"
+                disabled={loading}
+              >
+                <FaFacebook className="w-5 h-5 mr-2" />
+                Continue with Facebook
+              </button>
+
               <div className="relative">
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                   Email Address
                 </label>
                 <input
                   id="email"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all turniej w prawo duration-300"
                   type="email"
                   placeholder="Enter your email"
                   value={form.email}
@@ -247,7 +260,7 @@ export default function Auth() {
                     aria-required="true"
                     aria-label="Full name"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Please enter your first name first (e.g., John Doe).</p>
+                  <p className="text-xs text-gray-500 mt-1">Please enter your first name first (e.g., JohnDoe).</p>
                 </div>
               )}
 
@@ -320,6 +333,18 @@ export default function Auth() {
                   >
                     {showConfirm ? <FaEyeSlash /> : <FaEye />}
                   </button>
+                </div>
+              )}
+
+              {mode === "login" && (
+                <div className="text-center">
+                  <Link
+                    href="/reset-password"
+                    className="text-sm text-purple-700 font-semibold hover:underline transition-all duration-300"
+                    aria-label="Forgot your password?"
+                  >
+                    Forgot Password?
+                  </Link>
                 </div>
               )}
 
