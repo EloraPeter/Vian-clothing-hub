@@ -64,12 +64,34 @@ export default function Shop() {
     const searchInputRef = useRef(null);
 
     // Countdown timer for promotional banner
-    const [saleEndTime, setSaleEndTime] = useState(
-        new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-    );
+    const [saleEndTime, setSaleEndTime] = useState(null);
     const [timeLeft, setTimeLeft] = useState("");
+    const [promotion, setPromotion] = useState(null);
 
     useEffect(() => {
+        async function fetchPromotion() {
+            const now = new Date().toISOString();
+            const { data, error } = await supabase
+                .from("promotions")
+                .select("*")
+                .eq("active", true)
+                .lte("start_date", now)
+                .gte("end_date", now)
+                .order("created_at", { ascending: false })
+                .limit(1);
+            if (error) {
+                console.error("Error fetching promotion:", error.message);
+                toast.error("Failed to load promotions.");
+            } else if (data && data.length > 0) {
+                setPromotion(data[0]);
+                setSaleEndTime(data[0].end_date);
+            }
+        }
+        fetchPromotion();
+    }, []);
+
+    useEffect(() => {
+        if (!saleEndTime) return;
         const interval = setInterval(() => {
             const now = new Date();
             const end = new Date(saleEndTime);
@@ -87,6 +109,7 @@ export default function Shop() {
         return () => clearInterval(interval);
     }, [saleEndTime]);
 
+    
     // Load preferences from local storage
     useEffect(() => {
         const saved = JSON.parse(localStorage.getItem("shopFilters") || "{}");
