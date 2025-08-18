@@ -3,7 +3,7 @@ import { DateTime } from 'luxon';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY // Use service role key for admin access
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 export default async function handler(req, res) {
@@ -33,9 +33,21 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid or expired OTP' });
     }
 
+    // Fetch user by email using admin.listUsers
+    const { data: users, error: listUsersError } = await supabase.auth.admin.listUsers();
+    if (listUsersError) {
+      console.error('List users error:', listUsersError);
+      return res.status(500).json({ error: `Failed to fetch users: ${listUsersError.message}` });
+    }
+
+    const user = users.users.find((u) => u.email === email);
+    if (!user) {
+      return res.status(400).json({ error: 'User not found' });
+    }
+
     // Update user password using admin API
     const { error: updateError } = await supabase.auth.admin.updateUserById(
-      (await supabase.auth.admin.getUserByEmail(email)).data.user.id,
+      user.id,
       { password: newPassword }
     );
 
