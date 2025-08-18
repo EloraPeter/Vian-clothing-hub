@@ -37,6 +37,8 @@ export default function AdminPage() {
   const [discountInputs, setDiscountInputs] = useState({});
   const [activeSection, setActiveSection] = useState("overview");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [promotions, setPromotions] = useState([]);
+
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
@@ -81,6 +83,8 @@ export default function AdminPage() {
           { data: shippingFeesData, error: shippingFeesError },
           { data: notificationsData, error: notificationsError },
           { data: contactInquiriesData, error: contactInquiriesError },
+          { data: promotionsData, error: promotionsError },
+
         ] = await Promise.all([
           supabase.from("custom_orders").select("*").order("created_at", { ascending: false }),
           supabase.from("orders").select("*, items, profiles(*)").order("created_at", { ascending: false }),
@@ -90,6 +94,8 @@ export default function AdminPage() {
           supabase.from("shipping_fees").select("id, state_name, shipping_fee"),
           supabase.from("notifications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
           supabase.from("contact_inquiries").select("*").order("created_at", { ascending: false }),
+          supabase.from("promotions").select("*").order("created_at", { ascending: false }),
+
         ]);
 
         if (customOrderError) {
@@ -173,6 +179,13 @@ export default function AdminPage() {
           toast.error("Error fetching contact inquiries: " + contactInquiriesError.message);
         } else {
           setContactInquiries(contactInquiriesData || []);
+        }
+
+        if (promotionsError) {
+          setError(promotionsError.message);
+          toast.error("Error fetching promotions: " + promotionsError.message);
+        } else {
+          setPromotions(promotionsData || []);
         }
 
         setLoading(false);
@@ -784,6 +797,8 @@ export default function AdminPage() {
               { id: "custom-orders", label: "Custom Orders", icon: <FaBox /> },
               { id: "product-orders", label: "Product Orders", icon: <FaBox /> },
               { id: "contact-inquiries", label: "Contact Inquiries", icon: <FaEnvelope /> },
+                            { id: "promotions", label: "Promotions", icon: <FaPercent /> },
+              
             ].map((item) => (
               <button
                 key={item.id}
