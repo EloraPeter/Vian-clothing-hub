@@ -109,7 +109,7 @@ export default function Shop() {
         return () => clearInterval(interval);
     }, [saleEndTime]);
 
-    
+
     // Load preferences from local storage
     useEffect(() => {
         const saved = JSON.parse(localStorage.getItem("shopFilters") || "{}");
@@ -644,11 +644,11 @@ export default function Shop() {
             />
             <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Promotional Banner with Countdown */}
-                {products.some((p) => p.is_on_sale) && (
+               {/* Promotional Banner with Countdown */}
+                {promotion && (
                     <div className="mb-12 relative rounded-2xl overflow-hidden shadow-lg">
                         <img
-                            src="/placeholder.jpg"
+                            src={promotion.image_url || "/placeholder.jpg"}
                             alt="Sale Promotion"
                             className="w-full h-64 sm:h-80 object-cover"
                             loading="lazy"
@@ -656,23 +656,17 @@ export default function Shop() {
                         <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/40 flex items-center justify-center">
                             <div className="text-center text-white">
                                 <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-                                    Flash Sale! Up to 7% Off
+                                    {promotion.title || "Flash Sale!"} Up to {promotion.discount_percentage || 7}% Off
                                 </h2>
                                 <p className="text-lg sm:text-xl mt-2">Hurry, ends in {timeLeft}</p>
                                 <button
                                     className="mt-4 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-md"
                                     aria-label="Shop sale items"
-                                    onClick={() =>
-                                        setSelectedCategories(
-                                            categories
-                                                .filter((c) =>
-                                                    products.some(
-                                                        (p) => p.is_on_sale && p.category_id === c.id
-                                                    )
-                                                )
-                                                .map((c) => c.id)
-                                        )
-                                    }
+                                    onClick={() => {
+                                        if (promotion.category_ids && promotion.category_ids.length > 0) {
+                                            setSelectedCategories(promotion.category_ids);
+                                        }
+                                    }}
                                 >
                                     Shop Now
                                 </button>

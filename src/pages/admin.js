@@ -874,8 +874,8 @@ export default function AdminPage() {
                     <li
                       key={notif.id}
                       className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 rounded-lg border transition-all duration-300 ${notif.read
-                          ? "bg-gray-100 border-gray-200"
-                          : "bg-purple-50 border-purple-200"
+                        ? "bg-gray-100 border-gray-200"
+                        : "bg-purple-50 border-purple-200"
                         } hover:shadow-md`}
                     >
                       <div className="flex-1 w-full max-w-full">
