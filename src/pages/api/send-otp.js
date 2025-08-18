@@ -22,11 +22,11 @@ export default async function handler(req, res) {
 
   try {
     const { data, error } = await resend.emails.send({
-  from: 'no-reply@vianclothinghub.com.ng',
-  to: email,
-  subject: 'Your OTP for Password Reset - Vian Clothing Hub',
-  text: `Your OTP is ${otp}. It expires in 10 minutes. If you didn’t request a password reset, please ignore this email.`,
-  html: `
+      from: 'no-reply@vianclothinghub.com.ng',
+      to: email,
+      subject: 'Your OTP for Password Reset - Vian Clothing Hub',
+      text: `Your OTP is ${otp}. It expires in 10 minutes. If you didn’t request a password reset, please ignore this email.`,
+      html: `
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -80,11 +80,11 @@ export default async function handler(req, res) {
     </body>
     </html>
   `
-});
+    });
 
 
     if (error) {
-      console.error('Resend API error:', error);
+      console.error('Resend API error details:', JSON.stringify(error, null, 2));
       return res.status(500).json({ error: `Failed to send OTP email: ${error.message || 'Unknown error'}` });
     }
 

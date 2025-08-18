@@ -6,7 +6,7 @@ import Head from "next/head";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import DressLoader from "@/components/DressLoader";
 import Spinner from "@/components/Spinner";
-import { DateTime } from "luxon"; 
+import { DateTime } from "luxon";
 
 export default function ResetPassword() {
   const router = useRouter();
@@ -19,9 +19,9 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const { access_token } = router.query; 
-  const [resendCountdown, setResendCountdown] = useState(60); 
-const [isResendDisabled, setIsResendDisabled] = useState(true);
+  const { access_token } = router.query;
+  const [resendCountdown, setResendCountdown] = useState(60);
+  const [isResendDisabled, setIsResendDisabled] = useState(true);
 
   useEffect(() => {
     // Check if access_token is present for email link-based reset
@@ -35,28 +35,28 @@ const [isResendDisabled, setIsResendDisabled] = useState(true);
   };
 
   useEffect(() => {
-  let timer;
-  if (mode === "otp" && resendCountdown > 0) {
-    timer = setInterval(() => {
-      setResendCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          setIsResendDisabled(false);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }
-  return () => clearInterval(timer); // Cleanup on unmount or mode change
-}, [mode, resendCountdown]);
+    let timer;
+    if (mode === "otp" && resendCountdown > 0) {
+      timer = setInterval(() => {
+        setResendCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            setIsResendDisabled(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer); // Cleanup on unmount or mode change
+  }, [mode, resendCountdown]);
 
   const handleRequestReset = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
     setResendCountdown(60); // Reset countdown
-  setIsResendDisabled(true); // Disable resend button
+    setIsResendDisabled(true); // Disable resend button
 
     // Validate email
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -65,7 +65,7 @@ const [isResendDisabled, setIsResendDisabled] = useState(true);
       return;
     }
 
-    
+
 
     // Generate OTP
     const otpCode = generateOTP();
@@ -144,45 +144,46 @@ const [isResendDisabled, setIsResendDisabled] = useState(true);
   };
 
   const handleResendOTP = async (e) => {
-  setResendCountdown(60); // Reset to 60 seconds
-  setIsResendDisabled(true); // Disable button again
-  await handleRequestReset(e); // Reuse existing function
-};
+    setResendCountdown(60); // Reset to 60 seconds
+    setIsResendDisabled(true); // Disable button again
+    await handleRequestReset(e); // Reuse existing function
+  };
 
   const handleVerifyOTP = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setMessage("");
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
 
-  try {
-    const response = await fetch('/api/verify-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, otp }),
-    });
+    try {
+      const response = await fetch('/api/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp }),
+      });
 
-    const data = await response.json();
-    if (!response.ok) {
-      console.error('OTP verification error:', data.error);
-      setMessage('Invalid or expired OTP. OTPs expire after 10 minutes. Please request a new one.');
+      console.log('Client time (UTC):', new Date().toISOString());
+
+      const data = await response.json();
+      if (!response.ok) {
+        console.error('OTP verification error:', data.error);
+        setMessage('Invalid or expired OTP. OTPs expire after 10 minutes. Please request a new one.');
+        setLoading(false);
+        return;
+      }
+
+      setMode('reset');
+    } catch (err) {
+      console.error('Unexpected error in handleVerifyOTP:', err);
+      setMessage(`An unexpected error occurred: ${err.message || 'Unknown error'}`);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setMode('reset');
-  } catch (err) {
-    console.error('Unexpected error in handleVerifyOTP:', err);
-    setMessage(`An unexpected error occurred: ${err.message || 'Unknown error'}`);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
-    
 
     if (newPassword !== confirmPassword) {
       setMessage("Passwords do not match");
@@ -197,24 +198,19 @@ const [isResendDisabled, setIsResendDisabled] = useState(true);
     }
 
     try {
-      // Update password using Supabase
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
+      // Call server-side endpoint to update password
+      const response = await fetch('/api/update-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp, newPassword }),
       });
 
-      if (error) {
-        console.error("Password update error:", error);
-        setMessage(`Error resetting password: ${error.message || "Unknown error"}`);
+      const data = await response.json();
+      if (!response.ok) {
+        console.error('Password update error:', data.error);
+        setMessage(`Error resetting password: ${data.error || 'Unknown error'}`);
         setLoading(false);
         return;
-      }
-
-      // Delete used OTP
-      const { error: deleteError } = await supabase.from("otps").delete().eq("email", email);
-
-      if (deleteError) {
-        console.error("OTP deletion error:", deleteError);
-        // Log error but don't block success
       }
 
       setMessage("Password reset successful! Redirecting to login...");
@@ -223,7 +219,7 @@ const [isResendDisabled, setIsResendDisabled] = useState(true);
       }, 2000);
     } catch (err) {
       console.error("Unexpected error in handleResetPassword:", err);
-      setMessage(`An unexpected error occurred: ${err.message || "Unknown error"}`);
+      setMessage(`An unexpected error occurred: ${err.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -349,66 +345,66 @@ const [isResendDisabled, setIsResendDisabled] = useState(true);
               </form>
             )}
             {mode === "otp" && (
-  <form onSubmit={handleVerifyOTP} className="space-y-6" aria-label="OTP verification form">
-    <h1 className="text-3xl font-extrabold text-center text-purple-800 font-['Playfair_Display']">
-      Verify OTP
-    </h1>
-    <div className="relative">
-      <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-1">
-        OTP Code
-      </label>
-      <input
-        id="otp"
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
-        type="text"
-        placeholder="Enter 6-digit OTP"
-        value={otp}
-        onChange={(e) => setOtp(e.target.value)}
-        required
-        aria-required="true"
-      />
-    </div>
-    <button
-      type="submit"
-      className="w-full bg-purple-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-purple-700 shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50 flex items-center justify-center"
-      disabled={loading}
-      aria-label="Verify OTP"
-    >
-      {loading ? <Spinner size="sm" color="white" /> : "Verify OTP"}
-    </button>
-    <button
-      type="button"
-      onClick={handleResendOTP}
-      className="w-full bg-gray-200 text-gray-700 px-4 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-all duration-300 disabled:opacity-50 flex items-center justify-center"
-      disabled={isResendDisabled || loading}
-      aria-label="Resend OTP"
-    >
-      {isResendDisabled ? `Resend OTP in ${resendCountdown}s` : "Resend OTP"}
-    </button>
-    {message && (
-      <div className="relative bg-red-50 text-red-600 text-sm p-3 rounded-lg flex items-center justify-between animate-pulse">
-        <span>{message}</span>
-        <button
-          onClick={() => setMessage("")}
-          className="text-red-600 hover:text-red-800"
-          aria-label="Dismiss message"
-        >
-          ✕
-        </button>
-      </div>
-    )}
-    <p className="text-center text-sm text-gray-600">
-      Back to{" "}
-      <Link
-        href="/auth"
-        className="text-purple-700 font-semibold hover:underline transition-all duration-300"
-        aria-label="Back to login"
-      >
-        Log In
-      </Link>
-    </p>
-  </form>
-)}
+              <form onSubmit={handleVerifyOTP} className="space-y-6" aria-label="OTP verification form">
+                <h1 className="text-3xl font-extrabold text-center text-purple-800 font-['Playfair_Display']">
+                  Verify OTP
+                </h1>
+                <div className="relative">
+                  <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-1">
+                    OTP Code
+                  </label>
+                  <input
+                    id="otp"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300"
+                    type="text"
+                    placeholder="Enter 6-digit OTP"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    required
+                    aria-required="true"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full bg-purple-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-purple-700 shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50 flex items-center justify-center"
+                  disabled={loading}
+                  aria-label="Verify OTP"
+                >
+                  {loading ? <Spinner size="sm" color="white" /> : "Verify OTP"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResendOTP}
+                  className="w-full bg-gray-200 text-gray-700 px-4 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-all duration-300 disabled:opacity-50 flex items-center justify-center"
+                  disabled={isResendDisabled || loading}
+                  aria-label="Resend OTP"
+                >
+                  {isResendDisabled ? `Resend OTP in ${resendCountdown}s` : "Resend OTP"}
+                </button>
+                {message && (
+                  <div className="relative bg-red-50 text-red-600 text-sm p-3 rounded-lg flex items-center justify-between animate-pulse">
+                    <span>{message}</span>
+                    <button
+                      onClick={() => setMessage("")}
+                      className="text-red-600 hover:text-red-800"
+                      aria-label="Dismiss message"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+                <p className="text-center text-sm text-gray-600">
+                  Back to{" "}
+                  <Link
+                    href="/auth"
+                    className="text-purple-700 font-semibold hover:underline transition-all duration-300"
+                    aria-label="Back to login"
+                  >
+                    Log In
+                  </Link>
+                </p>
+              </form>
+            )}
             {mode === "reset" && (
               <form onSubmit={handleResetPassword} className="space-y-6" aria-label="Password reset form">
                 <h1 className="text-3xl font-extrabold text-center text-purple-800 font-['Playfair_Display']">
