@@ -797,8 +797,8 @@ export default function AdminPage() {
               { id: "custom-orders", label: "Custom Orders", icon: <FaBox /> },
               { id: "product-orders", label: "Product Orders", icon: <FaBox /> },
               { id: "contact-inquiries", label: "Contact Inquiries", icon: <FaEnvelope /> },
-                            { id: "promotions", label: "Promotions", icon: <FaPercent /> },
-              
+              { id: "promotions", label: "Promotions", icon: <FaPercent /> },
+
             ].map((item) => (
               <button
                 key={item.id}
@@ -1063,6 +1063,22 @@ export default function AdminPage() {
                   </table>
                 </div>
               )}
+            </section>
+          )}
+
+          {/* Promotions Section */}
+          {activeSection === "promotions" && (
+            <section className="rounded-2xl shadow-lg p-6 mb-6">
+              <AddPromotionForm
+                promotions={promotions}
+                setPromotions={setPromotions}
+                categories={categories}
+              />
+              <PromotionsTable
+                promotions={promotions}
+                setPromotions={setPromotions}
+                categories={categories}
+              />
             </section>
           )}
         </div>
