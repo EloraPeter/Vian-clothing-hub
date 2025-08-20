@@ -52,7 +52,6 @@ export default async function handler(req, res) {
       supabase.from('profiles').delete().eq('id', userData.id),
       supabase.from('orders').delete().eq('user_id', userData.id),
       supabase.from('custom_orders').delete().eq('user_id', userData.id),
-      supabase.from('wishlist').delete().eq('user_id', userData.id),
       supabase.from('invoices').delete().eq('user_id', userData.id),
       supabase.from('receipts').delete().eq('user_id', userData.id),
       supabase.from('notifications').delete().eq('user_id', userData.id),
