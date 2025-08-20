@@ -4,7 +4,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/footer';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
 import { toast } from 'react-toastify';
@@ -18,9 +18,31 @@ export default function AccountDeletion({ profile }) {
   const [errorMessage, setErrorMessage] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [user, setUser] = useState(null);
+
+  // Check and refresh session on mount
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
+        setErrorMessage('Please log in to delete your account.');
+        toast.error('Session expired. Redirecting to login...');
+        setTimeout(() => router.push('/auth'), 2000);
+        return;
+      }
+      setUser(session.user);
+    };
+    checkSession();
+  }, [router]);
 
   // Handle self-service account deletion
   const handleSelfDeletion = async () => {
+    if (!user) {
+      setErrorMessage('No user logged in. Please log in again.');
+      toast.error('No user logged in.');
+      return;
+    }
+
     if (!password && profile?.provider !== 'facebook') {
       setErrorMessage('Please enter your password to confirm deletion.');
       toast.error('Please enter your password.');
@@ -32,15 +54,16 @@ export default function AccountDeletion({ profile }) {
     setSuccessMessage('');
 
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw new Error('No user logged in.');
+      // Refresh session to ensure valid token
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) throw new Error('Session expired. Please log in again.');
 
       // Call the server-side API to delete the account
       const response = await fetch('/api/delete-account', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           password: profile?.provider !== 'facebook' ? password : null,
@@ -57,10 +80,17 @@ export default function AccountDeletion({ profile }) {
     } catch (error) {
       setErrorMessage(error.message);
       toast.error(error.message);
+      if (error.message.includes('Session expired')) {
+        setTimeout(() => router.push('/auth'), 2000);
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  if (!user && !errorMessage) {
+    return <div className="min-h-screen bg-gray-100 flex items-center justify-center">Loading...</div>;
+  }
 
   return (
     <>
@@ -152,9 +182,9 @@ export default function AccountDeletion({ profile }) {
           )}
           <button
             onClick={handleSelfDeletion}
-            disabled={loading}
+            disabled={loading || !user}
             className={`bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors ${
-              loading ? 'opacity-50 cursor-not-allowed' : ''
+              loading || !user ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
             {loading ? 'Deleting...' : 'Delete My Account'}

@@ -11,11 +11,18 @@ export default async function handler(req, res) {
   }
 
   const { password, userId } = req.body;
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized: Missing or invalid Authorization header' });
+  }
 
   try {
     // Get the authenticated user from the session
-    const { data: { user }, error: sessionError } = await supabase.auth.getUser(req.headers.authorization?.split('Bearer ')[1]);
+    const token = authHeader.split('Bearer ')[1];
+    const { data: { user }, error: sessionError } = await supabase.auth.getUser(token);
     if (sessionError || !user || user.id !== userId) {
+      console.error('Session error:', sessionError?.message || 'User ID mismatch');
       return res.status(401).json({ error: 'Unauthorized: Invalid or missing session' });
     }
 
@@ -29,12 +36,13 @@ export default async function handler(req, res) {
         password,
       });
       if (signInError) {
+        console.error('Password verification failed:', signInError.message);
         return res.status(401).json({ error: 'Incorrect password' });
       }
     }
 
-    // Delete associated data
-    await Promise.all([
+    // Delete associated data (service role key bypasses RLS)
+    const deletePromises = [
       supabase.from('profiles').delete().eq('id', user.id),
       supabase.from('orders').delete().eq('user_id', user.id),
       supabase.from('custom_orders').delete().eq('user_id', user.id),
@@ -42,16 +50,24 @@ export default async function handler(req, res) {
       supabase.from('invoices').delete().eq('user_id', user.id),
       supabase.from('receipts').delete().eq('user_id', user.id),
       supabase.from('notifications').delete().eq('user_id', user.id),
-    ]);
+    ];
+
+    const results = await Promise.allSettled(deletePromises);
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        console.error(`Failed to delete from table ${['profiles', 'orders', 'custom_orders', 'wishlist', 'invoices', 'receipts', 'notifications'][index]}:`, result.reason.message);
+      }
+    });
 
     // Delete the user from Supabase auth
     const { error: authError } = await supabase.auth.admin.deleteUser(user.id);
     if (authError) {
+      console.error('Failed to delete user:', authError.message);
       throw new Error('Failed to delete user: ' + authError.message);
     }
 
     // Send confirmation email
-    await fetch('https://vianclothinghub.com.ng/api/send-email', {
+    const emailResponse = await fetch('https://vianclothinghub.com.ng/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -68,9 +84,13 @@ export default async function handler(req, res) {
       }),
     });
 
+    if (!emailResponse.ok) {
+      console.error('Failed to send email:', await emailResponse.text());
+    }
+
     return res.status(200).json({ message: 'Account deleted successfully' });
   } catch (error) {
-    console.error('Error deleting account:', error);
+    console.error('Error deleting account:', error.message);
     return res.status(500).json({ error: error.message });
   }
 }
