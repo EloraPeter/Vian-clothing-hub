@@ -73,7 +73,7 @@ export default function Shop() {
             const now = new Date().toISOString();
             const { data, error } = await supabase
                 .from("promotions")
-                .select("*")
+                .select("*, promotion_categories(category_id)")
                 .eq("active", true)
                 .lte("start_date", now)
                 .gte("end_date", now)
@@ -110,21 +110,17 @@ export default function Shop() {
     useEffect(() => {
         if (promotions.length === 0) return;
         const interval = setInterval(() => {
-            const updatedTimeLeft = {};
-            let activePromos = promotions.length;
+            const updatedTimeLeft = { ...timeLeft };
             promotions.forEach((promo) => {
                 const time = calculateTimeLeft(promo.end_date);
                 updatedTimeLeft[promo.id] = time;
-                if (time === "Sale Ended") activePromos--;
             });
             setTimeLeft(updatedTimeLeft);
-            if (activePromos === 0) {
-                clearInterval(interval);
-                setPromotions([]);
-            }
+            const activePromotions = promotions.filter((promo) => updatedTimeLeft[promo.id] !== "Sale Ended");
+            setPromotions(activePromotions);
         }, 1000);
         return () => clearInterval(interval);
-    }, [promotions]);
+    }, [promotions, timeLeft]);
 
     // Auto-slide for promotions
     useEffect(() => {
@@ -676,9 +672,8 @@ export default function Shop() {
                             {promotions.map((promotion, index) => (
                                 <div
                                     key={promotion.id}
-                                    className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-                                        index === currentPromoIndex ? "opacity-100" : "opacity-0"
-                                    }`}
+                                    className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${index === currentPromoIndex ? "opacity-100" : "opacity-0"
+                                        }`}
                                     role="region"
                                     aria-live="polite"
                                     aria-label={`Promotion: ${promotion.title}`}
@@ -742,11 +737,10 @@ export default function Shop() {
                                     {promotions.map((_, index) => (
                                         <button
                                             key={index}
-                                            className={`w-3 h-3 rounded-full ${
-                                                index === currentPromoIndex
+                                            className={`w-3 h-3 rounded-full ${index === currentPromoIndex
                                                     ? "bg-white"
                                                     : "bg-white/50 hover:bg-white/80"
-                                            } transition-colors`}
+                                                } transition-colors`}
                                             onClick={() => setCurrentPromoIndex(index)}
                                             aria-label={`Go to promotion ${index + 1}`}
                                             aria-current={index === currentPromoIndex ? "true" : "false"}
