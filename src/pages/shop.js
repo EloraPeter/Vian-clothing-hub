@@ -74,13 +74,14 @@ export default function Shop() {
                 .from("promotions")
                 .select("*, promotion_categories(category_id)")
                 .eq("active", true)
-                .lte("start_date", now)
-                .gte("end_date", now)
+                // .lte("start_date", now)
+                // .gte("end_date", now)
                 .order("created_at", { ascending: false });
             if (error) {
                 console.error("Error fetching promotions:", error.message);
                 toast.error("Failed to load promotions.");
             } else {
+                console.log("Fetched promotions:", data); // Debug log
                 setPromotions(data);
                 // Initialize timeLeft for each promotion
                 const initialTimeLeft = {};
