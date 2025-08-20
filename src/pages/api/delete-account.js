@@ -28,12 +28,11 @@ export default async function handler(req, res) {
         }
 
         // Call your Postgres function to delete user + associated data
-        const { error: rpcError } = await supabase.rpc('delete_user_data', { user_id: user.id });
-
+        const { error: rpcError } = await supabase.rpc('delete_user_data', { p_user_id: user.id });
         if (rpcError) {
-            console.error('Error deleting user via RPC:', rpcError.message);
-            return res.status(500).json({ error: rpcError.message });
+            console.error('RPC error:', rpcError.message);
         }
+
 
         // Send confirmation email
         const emailResponse = await fetch('https://vianclothinghub.com.ng/api/send-email', {

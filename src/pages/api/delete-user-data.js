@@ -2,8 +2,8 @@ import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
 const supabase = createClient(
-  process.env.SUPABASE_URL || 'https://your-supabase-url.supabase.co',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 'your-service-role-key'
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 function verifySignedRequest(signedRequest, appSecret) {
@@ -27,19 +27,17 @@ export default async function handler(req, res) {
 
   try {
     const { signed_request } = req.body;
-    if (!signed_request) {
-      return res.status(400).json({ error: 'Missing signed_request' });
-    }
+    if (!signed_request) return res.status(400).json({ error: 'Missing signed_request' });
 
     const appSecret = process.env.FACEBOOK_APP_SECRET || 'your-facebook-app-secret';
     const data = verifySignedRequest(signed_request, appSecret);
     const facebookId = data.user_id;
 
-    // Query auth.users to find user by Facebook ID in raw_user_meta_data
+    // Find the user by Facebook ID in raw_user_meta_data
     const { data: users, error: userError } = await supabase.auth.admin.listUsers();
     if (userError) throw userError;
 
-    const userData = users.find(user => user.raw_user_meta_data?.provider_id === facebookId);
+    const userData = users.find(u => u.raw_user_meta_data?.provider_id === facebookId);
     if (!userData) {
       return res.status(200).json({
         url: 'https://vianclothinghub.com.ng/account-deletion',
@@ -47,16 +45,9 @@ export default async function handler(req, res) {
       });
     }
 
-    // Delete user data
-    await Promise.all([
-      supabase.from('profiles').delete().eq('id', userData.id),
-      supabase.from('orders').delete().eq('user_id', userData.id),
-      supabase.from('custom_orders').delete().eq('user_id', userData.id),
-      supabase.from('invoices').delete().eq('user_id', userData.id),
-      supabase.from('receipts').delete().eq('user_id', userData.id),
-      supabase.from('notifications').delete().eq('user_id', userData.id),
-      supabase.auth.admin.deleteUser(userData.id),
-    ]);
+    // Call RPC to delete everything including the auth user
+    const { error: rpcError } = await supabase.rpc('delete_user_data', { p_user_id: userData.id });
+    if (rpcError) throw rpcError;
 
     // Send confirmation email
     await fetch('https://vianclothinghub.com.ng/api/send-email', {
