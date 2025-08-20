@@ -669,34 +669,90 @@ export default function Shop() {
             />
             <CartPanel isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-               {/* Promotional Banner with Countdown */}
-                {promotion && (
+                {/* Promotional Banner with Slideshow */}
+                {promotions.length > 0 && (
                     <div className="mb-12 relative rounded-2xl overflow-hidden shadow-lg">
-                        <img
-                            src={promotion.image_url || "/placeholder.jpg"}
-                            alt="Sale Promotion"
-                            className="w-full h-64 sm:h-80 object-cover"
-                            loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/40 flex items-center justify-center">
-                            <div className="text-center text-white">
-                                <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-                                    {promotion.title || "Flash Sale!"} Up to {promotion.discount_percentage || 7}% Off
-                                </h2>
-                                <p className="text-lg sm:text-xl mt-2">Hurry, ends in {timeLeft}</p>
-                                <button
-                                    className="mt-4 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-md"
-                                    aria-label="Shop sale items"
-                                    onClick={() => {
-                                        if (promotion.category_ids && promotion.category_ids.length > 0) {
-                                            setSelectedCategories(promotion.category_ids);
-                                        }
-                                    }}
+                        <div className="relative w-full h-64 sm:h-80">
+                            {promotions.map((promotion, index) => (
+                                <div
+                                    key={promotion.id}
+                                    className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${index === currentPromoIndex ? "opacity-100" : "opacity-0"
+                                        }`}
+                                    role="region"
+                                    aria-live="polite"
+                                    aria-label={`Promotion: ${promotion.title}`}
                                 >
-                                    Shop Now
-                                </button>
-                            </div>
+                                    <img
+                                        src={promotion.image_url || "/placeholder.jpg"}
+                                        alt={promotion.title || "Sale Promotion"}
+                                        className="w-full h-full object-cover"
+                                        loading="lazy"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/40 flex items-center justify-center">
+                                        <div className="text-center text-white">
+                                            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+                                                {promotion.title || "Flash Sale!"} Up to{" "}
+                                                {promotion.discount_percentage || 7}% Off
+                                            </h2>
+                                            <p className="text-lg sm:text-xl mt-2">
+                                                Hurry, ends in {timeLeft[promotion.id] || "Loading..."}
+                                            </p>
+                                            <button
+                                                className="mt-4 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-md"
+                                                aria-label={`Shop ${promotion.title} items`}
+                                                onClick={() => {
+                                                    if (promotion.category_ids && promotion.category_ids.length > 0) {
+                                                        setSelectedCategories(promotion.category_ids);
+                                                    }
+                                                }}
+                                            >
+                                                Shop Now
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
+                        {promotions.length > 1 && (
+                            <>
+                                {/* Navigation Arrows */}
+                                <button
+                                    className="absolute left-4 top-1/2 transform -translate-y-1/2 p-2 bg-white/80 rounded-full hover:bg-white transition-colors"
+                                    onClick={() =>
+                                        setCurrentPromoIndex((prev) =>
+                                            (prev - 1 + promotions.length) % promotions.length
+                                        )
+                                    }
+                                    aria-label="Previous promotion"
+                                >
+                                    <FaChevronLeft className="w-5 h-5 text-gray-800" />
+                                </button>
+                                <button
+                                    className="absolute right-4 top-1/2 transform -translate-y-1/2 p-2 bg-white/80 rounded-full hover:bg-white transition-colors"
+                                    onClick={() =>
+                                        setCurrentPromoIndex((prev) => (prev + 1) % promotions.length)
+                                    }
+                                    aria-label="Next promotion"
+                                >
+                                    <FaChevronRight className="w-5 h-5 text-gray-800" />
+                                </button>
+                                {/* Navigation Dots */}
+                                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+                                    {promotions.map((_, index) => (
+                                        <button
+                                            key={index}
+                                            className={`w-3 h-3 rounded-full ${index === currentPromoIndex
+                                                    ? "bg-white"
+                                                    : "bg-white/50 hover:bg-white/80"
+                                                } transition-colors`}
+                                            onClick={() => setCurrentPromoIndex(index)}
+                                            aria-label={`Go to promotion ${index + 1}`}
+                                            aria-current={index === currentPromoIndex ? "true" : "false"}
+                                        />
+                                    ))}
+                                </div>
+                            </>
+                        )}
                     </div>
                 )}
 
