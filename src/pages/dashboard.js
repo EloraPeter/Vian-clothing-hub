@@ -11,7 +11,9 @@ import Script from "next/script";
 import DressLoader from "@/components/DressLoader";
 import Link from "next/link";
 import { initiatePayment } from "@/lib/payment";
-import { FaUser, FaBell, FaBox, FaFileInvoice, FaReceipt, FaHeart, FaSignOutAlt, FaBars } from "react-icons/fa";
+import { FaUser, FaBell, FaBox, FaTrash, FaFileInvoice, FaReceipt, FaHeart, FaSignOutAlt, FaBars } from "react-icons/fa";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Dashboard() {
   const router = useRouter();
