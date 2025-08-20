@@ -53,7 +53,7 @@ export default function AddPromotionForm({ promotions, setPromotions, categories
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Title"
-          className="p-2 border border-gray-200 rounded-lg"
+          className="p-2 text-black border border-gray-200 rounded-lg"
           required
         />
         <input
