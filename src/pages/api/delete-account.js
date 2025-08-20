@@ -18,15 +18,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Get the authenticated user from the session
     const token = authHeader.split('Bearer ')[1];
     const { data: { user }, error: sessionError } = await supabase.auth.getUser(token);
     if (sessionError || !user || user.id !== userId) {
-      console.error('Session error:', sessionError?.message || 'User ID mismatch');
+      console.error('Session error:', sessionError?.message || 'User ID mismatch', { userId, user });
       return res.status(401).json({ error: 'Unauthorized: Invalid or missing session' });
     }
 
-    // Verify password for non-OAuth users
     if (user.app_metadata.provider !== 'facebook') {
       if (!password) {
         return res.status(400).json({ error: 'Password required for email users' });
@@ -41,7 +39,14 @@ export default async function handler(req, res) {
       }
     }
 
-    // Delete associated data (service role key bypasses RLS)
+    // Verify user exists
+    const { data: userData, error: userError } = await supabase.auth.admin.getUserById(user.id);
+    if (userError || !userData) {
+      console.error('User not found:', user.id, userError?.message);
+      throw new Error('User not found');
+    }
+
+    // Delete associated data
     const deletePromises = [
       supabase.from('profiles').delete().eq('id', user.id),
       supabase.from('orders').delete().eq('user_id', user.id),
@@ -55,42 +60,40 @@ export default async function handler(req, res) {
     const results = await Promise.allSettled(deletePromises);
     results.forEach((result, index) => {
       if (result.status === 'rejected') {
-        console.error(`Failed to delete from table ${['profiles', 'orders', 'custom_orders', 'wishlist', 'invoices', 'receipts', 'notifications'][index]}:`, result.reason.message);
+        console.error(`Failed to delete from table ${['profiles', 'orders', 'custom_orders', 'wishlist', 'invoices', 'receipts', 'notifications'][index]}:`, result.reason);
       }
     });
 
-    // Delete the user from Supabase auth
-    const { error: authError } = await supabase.auth.admin.deleteUser(user.id);
+    // Delete user with retry logic
+    let authError;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const { error } = await supabase.auth.admin.deleteUser(user.id);
+      if (!error) break;
+      authError = error;
+      console.error(`Attempt ${attempt} failed to delete user:`, error.message);
+      if (attempt < 3) await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+    }
     if (authError) {
-      console.error('Failed to delete user:', authError.message);
+      console.error('Failed to delete user after retries:', authError.message, authError);
       throw new Error('Failed to delete user: ' + authError.message);
     }
 
-    // Send confirmation email
     const emailResponse = await fetch('https://vianclothinghub.com.ng/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         to: user.email,
         subject: 'Vian Clothing Hub Account Deletion Confirmation',
-        html: `
-          <h2>Account Deletion Confirmation</h2>
-          <p>Dear ${user.user_metadata.first_name || 'Customer'},</p>
-          <p>Your Vian Clothing Hub account and associated data have been permanently deleted as of ${new Date().toLocaleString()}. This includes your profile, orders, wishlist, and any data shared via Facebook login.</p>
-          <p>If this was a mistake, please contact <a href="mailto:support@vianclothinghub.com.ng">support@vianclothinghub.com.ng</a> immediately.</p>
-          <p>Thank you for shopping with us!</p>
-          <p>Vian Clothing Hub Team</p>
-        `,
+        html: `...`,
       }),
     });
-
     if (!emailResponse.ok) {
       console.error('Failed to send email:', await emailResponse.text());
     }
 
     return res.status(200).json({ message: 'Account deleted successfully' });
   } catch (error) {
-    console.error('Error deleting account:', error.message);
+    console.error('Error deleting account:', error.message, error);
     return res.status(500).json({ error: error.message });
   }
 }
