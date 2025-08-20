@@ -43,6 +43,63 @@ export default function Dashboard() {
     setStrengthScore(zxcvbn(val).score);
   };
 
+  // Handle self-service account deletion
+  const handleSelfDeletion = async () => {
+    const confirm = window.confirm("Are you sure you want to permanently delete your account? This action cannot be undone.");
+    if (!confirm) return;
+
+    setLoading(true);
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) throw new Error('No user logged in.');
+
+      // Delete associated data
+      await Promise.all([
+        supabase.from('profiles').delete().eq('id', user.id),
+        supabase.from('orders').delete().eq('user_id', user.id),
+        supabase.from('custom_orders').delete().eq('user_id', user.id),
+        supabase.from('wishlist').delete().eq('user_id', user.id),
+        supabase.from('invoices').delete().eq('user_id', user.id),
+        supabase.from('receipts').delete().eq('user_id', user.id),
+        supabase.from('notifications').delete().eq('user_id', user.id),
+      ]);
+
+      // Revoke Facebook OAuth tokens
+      if (user.app_metadata.provider === 'facebook') {
+        await supabase.auth.signOut();
+      }
+
+      // Delete auth user
+      const { error: authError } = await supabase.auth.admin.deleteUser(user.id);
+      if (authError) throw new Error('Failed to delete account: ' + authError.message);
+
+      // Send confirmation email
+      await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: user.email,
+          subject: 'Vian Clothing Hub Account Deletion Confirmation',
+          html: `
+            <h2>Account Deletion Confirmation</h2>
+            <p>Dear ${profile?.first_name || 'Customer'},</p>
+            <p>Your Vian Clothing Hub account and associated data have been permanently deleted as of ${new Date().toLocaleString()}. This includes your profile, orders, wishlist, and any data shared via Facebook login.</p>
+            <p>If this was a mistake, please contact <a href="mailto:support@vianclothinghub.com.ng">support@vianclothinghub.com.ng</a> immediately.</p>
+            <p>Thank you for shopping with us!</p>
+            <p>Vian Clothing Hub Team</p>
+          `,
+        }),
+      });
+
+      toast.success('Account deleted successfully. Redirecting to homepage...');
+      setTimeout(() => router.push('/'), 3000);
+    } catch (error) {
+      toast.error('Error deleting account: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) {
