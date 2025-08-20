@@ -27,7 +27,8 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized: Invalid or missing session' });
     }
 
-    if (user.app_metadata.provider !== 'facebook') {
+    // Verify password for non-OAuth users
+    if (!oauthProviders.includes(user.app_metadata.provider)) {
       if (!password) {
         return res.status(400).json({ error: 'Password required for email users' });
       }
