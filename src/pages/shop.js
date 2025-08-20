@@ -26,7 +26,6 @@ import DressLoader from "@/components/DressLoader";
 import { Helmet } from "react-helmet";
 import FloatingChatButton from "@/components/FloatingChatButton";
 
-
 export default function Shop() {
     const [products, setProducts] = useState([]);
     const [profile, setProfile] = useState(null);
@@ -110,7 +109,7 @@ export default function Shop() {
     useEffect(() => {
         if (promotions.length === 0) return;
         const interval = setInterval(() => {
-            const updatedTimeLeft = { ...timeLeft };
+            const updatedTimeLeft = {...timeLeft};
             promotions.forEach((promo) => {
                 const time = calculateTimeLeft(promo.end_date);
                 updatedTimeLeft[promo.id] = time;
@@ -375,7 +374,7 @@ export default function Shop() {
         if (sortOption === "price-asc") {
             result.sort((a, b) => a.price - b.price);
         } else if (sortOption === "price-desc") {
-            result.sort((a, b) => b.price - b.price);
+            result.sort((a, b) => b.price - a.price);
         } else if (sortOption === "newest") {
             result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         } else if (sortOption === "rating") {
@@ -613,7 +612,7 @@ export default function Shop() {
         },
         "mainEntity": {
             "@type": "ItemList",
-            "itemListElement": displayedProducts.slice(0, 10).map((product, index) => ({ // Limit to top 10 for performance
+            "itemListElement": displayedProducts.slice(0, 10).map((product, index) => ({
                 "@type": "ListItem",
                 "position": index + 1,
                 "item": {
@@ -638,8 +637,6 @@ export default function Shop() {
             }))
         }
     };
-
-
 
     return (
         <div className="min-h-screen bg-gray-100 font-sans">
@@ -672,8 +669,9 @@ export default function Shop() {
                             {promotions.map((promotion, index) => (
                                 <div
                                     key={promotion.id}
-                                    className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${index === currentPromoIndex ? "opacity-100" : "opacity-0"
-                                        }`}
+                                    className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                                        index === currentPromoIndex ? "opacity-100" : "opacity-0"
+                                    }`}
                                     role="region"
                                     aria-live="polite"
                                     aria-label={`Promotion: ${promotion.title}`}
@@ -737,10 +735,11 @@ export default function Shop() {
                                     {promotions.map((_, index) => (
                                         <button
                                             key={index}
-                                            className={`w-3 h-3 rounded-full ${index === currentPromoIndex
+                                            className={`w-3 h-3 rounded-full ${
+                                                index === currentPromoIndex
                                                     ? "bg-white"
                                                     : "bg-white/50 hover:bg-white/80"
-                                                } transition-colors`}
+                                            } transition-colors`}
                                             onClick={() => setCurrentPromoIndex(index)}
                                             aria-label={`Go to promotion ${index + 1}`}
                                             aria-current={index === currentPromoIndex ? "true" : "false"}
@@ -1406,7 +1405,7 @@ export default function Shop() {
                             {relatedProducts.map((product) => (
                                 <div
                                     key={product.id}
-                                    className="bg-white p-6 rounded-_news_2xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-300"
+                                    className="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-300"
                                 >
                                     <a href={`/product/${product.id}`} className="block">
                                         <img
@@ -1593,8 +1592,7 @@ export default function Shop() {
                         </div>
                     </div>
                 )}
-                <FloatingChatButton cartItemCount={0} /> {/* Replace 0 with actual cart count if available */}
-
+                <FloatingChatButton cartItemCount={cart.length} />
             </div>
             <Footer />
         </div>
