@@ -127,7 +127,7 @@ export default function Shop() {
         if (promotions.length <= 1) return;
         const slideInterval = setInterval(() => {
             setCurrentPromoIndex((prev) => (prev + 1) % promotions.length);
-        }, 10000); // Change slide every 5 seconds
+        }, 15000); // Change slide every 5 seconds
         return () => clearInterval(slideInterval);
     }, [promotions.length]);
 
