@@ -149,7 +149,7 @@ export default function AddPromotionForm({ promotions, setPromotions, categories
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Enter promotion description"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 placeholder-gray-400"
+            className="w-full text-black p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 placeholder-gray-400"
           />
         </div>
 
@@ -163,7 +163,7 @@ export default function AddPromotionForm({ promotions, setPromotions, categories
             value={discountPercentage}
             onChange={(e) => setDiscountPercentage(e.target.value)}
             placeholder="Enter discount percentage (e.g., 20)"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 placeholder-gray-400"
+            className="w-full p-3 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 placeholder-gray-400"
             required
             min="0"
             max="100"
@@ -180,7 +180,7 @@ export default function AddPromotionForm({ promotions, setPromotions, categories
             type="file"
             accept="image/*"
             onChange={handleImageChange}
-            className="w-full p-3 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-purple-100 file:text-purple-800 hover:file:bg-purple-200"
+            className="w-full text-black p-3 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-purple-100 file:text-purple-800 hover:file:bg-purple-200"
             required
           />
           {imagePreview && (
@@ -199,7 +199,7 @@ export default function AddPromotionForm({ promotions, setPromotions, categories
             type="datetime-local"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 placeholder-gray-400"
+            className="w-full p-3 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 placeholder-gray-400"
             required
           />
         </div>
@@ -213,7 +213,7 @@ export default function AddPromotionForm({ promotions, setPromotions, categories
             type="datetime-local"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 placeholder-gray-400"
+            className="w-full text-black p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 placeholder-gray-400"
             required
           />
         </div>
@@ -242,6 +242,7 @@ export default function AddPromotionForm({ promotions, setPromotions, categories
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
           >
             {categories.map((cat) => (
+                <option>All</option>
               <option key={cat.id} value={cat.id}>{cat.name}</option>
             ))}
           </select>
