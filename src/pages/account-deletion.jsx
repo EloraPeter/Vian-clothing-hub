@@ -216,7 +216,7 @@ export default function AccountDeletion({ profile }) {
               </a>.
             </li>
             <li>
-              Alternatively, revoke access directly in Facebook: Go to Settings > Apps and Websites > Find "Vian Clothing Hub" > Remove.
+              Alternatively, revoke access directly in Facebook: Go to Settings &gt; Apps and Websites &gt; Find "Vian Clothing Hub" &gt; Remove.
             </li>
           </ul>
 
