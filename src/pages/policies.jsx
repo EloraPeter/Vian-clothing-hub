@@ -25,7 +25,7 @@ export default function Policies({ profile }) {
       title: 'Cookies Policy',
       content: (
         <div className="space-y-6">
-          <p><strong>Last Updated:</strong> July 25, 2025</p>
+          <p><strong>Last Updated:</strong> August 20, 2025</p>
           <p>
             Vian Clothing Hub ("we," "us," or "our") uses cookies and similar technologies to enhance your experience on our website. This Cookies Policy explains what cookies are, how we use them, and how you can manage your cookie preferences.
           </p>
@@ -60,7 +60,7 @@ export default function Policies({ profile }) {
       title: 'Terms of Service',
       content: (
         <div className="space-y-6">
-          <p><strong>Last Updated:</strong> July 25, 2025</p>
+          <p><strong>Last Updated:</strong> August 20, 2025</p>
           <p>
             Welcome to Vian Clothing Hub ("we," "us," or "our"). These Terms of Service ("Terms") govern your use of our website and services. By accessing or using our website, you agree to these Terms.
           </p>
@@ -96,7 +96,7 @@ export default function Policies({ profile }) {
       title: 'Terms and Conditions',
       content: (
         <div className="space-y-6">
-          <p><strong>Last Updated:</strong> July 25, 2025</p>
+          <p><strong>Last Updated:</strong> August 20, 2025</p>
           <p>
             These Terms and Conditions ("Terms") govern your purchase and use of products and services from Vian Clothing Hub ("we," "us," or "our"). By placing an order, you agree to these Terms.
           </p>
@@ -132,7 +132,7 @@ export default function Policies({ profile }) {
       title: 'Return Policy',
       content: (
         <div className="space-y-6">
-          <p><strong>Last Updated:</strong> July 25, 2025</p>
+          <p><strong>Last Updated:</strong> August 20, 2025</p>
           <p>
             At Vian Clothing Hub, we want you to be satisfied with your purchase. Our Return Policy outlines the conditions under which you can return or exchange items.
           </p>
@@ -154,7 +154,7 @@ export default function Policies({ profile }) {
           </p>
           <h2 className="text-xl font-semibold text-purple-700">5. Contact Us</h2>
           <p>
-            For questions about returns, contact us via our <Link href="/contact" className="text-purple-600 hover:underline">Contact Page</Link> or on <Link href="https://wa.me/+2348122123280" className="text-purple-600 hover:underline">Whatsapp</Link>.
+            For questions about returns, contact us via our <Link href="/contact" className="text-purple-600 hover:underline">Contact Page</Link> or on <Link href="https://wa.me/+2348122123280" className="text-purple-600 hover:underline">WhatsApp</Link>.
           </p>
         </div>
       ),
@@ -164,7 +164,7 @@ export default function Policies({ profile }) {
       title: 'Refund Policy',
       content: (
         <div className="space-y-6">
-          <p><strong>Last Updated:</strong> July 25, 2025</p>
+          <p><strong>Last Updated:</strong> August 20, 2025</p>
           <p>
             Vian Clothing Hub is committed to ensuring your satisfaction. Our Refund Policy explains how refunds are processed for eligible returns or order issues.
           </p>
@@ -191,18 +191,41 @@ export default function Policies({ profile }) {
         </div>
       ),
     },
+    {
+      id: 'account-deletion',
+      title: 'Account Deletion',
+      content: (
+        <div className="space-y-6">
+          <p><strong>Last Updated:</strong> August 20, 2025</p>
+          <p>
+            You can delete your Vian Clothing Hub account and associated personal data, including data shared via Facebook login, at any time. Visit our dedicated{' '}
+            <Link href="/account-deletion" className="text-purple-600 hover:underline">
+              Account Deletion
+            </Link>{' '}
+            page for instructions on self-service deletion or to submit a data deletion request.
+          </p>
+          <h2 className="text-xl font-semibold text-purple-700">Contact Us</h2>
+          <p>
+            For assistance, contact us via our <Link href="/contact" className="text-purple-600 hover:underline">Contact Page</Link> or at{' '}
+            <a href="mailto:support@vianclothinghub.com.ng" className="text-purple-600 hover:underline">
+              support@vianclothinghub.com.ng
+            </a>.
+          </p>
+        </div>
+      ),
+    },
   ];
 
   const policiesSchema = {
     "@context": "https://schema.org",
     "@type": "WebPage",
     "name": "Policies - Vian Clothing Hub",
-    "description": "Review Vian Clothing Hub's policies, including Cookies, Terms of Service, Terms and Conditions, Returns, and Refunds.",
+    "description": "Review Vian Clothing Hub's policies, including Cookies, Terms of Service, Terms and Conditions, Returns, Refunds, and Account Deletion.",
     "url": "https://vianclothinghub.com.ng/policies",
     "hasPart": policies.map((policy) => ({
       "@type": "WebPageElement",
       "name": policy.title,
-      "text": policy.content.props.children.find((child) => typeof child === 'string' && child.startsWith('Last Updated')) // Extract summary if needed
+      "text": policy.content.props.children.find((child) => typeof child === 'string' && child.startsWith('Last Updated')),
     })),
     "breadcrumb": {
       "@type": "BreadcrumbList",
@@ -226,7 +249,6 @@ export default function Policies({ profile }) {
     }
   };
 
-  // Add ReturnPolicy specifically for returns/refunds sections
   const returnPolicySchema = {
     "@context": "https://schema.org",
     "@type": "ReturnPolicy",
@@ -235,10 +257,8 @@ export default function Policies({ profile }) {
     "merchantReturnDays": 7,
     "returnMethod": "https://schema.org/ReturnByMail",
     "applicableCountry": "NG",
-    "returnFees": "https://schema.org/ReturnFeesCustomerResponsibility" // Unless defective
+    "returnFees": "https://schema.org/ReturnFeesCustomerResponsibility"
   };
-
-
 
   return (
     <>
@@ -246,17 +266,19 @@ export default function Policies({ profile }) {
         <title>Policies - Vian Clothing Hub</title>
         <meta
           name="description"
-          content="Review Vian Clothing Hub's policies, including Cookies, Terms of Service, Terms and Conditions, Returns, and Refunds."
+          content="Review Vian Clothing Hub's policies, including Cookies, Terms of Service, Terms and Conditions, Returns, Refunds, and Account Deletion."
         />
-        <meta name="robots" content="index, follow" />
-
-        <meta name="keywords" content="policies, cookies, terms of service, terms and conditions, returns, refunds, Vian Clothing Hub" />
+        <meta
+          name="keywords"
+          content="policies, cookies, terms of service, terms and conditions, returns, refunds, account deletion, Vian Clothing Hub"
+        />
         <meta name="author" content="Vian Clothing Hub" />
         <meta property="og:title" content="Policies - Vian Clothing Hub" />
         <meta
           property="og:description"
           content="Understand our policies governing your use of Vian Clothing Hub's website and services."
         />
+        <meta name="robots" content="index, follow" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(policiesSchema) }}
@@ -269,7 +291,6 @@ export default function Policies({ profile }) {
       <div className="min-h-screen bg-gray-100">
         <Navbar profile={profile} />
         <section className="max-w-7xl mx-auto px-4 py-12 flex flex-col md:flex-row gap-8">
-          {/* Sidebar */}
           <aside className="w-full md:w-1/4 bg-white rounded-lg shadow-md p-4">
             <h2 className="text-xl font-bold text-purple-700 mb-4">Policies</h2>
             <ul className="space-y-2">
@@ -277,10 +298,11 @@ export default function Policies({ profile }) {
                 <li key={policy.id}>
                   <button
                     onClick={() => setActivePolicy(policy.id)}
-                    className={`w-full text-left py-2 px-4 rounded-lg ${activePolicy === policy.id
-                      ? 'bg-purple-100 text-purple-700 font-semibold'
-                      : 'text-gray-600 hover:bg-purple-50 hover:text-purple-600'
-                      } transition-colors`}
+                    className={`w-full text-left py-2 px-4 rounded-lg ${
+                      activePolicy === policy.id
+                        ? 'bg-purple-100 text-purple-700 font-semibold'
+                        : 'text-gray-600 hover:bg-purple-50 hover:text-purple-600'
+                    } transition-colors`}
                   >
                     {policy.title}
                   </button>
@@ -288,7 +310,6 @@ export default function Policies({ profile }) {
               ))}
             </ul>
           </aside>
-          {/* Main Content */}
           <div className="w-full md:w-3/4 bg-white text-gray-700 rounded-lg shadow-md p-6">
             {policies.find((policy) => policy.id === activePolicy)?.content || (
               <p className="text-gray-900">Select a policy to view details.</p>
