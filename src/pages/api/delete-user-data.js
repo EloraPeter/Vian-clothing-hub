@@ -40,7 +40,7 @@ export default async function handler(req, res) {
 
     // Find Supabase user by Facebook ID (assumes user_metadata stores facebook_id)
     const { data: userData, error: userError } = await supabase
-      .from('users')
+      .from('profiles')
       .select('id, email')
       .eq('raw_user_meta_data->>facebook_id', facebookId)
       .maybeSingle();
