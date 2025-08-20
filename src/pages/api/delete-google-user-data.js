@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-supabase-url.supabase.co',
+  process.env.SUPABASE_URL || 'https://your-supabase-url.supabase.co',
   process.env.SUPABASE_SERVICE_ROLE_KEY || 'your-service-role-key'
 );
 
@@ -12,19 +12,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { google_user_id } = req.body; // Adjust based on Google's callback format
+    const { google_user_id } = req.body;
     if (!google_user_id) {
       return res.status(400).json({ error: 'Missing Google user ID' });
     }
 
-    // Find Supabase user by Google ID (assumes user_metadata stores google_id)
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('id, email')
-      .eq('raw_user_meta_data->>google_id', google_user_id)
-      .maybeSingle();
+    // Query auth.users to find user by Google ID in raw_user_meta_data
+    const { data: users, error: userError } = await supabase.auth.admin.listUsers();
+    if (userError) throw userError;
 
-    if (userError || !userData) {
+    const userData = users.find(user => user.raw_user_meta_data?.sub === google_user_id);
+    if (!userData) {
       // Return success to comply with Google's requirements
       return res.status(200).json({
         url: 'https://vianclothinghub.com.ng/account-deletion',

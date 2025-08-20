@@ -1,13 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
-// Initialize Supabase client with service role key
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-supabase-url.supabase.co',
+  process.env.SUPABASE_URL || 'https://your-supabase-url.supabase.co',
   process.env.SUPABASE_SERVICE_ROLE_KEY || 'your-service-role-key'
 );
 
-// Helper to verify Meta's signed request
 function verifySignedRequest(signedRequest, appSecret) {
   const [encodedSig, payload] = signedRequest.split('.');
   const signature = Buffer.from(encodedSig, 'base64').toString('hex');
@@ -33,20 +31,16 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing signed_request' });
     }
 
-    // Verify the signed request from Meta
     const appSecret = process.env.FACEBOOK_APP_SECRET || 'your-facebook-app-secret';
     const data = verifySignedRequest(signed_request, appSecret);
     const facebookId = data.user_id;
 
-    // Find Supabase user by Facebook ID (assumes user_metadata stores facebook_id)
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('id, email')
-      .eq('raw_user_meta_data->>facebook_id', facebookId)
-      .maybeSingle();
+    // Query auth.users to find user by Facebook ID in raw_user_meta_data
+    const { data: users, error: userError } = await supabase.auth.admin.listUsers();
+    if (userError) throw userError;
 
-    if (userError || !userData) {
-      // If user not found, return success to comply with Meta's requirements
+    const userData = users.find(user => user.raw_user_meta_data?.provider_id === facebookId);
+    if (!userData) {
       return res.status(200).json({
         url: 'https://vianclothinghub.com.ng/account-deletion',
         confirmation_code: crypto.randomUUID(),
