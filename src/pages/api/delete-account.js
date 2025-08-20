@@ -1,22 +1,22 @@
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const oauthProviders = ['facebook', 'google']; // Add more providers as needed
+const oauthProviders = ['facebook', 'google'];
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { password, userId } = req.body;
+  const { userId } = req.body;
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Unauthorized: Missing or invalid Authorization header' });
+    return res.status(401).json({ error: 'Unauthorized:grado: Missing or invalid Authorization header' });
   }
 
   try {
@@ -25,28 +25,6 @@ export default async function handler(req, res) {
     if (sessionError || !user || user.id !== userId) {
       console.error('Session error:', sessionError?.message || 'User ID mismatch', { userId, user });
       return res.status(401).json({ error: 'Unauthorized: Invalid or missing session' });
-    }
-
-    // Verify password for non-OAuth users
-    if (!oauthProviders.includes(user.app_metadata.provider)) {
-      if (!password) {
-        return res.status(400).json({ error: 'Password required for email users' });
-      }
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password,
-      });
-      if (signInError) {
-        console.error('Password verification failed:', signInError.message);
-        return res.status(401).json({ error: 'Incorrect password' });
-      }
-    }
-
-    // Verify user exists
-    const { data: userData, error: userError } = await supabase.auth.admin.getUserById(user.id);
-    if (userError || !userData) {
-      console.error('User not found:', user.id, userError?.message);
-      throw new Error('User not found');
     }
 
     // Delete associated data
@@ -74,20 +52,26 @@ export default async function handler(req, res) {
       if (!error) break;
       authError = error;
       console.error(`Attempt ${attempt} failed to delete user:`, error.message);
-      if (attempt < 3) await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+      if (attempt < 3) await new Promise(resolve => setTimeout(resolve, 1000));
     }
     if (authError) {
-      console.error('Failed to delete user after retries:', authError.message, authError);
+      console.error('Failed to delete user after retries:', authError.message);
       throw new Error('Failed to delete user: ' + authError.message);
     }
 
+    // Send confirmation email
     const emailResponse = await fetch('https://vianclothinghub.com.ng/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         to: user.email,
         subject: 'Vian Clothing Hub Account Deletion Confirmation',
-        html: `...`,
+        html: `
+          <h2>Account Deletion Confirmation</h2>
+          <p>Your account has been permanently deleted from Vian Clothing Hub as of ${new Date().toLocaleString()}.</p>
+          <p>Contact <a href="mailto:support@vianclothinghub.com.ng">support@vianclothinghub.com.ng</a> if you have questions.</p>
+          <p>Vian Clothing Hub Team</p>
+        `,
       }),
     });
     if (!emailResponse.ok) {
@@ -96,7 +80,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ message: 'Account deleted successfully' });
   } catch (error) {
-    console.error('Error deleting account:', error.message, error);
+    console.error('Error deleting account:', error.message);
     return res.status(500).json({ error: error.message });
   }
 }
