@@ -403,12 +403,18 @@ export default function Dashboard() {
                 { id: "wishlist", label: "Wishlist", icon: <FaHeart /> },
                 { id: "custom-orders", label: "Custom Orders", icon: <FaBox /> },
                 { id: "product-orders", label: "Product Orders", icon: <FaBox /> },
+                { id: "delete-account", label: "Delete Account", icon: <FaTrash /> },
+
               ].map((item) => (
                 <button
                   key={item.id}
                   onClick={() => {
-                    setActiveSection(item.id);
-                    setIsSidebarOpen(false);
+                    if (item.id === "delete-account") {
+                      handleSelfDeletion();
+                    } else {
+                      setActiveSection(item.id);
+                      setIsSidebarOpen(false);
+                    }
                   }}
                   className={`w-full flex items-center space-x-2 p-3 rounded-lg text-left transition-colors ${activeSection === item.id
                     ? "bg-purple-100 text-purple-800"
