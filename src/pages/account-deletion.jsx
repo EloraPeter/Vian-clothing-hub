@@ -39,54 +39,54 @@ export default function AccountDeletion({ profile }) {
 
     // Handle self-service account deletion
     const handleSelfDeletion = async () => {
-  if (!user) {
-    setErrorMessage('No user logged in. Please log in again.');
-    toast.error('No user logged in.');
-    return;
-  }
-  if (!oauthProviders.includes(profile?.provider) && !password) {
-    setErrorMessage('Please enter your password to confirm deletion.');
-    toast.error('Please enter your password.');
-    return;
-  }
+        if (!user) {
+            setErrorMessage('No user logged in. Please log in again.');
+            toast.error('No user logged in.');
+            return;
+        }
+        if (!oauthProviders.includes(profile?.provider) && !password) {
+            setErrorMessage('Please enter your password to confirm deletion.');
+            toast.error('Please enter your password.');
+            return;
+        }
 
-  setLoading(true);
-  setErrorMessage('');
-  setSuccessMessage('');
+        setLoading(true);
+        setErrorMessage('');
+        setSuccessMessage('');
 
-  try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session) throw new Error('Session expired. Please log in again.');
+        try {
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+            if (sessionError || !session) throw new Error('Session expired. Please log in again.');
 
-    const response = await fetch('/api/delete-account', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({
-        password: oauthProviders.includes(profile?.provider) ? null : password,
-        userId: user.id,
-      }),
-    });
+            const response = await fetch('/api/delete-account', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({
+                    password: oauthProviders.includes(profile?.provider) ? null : password,
+                    userId: user.id,
+                }),
+            });
 
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || 'Failed to delete account');
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Failed to delete account');
 
-    setSuccessMessage('Your account and data have been deleted. You will be redirected to the homepage in 5 seconds.');
-    toast.success('Account deleted successfully.');
-    setTimeout(() => router.push('/'), 5000);
-  } catch (error) {
-    console.error('Fetch error:', error);
-    setErrorMessage(error.message || 'An unexpected error occurred.');
-    toast.error(error.message || 'An unexpected error occurred.');
-    if (error.message.includes('Session expired')) {
-      setTimeout(() => router.push('/auth'), 2000);
-    }
-  } finally {
-    setLoading(false);
-  }
-};
+            setSuccessMessage('Your account and data have been deleted. You will be redirected to the homepage in 5 seconds.');
+            toast.success('Account deleted successfully.');
+            setTimeout(() => router.push('/'), 5000);
+        } catch (error) {
+            console.error('Fetch error:', error);
+            setErrorMessage(error.message || 'An unexpected error occurred.');
+            toast.error(error.message || 'An unexpected error occurred.');
+            if (error.message.includes('Session expired')) {
+                setTimeout(() => router.push('/auth'), 2000);
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
     if (!user && !errorMessage) {
         return <div className="min-h-screen bg-gray-100 flex items-center justify-center">Loading...</div>;
@@ -221,6 +221,22 @@ export default function AccountDeletion({ profile }) {
                         </li>
                         <li>
                             Alternatively, revoke access directly in Facebook: Go to Settings &gt; Apps and Websites &gt; Find "Vian Clothing Hub" &gt; Remove.
+                        </li>
+                    </ul>
+
+                    <h2 className="text-2xl font-semibold text-purple-700 mt-8 mb-4">Google Login Data Deletion</h2>
+                    <p className="text-gray-700 mb-4">
+                        If you used Google to log in, we may have your name, email, and profile picture. To delete this data:
+                    </p>
+                    <ul className="list-disc list-inside space-y-2 mb-6 text-gray-700">
+                        <li>Use the self-service deletion option above to remove all data, including Google login data.</li>
+                        <li>
+                            Or, submit a request to <a href="mailto:support@vianclothinghub.com.ng" className="text-purple-600 hover:underline">
+                                support@vianclothinghub.com.ng
+                            </a>.
+                        </li>
+                        <li>
+                            Alternatively, revoke access directly in Google: Go to Google Account &gt; Security &gt; Your connections to third-party apps & services &gt; Find "Vian Clothing Hub" &gt; Remove access.
                         </li>
                     </ul>
 
