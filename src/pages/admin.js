@@ -11,6 +11,8 @@ import VariantsModal from "@/components/admin/VariantsModal";
 import ShippingFeesTable from "@/components/admin/ShippingFeesTable";
 import CustomOrdersTable from "@/components/admin/CustomOrdersTable";
 import ProductOrdersTable from "@/components/admin/ProductOrdersTable";
+import AddPromotionForm from "@/components/admin/AddPromotionForm";
+import PromotionsTable from "@/components/admin/PromotionsTable";
 import { FaUser, FaBox, FaShippingFast, FaTshirt, FaSignOutAlt, FaBars, FaBell, FaEnvelope, FaPercent } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
