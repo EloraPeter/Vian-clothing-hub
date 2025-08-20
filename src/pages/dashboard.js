@@ -11,9 +11,7 @@ import Script from "next/script";
 import DressLoader from "@/components/DressLoader";
 import Link from "next/link";
 import { initiatePayment } from "@/lib/payment";
-import { FaUser, FaBell, FaBox, FaTrash, FaFileInvoice, FaReceipt, FaHeart, FaSignOutAlt, FaBars } from "react-icons/fa";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { FaUser, FaBell, FaBox, FaFileInvoice, FaReceipt, FaHeart, FaSignOutAlt, FaBars } from "react-icons/fa";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -43,63 +41,6 @@ export default function Dashboard() {
     const val = e.target.value;
     setNewPassword(val);
     setStrengthScore(zxcvbn(val).score);
-  };
-
-  // Handle self-service account deletion
-  const handleSelfDeletion = async () => {
-    const confirm = window.confirm("Are you sure you want to permanently delete your account? This action cannot be undone.");
-    if (!confirm) return;
-
-    setLoading(true);
-    try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw new Error('No user logged in.');
-
-      // Delete associated data
-      await Promise.all([
-        supabase.from('profiles').delete().eq('id', user.id),
-        supabase.from('orders').delete().eq('user_id', user.id),
-        supabase.from('custom_orders').delete().eq('user_id', user.id),
-        supabase.from('wishlist').delete().eq('user_id', user.id),
-        supabase.from('invoices').delete().eq('user_id', user.id),
-        supabase.from('receipts').delete().eq('user_id', user.id),
-        supabase.from('notifications').delete().eq('user_id', user.id),
-      ]);
-
-      // Revoke Facebook OAuth tokens
-      if (user.app_metadata.provider === 'facebook') {
-        await supabase.auth.signOut();
-      }
-
-      // Delete auth user
-      const { error: authError } = await supabase.auth.admin.deleteUser(user.id);
-      if (authError) throw new Error('Failed to delete account: ' + authError.message);
-
-      // Send confirmation email
-      await fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: user.email,
-          subject: 'Vian Clothing Hub Account Deletion Confirmation',
-          html: `
-            <h2>Account Deletion Confirmation</h2>
-            <p>Dear ${profile?.first_name || 'Customer'},</p>
-            <p>Your Vian Clothing Hub account and associated data have been permanently deleted as of ${new Date().toLocaleString()}. This includes your profile, orders, wishlist, and any data shared via Facebook login.</p>
-            <p>If this was a mistake, please contact <a href="mailto:support@vianclothinghub.com.ng">support@vianclothinghub.com.ng</a> immediately.</p>
-            <p>Thank you for shopping with us!</p>
-            <p>Vian Clothing Hub Team</p>
-          `,
-        }),
-      });
-
-      toast.success('Account deleted successfully. Redirecting to homepage...');
-      setTimeout(() => router.push('/'), 3000);
-    } catch (error) {
-      toast.error('Error deleting account: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
   };
 
   useEffect(() => {
@@ -462,18 +403,12 @@ export default function Dashboard() {
                 { id: "wishlist", label: "Wishlist", icon: <FaHeart /> },
                 { id: "custom-orders", label: "Custom Orders", icon: <FaBox /> },
                 { id: "product-orders", label: "Product Orders", icon: <FaBox /> },
-                { id: "delete-account", label: "Delete Account", icon: <FaTrash /> },
-
               ].map((item) => (
                 <button
                   key={item.id}
                   onClick={() => {
-                    if (item.id === "delete-account") {
-                      handleSelfDeletion();
-                    } else {
-                      setActiveSection(item.id);
-                      setIsSidebarOpen(false);
-                    }
+                    setActiveSection(item.id);
+                    setIsSidebarOpen(false);
                   }}
                   className={`w-full flex items-center space-x-2 p-3 rounded-lg text-left transition-colors ${activeSection === item.id
                     ? "bg-purple-100 text-purple-800"

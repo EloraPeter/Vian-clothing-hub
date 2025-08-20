@@ -4,11 +4,12 @@ import Head from 'next/head';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/footer';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/router';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 export default function AccountDeletion({ profile }) {
   const router = useRouter();
@@ -20,7 +21,7 @@ export default function AccountDeletion({ profile }) {
 
   // Handle self-service account deletion
   const handleSelfDeletion = async () => {
-    if (!password) {
+    if (!password && profile?.provider !== 'facebook') {
       setErrorMessage('Please enter your password to confirm deletion.');
       toast.error('Please enter your password.');
       return;
@@ -34,50 +35,21 @@ export default function AccountDeletion({ profile }) {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('No user logged in.');
 
-      // Verify password
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password,
-      });
-      if (signInError) throw new Error('Incorrect password. Please try again.');
-
-      // Delete associated data
-      await Promise.all([
-        supabase.from('profiles').delete().eq('id', user.id),
-        supabase.from('orders').delete().eq('user_id', user.id),
-        supabase.from('custom_orders').delete().eq('user_id', user.id),
-        supabase.from('wishlist').delete().eq('user_id', user.id),
-        supabase.from('invoices').delete().eq('user_id', user.id),
-        supabase.from('receipts').delete().eq('user_id', user.id),
-        supabase.from('notifications').delete().eq('user_id', user.id),
-      ]);
-
-      // Revoke Facebook OAuth tokens (if applicable)
-      if (user.app_metadata.provider === 'facebook') {
-        await supabase.auth.signOut(); // Clears OAuth tokens
-      }
-
-      // Delete Supabase auth user
-      const { error: authError } = await supabase.auth.admin.deleteUser(user.id);
-      if (authError) throw new Error('Failed to delete account: ' + authError.message);
-
-      // Send confirmation email
-      await fetch('/api/send-email', {
+      // Call the server-side API to delete the account
+      const response = await fetch('/api/delete-account', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.access_token}`,
+        },
         body: JSON.stringify({
-          to: user.email,
-          subject: 'Vian Clothing Hub Account Deletion Confirmation',
-          html: `
-            <h2>Account Deletion Confirmation</h2>
-            <p>Dear ${profile?.first_name || 'Customer'},</p>
-            <p>Your Vian Clothing Hub account and associated data have been permanently deleted as of ${new Date().toLocaleString()}. This includes your profile, orders, wishlist, and any data shared via Facebook login.</p>
-            <p>If this was a mistake, please contact <a href="mailto:support@vianclothinghub.com.ng">support@vianclothinghub.com.ng</a> immediately.</p>
-            <p>Thank you for shopping with us!</p>
-            <p>Vian Clothing Hub Team</p>
-          `,
+          password: profile?.provider !== 'facebook' ? password : null,
+          userId: user.id,
         }),
       });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to delete account');
 
       setSuccessMessage('Your account and data have been deleted. You will be redirected to the homepage in 5 seconds.');
       toast.success('Account deleted successfully.');
@@ -144,37 +116,40 @@ export default function AccountDeletion({ profile }) {
 
           <h2 className="text-2xl font-semibold text-purple-700 mb-4">Option 1: Delete Your Account Yourself</h2>
           <p className="text-gray-700 mb-4">
-            If you have access to your account, you can delete it directly. This removes your profile, orders, custom orders, wishlist, invoices, receipts, notifications, and any Facebook login data.
+            If you have access to your account, you can delete it directly. This removes your profile, orders, custom orders, wishlist, invoices, receipts, notifications, and any Facebook login data. If you signed up with Facebook, no password is required.
           </p>
           <ol className="list-decimal list-inside space-y-2 mb-6 text-gray-700">
             <li>Ensure you are logged in. If not, go to <Link href="/auth" className="text-purple-600 hover:underline">vianclothinghub.com.ng/auth</Link>.</li>
-            <li>Enter your password below to confirm your identity.</li>
+            <li>If you used email signup, enter your password below to confirm your identity. Facebook users can skip this step.</li>
             <li>Click "Delete My Account" and confirm. You will receive an email confirmation.</li>
             <li>After deletion, you will be logged out and redirected to the homepage.</li>
           </ol>
-          <div className="mb-4">
-            <label htmlFor="password" className="block text-gray-700 font-medium mb-2">
-              Enter Password
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                placeholder="Your password"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-2 text-gray-600"
-              >
-                {showPassword ? 'Hide' : 'Show'}
-              </button>
+          {profile?.provider !== 'facebook' && (
+            <div className="mb-4">
+              <label htmlFor="password" className="block text-gray-700 font-medium mb-2">
+                Enter Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                  placeholder="Your password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2 top-2 text-gray-600"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
           <button
             onClick={handleSelfDeletion}
             disabled={loading}
