@@ -1,0 +1,1 @@
+INSERT INTO "public"."promotion_categories" ("promotion_id", "category_id") VALUES ('98e21bf7-8e0b-4c13-a19e-99cf1eb234ce', '12'), ('f4dff28a-73bf-4384-a07d-045501410d0f', '9');
