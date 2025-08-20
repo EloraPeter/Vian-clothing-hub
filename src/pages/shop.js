@@ -64,12 +64,12 @@ export default function Shop() {
     const searchInputRef = useRef(null);
 
     // Countdown timer for promotional banner
-    const [saleEndTime, setSaleEndTime] = useState(null);
-    const [timeLeft, setTimeLeft] = useState("");
-    const [promotion, setPromotion] = useState(null);
+    const [promotions, setPromotions] = useState([]);
+    const [currentPromoIndex, setCurrentPromoIndex] = useState(0);
+    const [timeLeft, setTimeLeft] = useState({});
 
     useEffect(() => {
-        async function fetchPromotion() {
+        async function fetchPromotions() {
             const now = new Date().toISOString();
             const { data, error } = await supabase
                 .from("promotions")
@@ -77,38 +77,63 @@ export default function Shop() {
                 .eq("active", true)
                 .lte("start_date", now)
                 .gte("end_date", now)
-                .order("created_at", { ascending: false })
-                .limit(1);
+                .order("created_at", { ascending: false });
             if (error) {
-                console.error("Error fetching promotion:", error.message);
+                console.error("Error fetching promotions:", error.message);
                 toast.error("Failed to load promotions.");
-            } else if (data && data.length > 0) {
-                setPromotion(data[0]);
-                setSaleEndTime(data[0].end_date);
+            } else {
+                setPromotions(data);
+                // Initialize timeLeft for each promotion
+                const initialTimeLeft = {};
+                data.forEach((promo) => {
+                    initialTimeLeft[promo.id] = calculateTimeLeft(promo.end_date);
+                });
+                setTimeLeft(initialTimeLeft);
             }
         }
-        fetchPromotion();
+        fetchPromotions();
     }, []);
 
+    // Calculate time left for a given end date
+    const calculateTimeLeft = (endDate) => {
+        const now = new Date();
+        const end = new Date(endDate);
+        const diff = end - now;
+        if (diff <= 0) return "Sale Ended";
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        return `${hours}h ${minutes}m ${seconds}s`;
+    };
+
+    // Update countdown timers
     useEffect(() => {
-        if (!saleEndTime) return;
+        if (promotions.length === 0) return;
         const interval = setInterval(() => {
-            const now = new Date();
-            const end = new Date(saleEndTime);
-            const diff = end - now;
-            if (diff <= 0) {
-                setTimeLeft("Sale Ended");
+            const updatedTimeLeft = {};
+            let activePromos = promotions.length;
+            promotions.forEach((promo) => {
+                const time = calculateTimeLeft(promo.end_date);
+                updatedTimeLeft[promo.id] = time;
+                if (time === "Sale Ended") activePromos--;
+            });
+            setTimeLeft(updatedTimeLeft);
+            if (activePromos === 0) {
                 clearInterval(interval);
-                return;
+                setPromotions([]);
             }
-            const hours = Math.floor(diff / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-            setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
         }, 1000);
         return () => clearInterval(interval);
-    }, [saleEndTime]);
+    }, [promotions]);
 
+    // Auto-slide for promotions
+    useEffect(() => {
+        if (promotions.length <= 1) return;
+        const slideInterval = setInterval(() => {
+            setCurrentPromoIndex((prev) => (prev + 1) % promotions.length);
+        }, 5000); // Change slide every 5 seconds
+        return () => clearInterval(slideInterval);
+    }, [promotions.length]);
 
     // Load preferences from local storage
     useEffect(() => {
