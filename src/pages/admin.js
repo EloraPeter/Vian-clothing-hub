@@ -96,7 +96,7 @@ export default function AdminPage() {
           supabase.from("shipping_fees").select("id, state_name, shipping_fee"),
           supabase.from("notifications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
           supabase.from("contact_inquiries").select("*").order("created_at", { ascending: false }),
-          supabase.from("promotions").select("*").order("created_at", { ascending: false }),
+          supabase.from("promotions").select("*, promotion_categories(category_id)").order("created_at", { ascending: false }),
 
         ]);
 
