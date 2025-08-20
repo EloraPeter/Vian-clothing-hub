@@ -22,6 +22,7 @@ export default function AccountDeletion({ profile }) {
   const handleSelfDeletion = async () => {
     if (!password) {
       setErrorMessage('Please enter your password to confirm deletion.');
+      toast.error('Please enter your password.');
       return;
     }
 
@@ -79,6 +80,7 @@ export default function AccountDeletion({ profile }) {
       });
 
       setSuccessMessage('Your account and data have been deleted. You will be redirected to the homepage in 5 seconds.');
+      toast.success('Account deleted successfully.');
       setTimeout(() => router.push('/'), 5000);
     } catch (error) {
       setErrorMessage(error.message);
