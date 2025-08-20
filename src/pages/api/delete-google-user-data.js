@@ -23,23 +23,15 @@ export default async function handler(req, res) {
 
     const userData = users.find(user => user.raw_user_meta_data?.sub === google_user_id);
     if (!userData) {
-      // Return success to comply with Google's requirements
       return res.status(200).json({
         url: 'https://vianclothinghub.com.ng/account-deletion',
         confirmation_code: crypto.randomUUID(),
       });
     }
 
-    // Delete user data
-    await Promise.all([
-      supabase.from('profiles').delete().eq('id', userData.id),
-      supabase.from('orders').delete().eq('user_id', userData.id),
-      supabase.from('custom_orders').delete().eq('user_id', userData.id),
-      supabase.from('invoices').delete().eq('user_id', userData.id),
-      supabase.from('receipts').delete().eq('user_id', userData.id),
-      supabase.from('notifications').delete().eq('user_id', userData.id),
-      supabase.auth.admin.deleteUser(userData.id),
-    ]);
+    // Call RPC to delete everything including auth user
+    const { error: rpcError } = await supabase.rpc('delete_user_data', { p_user_id: userData.id });
+    if (rpcError) throw rpcError;
 
     // Send confirmation email
     await fetch('https://vianclothinghub.com.ng/api/send-email', {
