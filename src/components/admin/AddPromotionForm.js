@@ -231,24 +231,44 @@ export default function AddPromotionForm({ promotions, setPromotions, categories
                 </div>
 
                 <div className="space-y-2">
-                    <label htmlFor="categories" className="block text-sm font-medium text-gray-700">
+                    <label
+                        htmlFor="categories"
+                        className="block text-sm font-medium text-gray-700"
+                    >
                         Categories
                     </label>
                     <select
                         id="categories"
                         multiple
                         value={selectedCategoryIds}
-                        onChange={(e) => setSelectedCategoryIds(Array.from(e.target.selectedOptions, option => parseInt(option.value)))}
+                        onChange={(e) => {
+                            const selectedValues = Array.from(
+                                e.target.selectedOptions,
+                                (option) => option.value
+                            );
+
+                            if (selectedValues.includes("all")) {
+                                // Select all category IDs
+                                setSelectedCategoryIds(categories.map((cat) => cat.id));
+                            } else {
+                                // Only selected categories
+                                setSelectedCategoryIds(selectedValues.map((val) => parseInt(val)));
+                            }
+                        }}
                         className="w-full text-black p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     >
-                        <option>All</option>
-
+                        <option value="all">All</option>
                         {categories.map((cat) => (
-                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                            <option key={cat.id} value={cat.id}>
+                                {cat.name}
+                            </option>
                         ))}
                     </select>
-                    <p className="text-xs text-gray-500">Hold Ctrl/Cmd to select multiple categories</p>
+                    <p className="text-xs text-gray-800">
+                        Hold Ctrl/Cmd to select multiple categories
+                    </p>
                 </div>
+
             </div>
 
             <button
