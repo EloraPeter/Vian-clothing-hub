@@ -676,8 +676,9 @@ export default function Shop() {
                             {promotions.map((promotion, index) => (
                                 <div
                                     key={promotion.id}
-                                    className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${index === currentPromoIndex ? "opacity-100" : "opacity-0"
-                                        }`}
+                                    className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                                        index === currentPromoIndex ? "opacity-100" : "opacity-0"
+                                    }`}
                                     role="region"
                                     aria-live="polite"
                                     aria-label={`Promotion: ${promotion.title}`}
@@ -701,8 +702,8 @@ export default function Shop() {
                                                 className="mt-4 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-md"
                                                 aria-label={`Shop ${promotion.title} items`}
                                                 onClick={() => {
-                                                    if (promotion.category_ids && promotion.category_ids.length > 0) {
-                                                        setSelectedCategories(promotion.category_ids);
+                                                    if (promotion.promotion_categories && promotion.promotion_categories.length > 0) {
+                                                        setSelectedCategories(promotion.promotion_categories.map(pc => pc.category_id));
                                                     }
                                                 }}
                                             >
@@ -741,10 +742,11 @@ export default function Shop() {
                                     {promotions.map((_, index) => (
                                         <button
                                             key={index}
-                                            className={`w-3 h-3 rounded-full ${index === currentPromoIndex
+                                            className={`w-3 h-3 rounded-full ${
+                                                index === currentPromoIndex
                                                     ? "bg-white"
                                                     : "bg-white/50 hover:bg-white/80"
-                                                } transition-colors`}
+                                            } transition-colors`}
                                             onClick={() => setCurrentPromoIndex(index)}
                                             aria-label={`Go to promotion ${index + 1}`}
                                             aria-current={index === currentPromoIndex ? "true" : "false"}
