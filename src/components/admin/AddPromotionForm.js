@@ -34,16 +34,23 @@ export default function AddPromotionForm({ promotions, setPromotions, categories
     e.preventDefault();
     setIsUploading(true);
 
+    const discount = parseInt(discountPercentage, 10);
+    if (isNaN(discount) || discount < 0 || discount > 100) {
+      toast.error("Discount percentage must be an integer between 0 and 100");
+      setIsUploading(false);
+      return;
+    }
+
     let imageUrl = "";
     if (imageFile) {
       const fileExt = imageFile.name.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
-      const { data, error } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('promotions')
         .upload(`images/${fileName}`, imageFile);
 
-      if (error) {
-        toast.error("Error uploading image: " + error.message);
+      if (uploadError) {
+        toast.error("Error uploading image: " + uploadError.message);
         setIsUploading(false);
         return;
       }
@@ -54,35 +61,62 @@ export default function AddPromotionForm({ promotions, setPromotions, categories
       imageUrl = publicUrlData.publicUrl;
     }
 
-    const { data, error } = await supabase.from("promotions").insert([
+    const { data: promoData, error: promoError } = await supabase.from("promotions").insert([
       {
         title,
         description,
-        discount_percentage: parseFloat(discountPercentage),
+        discount_percentage: discount,
         image_url: imageUrl,
         start_date: startDate,
         end_date: endDate,
         active,
-        category_ids: selectedCategoryIds,
       },
     ]).select();
 
-    if (error) {
-      toast.error("Error adding promotion: " + error.message);
-    } else {
-      setPromotions([data[0], ...promotions]);
-      toast.success("Promotion added successfully.");
-      // Reset form
-      setTitle("");
-      setDescription("");
-      setDiscountPercentage("");
-      setImageFile(null);
-      setImagePreview(null);
-      setStartDate("");
-      setEndDate("");
-      setActive(false);
-      setSelectedCategoryIds([]);
+    if (promoError) {
+      toast.error("Error adding promotion: " + promoError.message);
+      setIsUploading(false);
+      return;
     }
+
+    const newPromo = promoData[0];
+    let categoryInsertError = null;
+
+    if (selectedCategoryIds.length > 0) {
+      const categoryInserts = selectedCategoryIds.map(category_id => ({
+        promotion_id: newPromo.id,
+        category_id,
+      }));
+
+      const { error: insertError } = await supabase.from("promotion_categories").insert(categoryInserts);
+
+      if (insertError) {
+        categoryInsertError = insertError;
+        toast.error("Error adding promotion categories: " + insertError.message);
+        // Optionally, delete the promotion if categories fail to insert
+        await supabase.from("promotions").delete().eq("id", newPromo.id);
+        setIsUploading(false);
+        return;
+      }
+    }
+
+    // Manually add category_ids to the new promo object for local state
+    newPromo.category_ids = selectedCategoryIds;
+
+    setPromotions([newPromo, ...promotions]);
+    toast.success("Promotion added successfully.");
+
+    // Reset form
+    setTitle("");
+    setDescription("");
+    setDiscountPercentage("");
+    setImageFile(null);
+    setImagePreview(null);
+    setStartDate("");
+    setEndDate("");
+    setActive(false);
+    setSelectedCategoryIds([]);
+
     setIsUploading(false);
   };
 
@@ -133,6 +167,7 @@ export default function AddPromotionForm({ promotions, setPromotions, categories
             required
             min="0"
             max="100"
+            step="1"
           />
         </div>
 
